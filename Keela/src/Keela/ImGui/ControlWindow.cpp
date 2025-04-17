@@ -2,6 +2,7 @@
 
 #include "ControlWindow.h"
 #include "CameraWindow.h"
+#include "Keela/Cameras/BaslerCam.h""
 #include "TraceWindow.h"
 #include "imgui.h"
 #include "implot.h"
@@ -9,12 +10,23 @@
 
 using Matrix = std::vector<std::vector<int>>;
 
+Matrix generateNoiseMatrix(int height, int width);
 void ShowDataCollectionSection();
 void ShowFrameRateSection();
 std::pair<int, int> ShowDataMatrixDimensionsSection();
 void ShowCameraNumberSection();
 void ShowDataVisualizationSection();
 void ShowTroubleShootingSection();
+
+Matrix generateNoiseMatrix(int height, int width) {
+    Matrix noise(height, std::vector<int>(width));
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            noise[y][x] = rand() % 256; // Random grayscale value (0-255)
+        }
+    }
+    return noise;
+}
 
 void ImGui::ShowControlWindow(bool* p_open)
 {
@@ -86,16 +98,16 @@ void ShowDataCollectionSection()
 void ShowFrameRateSection()
 {
     ImGui::SeparatorText("Frame Rate");
-    static float frame_rate = 0.5;
-    ImGui::InputFloat("Frame Rate", &frame_rate, 0.1f, 1.0f, "%.1f");
+    static float frame_rate = 500;
+    ImGui::InputFloat("Frame Rate (Hz)", &frame_rate, 0.1f, 1.0f, "%.1f");
 }
 
 std::pair<int, int> ShowDataMatrixDimensionsSection()
 {
     ImGui::Text("Data Matrix Dimensions");
-    static int data_width = 3;
+    static int data_width = 218;
     ImGui::InputInt("Data Width", &data_width);
-    static int data_height = 3;
+    static int data_height = 218;
     ImGui::InputInt("Data Height", &data_height);
 
     static bool cal_volt = false;
@@ -111,14 +123,32 @@ void ShowCameraNumberSection() {
     static int cam_num = 1; // Camera number
     static bool isLocked = false; // Lock state
 
-    Matrix img = {
-    {1, 2, 3},
-    {4, 5, 6},
-    {7, 8, 9}
-    };
+    static Matrix img = generateNoiseMatrix(520, 740); // Placeholder noise matrix
+    static int data_height = img.size();
+    static int data_width = (data_height > 0) ? img[0].size() : 0;
 
-    int data_height = img.size();
-    int data_width = img[0].size();
+    // Button to manually refresh the image
+    if (ImGui::Button("Fetch Image from Camera")) {
+        img = Keela::FetchImage();
+        if (!img.empty()) {
+            data_height = img.size();
+            data_width = img[0].size();
+        }
+        else {
+            data_height = data_width = 0;
+        }
+    }
+
+    // Show camera view if an image has been fetched
+    if (!img.empty()) {
+        for (int camIndex = 0; camIndex < cam_num; ++camIndex) {
+            bool open = true;
+            ImGui::ShowImageCtrlWindow(&open, img, data_height, data_width, camIndex);
+        }
+    }
+    else {
+        ImGui::Text("No image fetched.");
+    }
 
     // Checkbox to lock/unlock the camera number input
     ImGui::Checkbox("Lock Camera Number", &isLocked);

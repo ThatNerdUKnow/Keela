@@ -27,6 +27,7 @@ struct WindowState {
     int orientation_current = 0; // Added for rotation combo tracking
 };
 
+
 // Function to flatten a 2D matrix into a 1D vector
 std::vector<double> flattenMatrix(const Matrix& img) {
     std::vector<double> flattened;
@@ -176,7 +177,7 @@ void ShowImageSection(const Matrix& img, float& rmin, float& rmax)
     ImGui::Spacing();
 
     int height = img.size();
-    int width = (height > 0) ? img[0].size() : 0;
+    int width = img[0].size();
 
     float* pic = convertMatrixToArray(img);
 
@@ -198,7 +199,8 @@ void ShowImageSection(const Matrix& img, float& rmin, float& rmax)
         ImPlot::SetupAxisTicks(ImAxis_Y1, 1, 3, 3, nullptr);
 
         // Make sure only to plot if data has changed
-        ImPlot::PlotHeatmap("Image", pic, 3, 3, rmin, rmax, nullptr, ImPlotPoint(0, 0), ImPlotPoint(1, 1), hm_flags);
+        ImPlot::PlotHeatmap("Image", pic, width, height, rmin, rmax, nullptr, ImPlotPoint(0, 0), ImPlotPoint(width, height), hm_flags);
+
         ImPlot::EndPlot();
     }
 

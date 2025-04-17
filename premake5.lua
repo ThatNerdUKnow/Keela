@@ -47,6 +47,13 @@ project "Keela"
 	pchheader "keepch.h"
 	pchsource "Keela/src/keepch.cpp"
 
+	local pylonRoot = "C:/Program Files/Basler/pylon 5/Development"
+
+
+    if not pylonRoot then
+        error("Environment variable PYLON_ROOT is not set!")
+    end
+
 	files
 	{
 		"%{prj.name}/src/**.h",
@@ -67,7 +74,8 @@ project "Keela"
 		"%{IncludeDir.ImPlot}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.stb}",
-		"%{IncludeDir.BrassMono}"
+		"%{IncludeDir.BrassMono}",
+		path.join(pylonRoot, "include")
 	}
 
 	links{
@@ -82,7 +90,7 @@ project "Keela"
 	libdirs
 	{
 		"%{prj.name}/bin/" .. outputdir .. "/ImPlot",
-		"../Basler/pylon7/Applications/x64/lib/pylonviewer/plugins/"
+		path.join(pylonRoot, "lib/x64"),
 	}
 
 	filter "system:windows"
