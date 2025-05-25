@@ -19,3 +19,6 @@
 [submodule "Keela/vender/basler/gst-plugin-pylon"]
 	path = Keela/vender/basler/gst-plugin-pylon
 	url = https://github.com/basler/gst-plugin-pylon.git
+[submodule "Keela/vender/stb"]
+	path = Keela/vender/stb
+	url = https://github.com/nothings/stb.git

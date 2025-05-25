@@ -47,8 +47,8 @@ project "Keela"
 	pchheader "keepch.h"
 	pchsource "Keela/src/keepch.cpp"
 
-	local pylonRoot = "C:/Program Files/Basler/pylon 5/Development"
-
+	--local pylonRoot = "C:/Program Files/Basler/pylon 5/Development"
+	local pylonRoot = os.getenv("PYLON_DEV_DIR")
 
     if not pylonRoot then
         error("Environment variable PYLON_ROOT is not set!")
@@ -161,7 +161,7 @@ project "KitchenSink"
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.BrassMono}",
 		"%{IncludeDir.ImPlot}",
-		"Keela/vender/"
+		"Keela/vender/",
 	}
 
 	links

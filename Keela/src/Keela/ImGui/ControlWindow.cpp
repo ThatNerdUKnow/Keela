@@ -120,13 +120,14 @@ std::pair<int, int> ShowDataMatrixDimensionsSection()
 
 
 void ShowCameraNumberSection() {
+    
     static int cam_num = 1; // Camera number
     static bool isLocked = false; // Lock state
 
     static Matrix img = generateNoiseMatrix(520, 740); // Placeholder noise matrix
     static int data_height = img.size();
     static int data_width = (data_height > 0) ? img[0].size() : 0;
-
+    
     // Button to manually refresh the image
     if (ImGui::Button("Fetch Image from Camera")) {
         img = Keela::FetchImage();
@@ -138,7 +139,7 @@ void ShowCameraNumberSection() {
             data_height = data_width = 0;
         }
     }
-
+    
     // Show camera view if an image has been fetched
     if (!img.empty()) {
         for (int camIndex = 0; camIndex < cam_num; ++camIndex) {
@@ -149,7 +150,7 @@ void ShowCameraNumberSection() {
     else {
         ImGui::Text("No image fetched.");
     }
-
+    
     // Checkbox to lock/unlock the camera number input
     ImGui::Checkbox("Lock Camera Number", &isLocked);
 
