@@ -3,13 +3,16 @@
 //
 
 #include "mainwindow.h"
-
+#include <keela-widgets/labeledspinbutton.h>
 MainWindow::MainWindow(): Gtk::Window()
 {
     set_title("Main Control Window");
     set_resizable(true);
     set_default_size(800, 600);
     container.set_orientation(Gtk::ORIENTATION_VERTICAL);
+    container.set_spacing(10);
+    container.set_homogeneous(false);
+    container.set_border_width(10);
     MainWindow::add(container);
 
     // Record button
@@ -21,32 +24,15 @@ MainWindow::MainWindow(): Gtk::Window()
     container.add(record_button);
 
     // Framerate controls
-    framerate_label = Gtk::Label("Framerate (hz)");
-    framerate_spin = Gtk::SpinButton(Gtk::Adjustment::create(500,1.0,2000.0));
-    framerate_spin.set_digits(0);
+    container.add(framerate_spin);
 
-    framerate_box.add(framerate_spin);
-    framerate_box.add(framerate_label);
-    container.add(framerate_box);
-
-    // Data matrix controls
-    data_matrix_frame.set_label("Data Matrix Dimensions");
-    data_matrix_frame.add(data_matrix_grid);
-    data_matrix_w_label = Gtk::Label("Data Width");
-    data_matrix_h_label = Gtk::Label("Data Height");
-    const auto dm_adj = Gtk::Adjustment::create(218.0,1.0,std::numeric_limits<double>::max());
-    data_matrix_w_spin = Gtk::SpinButton(dm_adj);
-    data_matrix_w_spin.set_digits(0);
-    data_matrix_h_spin = Gtk::SpinButton(dm_adj);
-    data_matrix_h_spin.set_digits(0);
-    data_matrix_grid.attach(data_matrix_w_spin, 0, 0, 1, 1);
-    data_matrix_grid.attach(data_matrix_w_label, 1, 0, 1, 1);
-
-    data_matrix_grid.attach(data_matrix_h_spin, 0, 1, 1, 1);
-    data_matrix_grid.attach(data_matrix_h_label, 1, 1, 1, 1);
-    data_matrix_frame.add(data_matrix_w_spin);
-    data_matrix_frame.add(data_matrix_h_spin);
-    container.add(data_matrix_frame);
+    const auto dm_frame = Gtk::make_managed<Gtk::Frame>("Data Matrix Dimensions");
+    const auto dm_box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
+    dm_box->set_spacing(10);
+    dm_frame->add(*dm_box);
+    dm_box->add(data_matrix_w_spin);
+    dm_box->add(data_matrix_h_spin);
+    container.add(*dm_frame);
 
     // calcium voltage recording setting control
     cv_recording_check.set_label("Calcium-Voltage Recording Setting");
@@ -58,8 +44,9 @@ MainWindow::MainWindow(): Gtk::Window()
     lock_camera_check.set_label("Lock Camera Number");
     container.add(lock_camera_check);
 
-    const auto camera_limits = Gtk::Adjustment::create(1.0,1.0,std::numeric_limits<double>::max());
-    num_camera_spin = Gtk::SpinButton(camera_limits);
+    const auto camera_limits = Gtk::Adjustment::create(1.0, 1.0, std::numeric_limits<double>::max());
+    num_camera_spin.m_spin.set_adjustment(camera_limits);
+    container.add(num_camera_spin);
 
     show_trace_check.set_label("Show Traces");
     container.add(show_trace_check);
@@ -67,7 +54,6 @@ MainWindow::MainWindow(): Gtk::Window()
     restart_camera_button.set_label("Restart Camera(s)");
     container.add(restart_camera_button);
     show_all_children();
-
 }
 
 MainWindow::~MainWindow()
