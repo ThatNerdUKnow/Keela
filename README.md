@@ -19,6 +19,12 @@ Based off of the game engine Hazel by The Cherno
   - mingw-w64-x86_64-gst-plugins-good
   - mingw-w64-x86_64-gst-plugins-bad
   - mingw-w64-x86_64-gst-plugins-ugly
+- run the following commands in the repository directory
+  - mkdir build
+  - cd build
+  - cmake .. -G "MinGW Makefiles"
+  - mingw32-make
+- Depending on your IDE, your IDE may be able to perform the build step for you - I am using CLion
 
 ### Linux
 - Install the equivalent dependencies in your package manager
