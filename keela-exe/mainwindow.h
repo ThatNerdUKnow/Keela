@@ -15,9 +15,19 @@ class MainWindow final : public Gtk::Window {
     private:
     Gtk::Button record_button;
     Gtk::Button restart_camera_button;
+
+    Gtk::Box framerate_box;
+    Gtk::Label framerate_label;
     Gtk::SpinButton framerate_spin;
+
+    Gtk::Frame data_matrix_frame;
+    Gtk::Grid data_matrix_grid;
+    Gtk::Label data_matrix_w_label;
+    Gtk::Label data_matrix_h_label;
     Gtk::SpinButton data_matrix_w_spin;
     Gtk::SpinButton data_matrix_h_spin;
+
+
     Gtk::CheckButton cv_recording_check;
     Gtk::Button fetch_image_button;
     Gtk::CheckButton lock_camera_check;
