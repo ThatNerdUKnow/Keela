@@ -4,6 +4,9 @@
 
 #include "mainwindow.h"
 #include <keela-widgets/labeledspinbutton.h>
+
+#include "keela-widgets/framebox.h"
+
 MainWindow::MainWindow(): Gtk::Window()
 {
     set_title("Main Control Window");
@@ -26,12 +29,10 @@ MainWindow::MainWindow(): Gtk::Window()
     // Framerate controls
     container.add(framerate_spin);
 
-    const auto dm_frame = Gtk::make_managed<Gtk::Frame>("Data Matrix Dimensions");
-    const auto dm_box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
-    dm_box->set_spacing(10);
-    dm_frame->add(*dm_box);
-    dm_box->add(data_matrix_w_spin);
-    dm_box->add(data_matrix_h_spin);
+    const auto dm_frame = Gtk::make_managed<Keela::FrameBox>("Data Matrix Dimensions",Gtk::ORIENTATION_VERTICAL);
+    dm_frame->set_spacing(10);
+    dm_frame->add(data_matrix_w_spin);
+    dm_frame->add(data_matrix_h_spin);
     container.add(*dm_frame);
 
     // calcium voltage recording setting control
