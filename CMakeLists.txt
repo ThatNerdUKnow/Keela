@@ -1,6 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.30)
 project(Keela)
-
 find_package(PkgConfig)
 
 pkg_search_module(GTKMM REQUIRED IMPORTED_TARGET gtkmm-3.0)
