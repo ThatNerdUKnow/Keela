@@ -19,6 +19,7 @@ Based off of the game engine Hazel by The Cherno
   - mingw-w64-x86_64-gst-plugins-good
   - mingw-w64-x86_64-gst-plugins-bad
   - mingw-w64-x86_64-gst-plugins-ugly
+- (Optional) if you like, in a fresh terminal, run the command `gst-inspect-1.0` to confirm gstreamer is installed
 - run the following commands in the repository directory
   - mkdir build
   - cd build
