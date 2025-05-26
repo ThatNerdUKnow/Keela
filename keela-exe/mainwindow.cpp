@@ -9,7 +9,7 @@ MainWindow::MainWindow(): Gtk::Window()
     set_title("Main Control Window");
     set_resizable(true);
     set_default_size(800, 600);
-    container = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
+    container.set_orientation(Gtk::ORIENTATION_VERTICAL);
     MainWindow::add(container);
 
     // Record button
@@ -34,7 +34,7 @@ MainWindow::MainWindow(): Gtk::Window()
     data_matrix_frame.add(data_matrix_grid);
     data_matrix_w_label = Gtk::Label("Data Width");
     data_matrix_h_label = Gtk::Label("Data Height");
-    auto dm_adj = Gtk::Adjustment::create(218.0,1.0,std::numeric_limits<double>::max());
+    const auto dm_adj = Gtk::Adjustment::create(218.0,1.0,std::numeric_limits<double>::max());
     data_matrix_w_spin = Gtk::SpinButton(dm_adj);
     data_matrix_w_spin.set_digits(0);
     data_matrix_h_spin = Gtk::SpinButton(dm_adj);
@@ -48,7 +48,24 @@ MainWindow::MainWindow(): Gtk::Window()
     data_matrix_frame.add(data_matrix_h_spin);
     container.add(data_matrix_frame);
 
+    // calcium voltage recording setting control
+    cv_recording_check.set_label("Calcium-Voltage Recording Setting");
+    container.add(cv_recording_check);
 
+    fetch_image_button.set_label("Fetch Image from Camera");
+    container.add(fetch_image_button);
+
+    lock_camera_check.set_label("Lock Camera Number");
+    container.add(lock_camera_check);
+
+    const auto camera_limits = Gtk::Adjustment::create(1.0,1.0,std::numeric_limits<double>::max());
+    num_camera_spin = Gtk::SpinButton(camera_limits);
+
+    show_trace_check.set_label("Show Traces");
+    container.add(show_trace_check);
+
+    restart_camera_button.set_label("Restart Camera(s)");
+    container.add(restart_camera_button);
     show_all_children();
 
 }
