@@ -7,7 +7,7 @@
 #include "bin.h"
 
 namespace Keela {
-    class RecordBin : Keela::Bin {
+    class RecordBin : public Bin {
         public:
         explicit RecordBin(const std::string &name);
 

@@ -15,6 +15,9 @@ namespace Keela {
         ~Bin();
 
         operator GstBin*() const;
+
+        operator GstElement*() const;
+
     protected:
         GstBin *bin;
     };

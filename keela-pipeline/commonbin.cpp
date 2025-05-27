@@ -4,10 +4,20 @@
 
 #include "keela-pipeline/commonbin.h"
 
+#include <stdexcept>
+
 Keela::CommonBin::CommonBin() {
+    scale = gst_element_factory_make("videoscale", nullptr);
+    tee = gst_element_factory_make("tee", nullptr);
 }
 
-Keela::CommonBin::CommonBin(std::string name, bool subsample) {
+Keela::CommonBin::CommonBin(const std::string &name):CommonBin() {
+    gboolean ret = false;
+    ret = gst_object_set_name(GST_OBJECT(scale), (name + "_scale").c_str());
+    ret &= gst_object_set_name(GST_OBJECT(tee), (name + "_tee").c_str());
+    if (!ret) {
+        throw std::runtime_error("Failed to name Elements");
+    }
 }
 
 Keela::CommonBin::~CommonBin() {

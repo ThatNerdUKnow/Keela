@@ -8,9 +8,9 @@
 Keela::RecordBin::RecordBin(const std::string &name): Bin(name) {
     init();
     gboolean ret = false;
-    ret |= gst_object_set_name(GST_OBJECT(enc),(name + "_enc").c_str());
-    ret |= gst_object_set_name(GST_OBJECT(mux),(name + "_mux").c_str());
-    ret |= gst_object_set_name(GST_OBJECT(sink),(name + "_sink").c_str());
+    ret = gst_object_set_name(GST_OBJECT(enc),(name + "_enc").c_str());
+    ret &= gst_object_set_name(GST_OBJECT(mux),(name + "_mux").c_str());
+    ret &= gst_object_set_name(GST_OBJECT(sink),(name + "_sink").c_str());
     if (!ret) {
         throw std::runtime_error("Failed to name RecordBin elements");
     }
@@ -19,7 +19,7 @@ Keela::RecordBin::RecordBin(const std::string &name): Bin(name) {
 void Keela::RecordBin::init() {
     enc = gst_element_factory_make("x264enc", nullptr);
 
-    g_object_set(enc,"quantizer",0);
+    //g_object_set(enc,"quantizer",0);
     // TODO: set pass property of enc to "quant"
 
     mux = gst_element_factory_make("mp4mux", nullptr);
@@ -38,11 +38,12 @@ void Keela::RecordBin::init() {
     }
 }
 
-Keela::RecordBin::RecordBin(): Keela::Bin() {
+Keela::RecordBin::RecordBin(): Bin() {
     init();
 }
 
 Keela::RecordBin::~RecordBin() {
+    gst_bin_remove_many(*this,enc,mux,sink,nullptr);
     g_object_unref(enc);
     g_object_unref(mux);
     g_object_unref(sink);

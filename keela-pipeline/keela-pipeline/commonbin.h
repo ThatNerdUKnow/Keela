@@ -7,7 +7,7 @@
 #include "bin.h"
 
 namespace Keela {
-    class CommonBin: Keela::Bin {
+    class CommonBin: public Bin {
         public:
         CommonBin();
 
@@ -16,10 +16,9 @@ namespace Keela {
          * @param name Name of bin
          * @param subsample whether to subsample the video stream
          */
-        explicit CommonBin(std::string name, bool subsample);
+        explicit CommonBin(const std::string &name);
         ~CommonBin();
         private:
-        bool do_subsample;
         GstElement *scale;
         GstElement* tee;
     };

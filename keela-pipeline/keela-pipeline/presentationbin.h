@@ -9,7 +9,7 @@
 #include "bin.h"
 
 namespace Keela {
-    class PresentationBin: Keela::Bin {
+    class PresentationBin: public Bin {
         public:
         explicit  PresentationBin(int framerate = 60, const std::string &name = "");
         ~PresentationBin();

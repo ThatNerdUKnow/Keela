@@ -24,3 +24,7 @@ Keela::Bin::~Bin() {
 Keela::Bin::operator struct _GstBin*() const {
     return bin;
 }
+
+Keela::Bin::operator struct _GstElement*() const {
+    return GST_ELEMENT(bin);
+}
