@@ -6,6 +6,6 @@ add_library(keela-pipeline presentationbin.cpp keela-pipeline/presentationbin.h
         bin.cpp
         keela-pipeline/bin.h
 )
-target_link_libraries(keela-pipeline PUBLIC PkgConfig::GSTREAMER)
+target_link_libraries(keela-pipeline PUBLIC PkgConfig::GSTREAMER PkgConfig::SPDLOG)
 
 target_include_directories(keela-pipeline PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

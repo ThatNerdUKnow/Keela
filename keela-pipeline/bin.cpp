@@ -5,7 +5,7 @@
 #include "keela-pipeline/bin.h"
 
 #include <stdexcept>
-
+#include <spdlog/spdlog.h>
 Keela::Bin::Bin(const std::string &name): Bin() {
     gst_object_set_name(GST_OBJECT(bin),name.c_str());
 }
@@ -18,6 +18,7 @@ Keela::Bin::Bin() {
 }
 
 Keela::Bin::~Bin() {
+    spdlog::debug(__func__);
     g_object_unref(bin);
 }
 

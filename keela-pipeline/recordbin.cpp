@@ -4,15 +4,20 @@
 
 #include "keela-pipeline/recordbin.h"
 #include <stdexcept>
-
+#include <spdlog/spdlog.h>
+using namespace spdlog;
 Keela::RecordBin::RecordBin(const std::string &name): Bin(name) {
     init();
     gboolean ret = false;
-    ret = gst_object_set_name(GST_OBJECT(enc),(name + "_enc").c_str());
+
+    ret = gst_object_set_name(GST_OBJECT(enc), (name + "_enc").c_str());
+    debug("ret {} after naming enc",ret);
     ret &= gst_object_set_name(GST_OBJECT(mux),(name + "_mux").c_str());
+    debug("ret {} after naming mux",ret);
     ret &= gst_object_set_name(GST_OBJECT(sink),(name + "_sink").c_str());
+    debug("ret {} after naming sink",ret);
     if (!ret) {
-        throw std::runtime_error("Failed to name RecordBin elements");
+        throw std::runtime_error("Failed to name Elements");
     }
 }
 
@@ -38,13 +43,15 @@ void Keela::RecordBin::init() {
     }
 }
 
-Keela::RecordBin::RecordBin(): Bin() {
+Keela::RecordBin::RecordBin() {
     init();
 }
 
 Keela::RecordBin::~RecordBin() {
+    spdlog::debug(__func__);
+
     gst_bin_remove_many(*this,enc,mux,sink,nullptr);
-    g_object_unref(enc);
-    g_object_unref(mux);
-    g_object_unref(sink);
+    if (enc) g_object_unref(enc);
+    if (mux) g_object_unref(mux);
+    if (sink) g_object_unref(sink);
 }

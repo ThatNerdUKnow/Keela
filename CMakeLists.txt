@@ -2,9 +2,13 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.30)
 project(Keela)
 find_package(PkgConfig)
 
+option(MAKE_REFERENCE "Build reference gstreamer gtk integration" false)
 pkg_search_module(GTKMM REQUIRED IMPORTED_TARGET gtkmm-3.0)
 pkg_search_module(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0)
+pkg_search_module(SPDLOG REQUIRED IMPORTED_TARGET spdlog)
+
 add_subdirectory(keela-widgets)
 add_subdirectory(keela-pipeline)
 add_subdirectory(keela-exe)
 add_subdirectory(keela-test)
+add_subdirectory(reference)

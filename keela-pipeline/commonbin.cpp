@@ -5,6 +5,7 @@
 #include "keela-pipeline/commonbin.h"
 
 #include <stdexcept>
+#include <spdlog/spdlog.h>
 
 Keela::CommonBin::CommonBin() {
     scale = gst_element_factory_make("videoscale", nullptr);
@@ -21,6 +22,7 @@ Keela::CommonBin::CommonBin(const std::string &name):CommonBin() {
 }
 
 Keela::CommonBin::~CommonBin() {
+    spdlog::debug(__func__);
     g_object_unref(scale);
     g_object_unref(tee);
 }

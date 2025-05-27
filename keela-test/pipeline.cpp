@@ -19,7 +19,7 @@ TEST(KeelaPipeline, ConstructPresentationBin) {
 }
 
 TEST(KeelaPipeline, ConstructNamedPresentationBin) {
-    auto bin = Keela::PresentationBin(60,"Foo");
+    auto bin = Keela::PresentationBin("Foo");
 }
 
 TEST(KeelaPipeline, ConstructCommonBin) {

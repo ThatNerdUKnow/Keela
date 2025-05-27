@@ -5,15 +5,20 @@
 #include "keela-pipeline/presentationbin.h"
 
 #include <stdexcept>
-
-Keela::PresentationBin::PresentationBin(int framerate, const std::string &name) {
-    auto cname = name.c_str();
-    videorate = gst_element_factory_make("videorate",cname);
+#include <spdlog/spdlog.h>
 
 
+Keela::PresentationBin::PresentationBin(const std::string &name) {
+}
+
+Keela::PresentationBin::PresentationBin() {
+    videorate = gst_element_factory_make("videorate",nullptr);
+    GstElement *gtkglsink, *videosink;
+    assert(videorate != nullptr);
 }
 
 Keela::PresentationBin::~PresentationBin() {
+    spdlog::debug(__func__);
     g_object_unref(videorate);
     g_object_unref(sink);
 }
