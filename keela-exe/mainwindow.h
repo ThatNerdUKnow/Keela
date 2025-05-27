@@ -19,10 +19,6 @@ class MainWindow final : public Gtk::Window {
     Gtk::Button restart_camera_button;
 
     Keela::LabeledSpinButton framerate_spin = Keela::LabeledSpinButton("Framerate (Hz)");
-    //Gtk::Box framerate_box;
-    //Gtk::Label framerate_label;
-    //Gtk::SpinButton framerate_spin;
-
     Keela::LabeledSpinButton data_matrix_w_spin = Keela::LabeledSpinButton("Data Width");
     Keela::LabeledSpinButton data_matrix_h_spin = Keela::LabeledSpinButton("Data Height");
 
