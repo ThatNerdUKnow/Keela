@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.30)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.28)
 project(Keela)
 find_package(PkgConfig)
 

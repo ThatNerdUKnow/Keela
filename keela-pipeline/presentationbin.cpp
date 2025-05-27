@@ -29,7 +29,7 @@ void Keela::PresentationBin::set_framerate(int framerate) {
 gpointer Keela::PresentationBin::get_widget() {
     gpointer obj = nullptr;
 
-    g_object_get(sink,"widget", &obj);
+    g_object_get(sink,"widget", &obj, nullptr);
     if (!obj) {
         throw std::runtime_error("No widget found");
     }
