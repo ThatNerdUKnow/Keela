@@ -11,10 +11,11 @@
 namespace Keela {
     class PresentationBin: Keela::Bin {
         public:
-        explicit  PresentationBin(int framerate = 60);
+        explicit  PresentationBin(int framerate = 60, const std::string &name = "");
         ~PresentationBin();
 
         void set_framerate(int framerate);
+        gpointer get_widget();
         private:
         GstElement *videorate;
         GstElement *sink;

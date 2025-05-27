@@ -5,12 +5,6 @@
 #include "keela-pipeline/recordbin.h"
 #include <stdexcept>
 
-// just in case this macro is not defined, set it to value found in gst docs
-// https://gstreamer.freedesktop.org/documentation/x264/index.html?gi-language=c#GstX264EncPass
-#ifndef GST_X264_ENC_PASS_QUANT
-#define GST_X264_ENC_PASS_QUANT 0
-#endif
-
 Keela::RecordBin::RecordBin(const std::string &name): Bin(name) {
     init();
     gboolean ret = false;
@@ -26,7 +20,7 @@ void Keela::RecordBin::init() {
     enc = gst_element_factory_make("x264enc", nullptr);
 
     g_object_set(enc,"quantizer",0);
-    g_object_set(enc,"pass",GST_X264_ENC_PASS_QUANT);
+    // TODO: set pass property of enc to "quant"
 
     mux = gst_element_factory_make("mp4mux", nullptr);
 
