@@ -20,3 +20,7 @@ Keela::Bin::Bin() {
 Keela::Bin::~Bin() {
     g_object_unref(bin);
 }
+
+Keela::Bin::operator struct _GstBin*() const {
+    return bin;
+}

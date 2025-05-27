@@ -13,6 +13,8 @@ namespace Keela {
         explicit Bin(const std::string &name);
         Bin();
         ~Bin();
+
+        operator GstBin*() const;
     protected:
         GstBin *bin;
     };
