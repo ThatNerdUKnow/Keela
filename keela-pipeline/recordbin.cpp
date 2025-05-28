@@ -54,10 +54,4 @@ Keela::RecordBin::RecordBin() {
 
 Keela::RecordBin::~RecordBin() {
     spdlog::debug(__func__);
-
-    gst_element_unlink_many(enc,mux,sink,nullptr);
-    gst_bin_remove_many(*this,enc,mux,sink,nullptr);
-    //if (enc) gst_object_unref(enc);
-    //if (mux) gst_object_unref(mux);
-    //if (sink) gst_object_unref(sink);
 }

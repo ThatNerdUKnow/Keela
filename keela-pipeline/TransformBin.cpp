@@ -24,8 +24,6 @@ Keela::TransformBin::TransformBin(const std::string &name):Bin(name) {
 
 Keela::TransformBin::~TransformBin() {
     spdlog::debug(__func__);
-    gst_bin_remove_many(*this,scale, nullptr);
-    //if (scale) g_object_unref(scale);
 }
 
 void Keela::TransformBin::init() {

@@ -26,8 +26,6 @@ Keela::PresentationBin::PresentationBin() {
 
 Keela::PresentationBin::~PresentationBin() {
     spdlog::debug(__func__);
-    //g_object_unref(videorate);
-    //g_object_unref(sink);
 }
 
 void Keela::PresentationBin::set_framerate(int framerate) {
