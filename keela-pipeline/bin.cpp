@@ -23,9 +23,13 @@ Keela::Bin::~Bin() {
 }
 
 Keela::Bin::operator struct _GstBin*() const {
+    const gchar *name = g_type_name(G_OBJECT_TYPE(bin));
+    spdlog::debug("{} Type name {}",__func__,name);
     return bin;
 }
 
 Keela::Bin::operator struct _GstElement*() const {
+    const gchar *name = g_type_name(G_OBJECT_TYPE(bin));
+    spdlog::debug("{} Type name {}",__func__,name);
     return GST_ELEMENT(bin);
 }

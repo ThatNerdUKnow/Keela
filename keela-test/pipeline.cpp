@@ -32,12 +32,12 @@ TEST(KeelaPipeline, ConstructNamedTransformBin) {
 
 TEST(KeelaPipeline, UseBinAsGstBin) {
     GstBin* bin = Keela::Bin();
-    ASSERT_TRUE(GST_IS_BIN(bin));
+    EXPECT_TRUE(GST_IS_BIN(bin));
 }
 
 TEST(KeelaPipeline, UseBinAsGstElement) {
     GstElement* bin = Keela::Bin();
-    ASSERT_TRUE(GST_IS_ELEMENT(bin));
+    EXPECT_TRUE(GST_IS_ELEMENT(bin));
 }
 
 TEST(KeelaPipeline, DuplicateNamedBins) {
