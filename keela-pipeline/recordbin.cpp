@@ -5,6 +5,8 @@
 #include "keela-pipeline/recordbin.h"
 #include <stdexcept>
 #include <spdlog/spdlog.h>
+#include "keela-pipeline/gst-helpers.h"
+
 using namespace spdlog;
 Keela::RecordBin::RecordBin(const std::string &name): Bin(name) {
     RecordBin::init();
@@ -22,8 +24,10 @@ Keela::RecordBin::RecordBin(const std::string &name): Bin(name) {
 void Keela::RecordBin::init() {
     enc = gst_element_factory_make("x264enc", nullptr);
 
-    //g_object_set(enc,"quantizer",0);
-    // TODO: set pass property of enc to "quant"
+    g_object_set(enc,"quantizer",0, nullptr);
+
+    gint variant = Keela::gst_enum_variant_by_nick(G_OBJECT(enc),"pass","quant");
+    g_object_set(enc,"pass",variant ,nullptr);
 
     mux = gst_element_factory_make("mp4mux", nullptr);
 
