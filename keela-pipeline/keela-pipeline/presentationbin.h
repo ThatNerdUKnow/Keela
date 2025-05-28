@@ -17,8 +17,14 @@ namespace Keela {
 
         void set_framerate(int framerate);
         gpointer get_widget();
-        private:
+
+    private:
+        void init() override;
+
+        void link() override;
+
         GstElement *videorate;
+        GstElement *glsink;
         GstElement *sink;
     };
 }

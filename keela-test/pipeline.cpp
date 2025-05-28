@@ -22,20 +22,22 @@ TEST(KeelaPipeline, ConstructNamedPresentationBin) {
     auto bin = Keela::PresentationBin("Foo");
 }
 
-TEST(KeelaPipeline, ConstructCommonBin) {
+TEST(KeelaPipeline, ConstructTransformBin) {
     auto bin = Keela::TransformBin();
 }
 
-TEST(KeelaPipeline, ConstructNamedCommonBin) {
+TEST(KeelaPipeline, ConstructNamedTransformBin) {
     auto bin = Keela::TransformBin("Foo");
 }
 
 TEST(KeelaPipeline, UseBinAsGstBin) {
     GstBin* bin = Keela::Bin();
+    ASSERT_TRUE(GST_IS_BIN(bin));
 }
 
 TEST(KeelaPipeline, UseBinAsGstElement) {
     GstElement* bin = Keela::Bin();
+    ASSERT_TRUE(GST_IS_ELEMENT(bin));
 }
 
 TEST(KeelaPipeline, DuplicateNamedBins) {
