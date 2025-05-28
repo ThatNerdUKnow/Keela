@@ -1,8 +1,8 @@
 add_library(keela-pipeline presentationbin.cpp keela-pipeline/presentationbin.h
         recordbin.cpp
         keela-pipeline/recordbin.h
-        commonbin.cpp
-        keela-pipeline/commonbin.h
+        TransformBin.cpp
+        keela-pipeline/TransformBin.h
         bin.cpp
         keela-pipeline/bin.h
 )

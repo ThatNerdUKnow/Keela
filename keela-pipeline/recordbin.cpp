@@ -7,18 +7,16 @@
 #include <spdlog/spdlog.h>
 using namespace spdlog;
 Keela::RecordBin::RecordBin(const std::string &name): Bin(name) {
-    init();
+    RecordBin::init();
     gboolean ret = false;
 
     ret = gst_object_set_name(GST_OBJECT(enc), (name + "_enc").c_str());
-    debug("ret {} after naming enc",ret);
     ret &= gst_object_set_name(GST_OBJECT(mux),(name + "_mux").c_str());
-    debug("ret {} after naming mux",ret);
     ret &= gst_object_set_name(GST_OBJECT(sink),(name + "_sink").c_str());
-    debug("ret {} after naming sink",ret);
     if (!ret) {
         throw std::runtime_error("Failed to name Elements");
     }
+    RecordBin::link();
 }
 
 void Keela::RecordBin::init() {
@@ -35,7 +33,9 @@ void Keela::RecordBin::init() {
     if (!enc || !mux || !sink) {
         throw std::runtime_error("Not all elements could be created");
     }
+}
 
+void Keela::RecordBin::link() {
     gst_bin_add_many (GST_BIN(bin), enc, mux, sink, nullptr);
     gboolean ret = gst_element_link_many (enc, mux, sink, nullptr);
     if (!ret) {
@@ -44,14 +44,16 @@ void Keela::RecordBin::init() {
 }
 
 Keela::RecordBin::RecordBin() {
-    init();
+    RecordBin::init();
+    RecordBin::link();
 }
 
 Keela::RecordBin::~RecordBin() {
     spdlog::debug(__func__);
 
+    gst_element_unlink_many(enc,mux,sink,nullptr);
     gst_bin_remove_many(*this,enc,mux,sink,nullptr);
-    if (enc) g_object_unref(enc);
-    if (mux) g_object_unref(mux);
-    if (sink) g_object_unref(sink);
+    if (enc) gst_object_unref(enc);
+    if (mux) gst_object_unref(mux);
+    if (sink) gst_object_unref(sink);
 }

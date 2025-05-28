@@ -17,7 +17,10 @@ namespace Keela {
         ~RecordBin();
 
         private:
-        void init();
+        void init() override;
+        void link() override;
+
+    private:
         std::string name;
         GstElement *enc = nullptr;
         GstElement *mux = nullptr;

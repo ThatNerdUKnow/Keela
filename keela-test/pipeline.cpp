@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include <keela-pipeline/recordbin.h>
 #include <keela-pipeline/presentationbin.h>
-#include <keela-pipeline/commonbin.h>
+#include <keela-pipeline/TransformBin.h>
 
 TEST(KeelaPipeline, ConstructRecordBin) {
     auto bin = Keela::RecordBin();
@@ -23,11 +23,11 @@ TEST(KeelaPipeline, ConstructNamedPresentationBin) {
 }
 
 TEST(KeelaPipeline, ConstructCommonBin) {
-    auto bin = Keela::CommonBin();
+    auto bin = Keela::TransformBin();
 }
 
 TEST(KeelaPipeline, ConstructNamedCommonBin) {
-    auto bin = Keela::CommonBin("Foo");
+    auto bin = Keela::TransformBin("Foo");
 }
 
 TEST(KeelaPipeline, UseBinAsGstBin) {
@@ -44,8 +44,8 @@ TEST(KeelaPipeline, DuplicateNamedBins) {
 }
 
 TEST(KeelaPipeline, LinkBins) {
-    auto bin1 = Keela::CommonBin();
+    auto bin1 = Keela::TransformBin();
     auto bin2 = Keela::RecordBin();
-
+    // TODO: Set ghost pads on Keela::Bin
     ASSERT_TRUE(gst_element_link(bin1,bin2));
 }

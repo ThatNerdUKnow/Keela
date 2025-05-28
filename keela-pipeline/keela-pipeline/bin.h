@@ -12,7 +12,10 @@ namespace Keela {
         public:
         explicit Bin(const std::string &name);
         Bin();
-        ~Bin();
+
+        virtual ~Bin();
+
+
 
         operator GstBin*() const;
 
@@ -20,6 +23,14 @@ namespace Keela {
 
     protected:
         GstBin *bin;
+    private:
+        /* Create required elements and add them to the bin
+         */
+        virtual void init() {};
+
+        /* Link elements together
+         */
+        virtual void link() {};
     };
 }
 #endif //BIN_H

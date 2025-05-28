@@ -7,20 +7,25 @@
 #include "bin.h"
 
 namespace Keela {
-    class CommonBin: public Bin {
+    class TransformBin: public Bin {
         public:
-        CommonBin();
+        TransformBin();
 
         /**
          *
          * @param name Name of bin
          * @param subsample whether to subsample the video stream
          */
-        explicit CommonBin(const std::string &name);
-        ~CommonBin();
-        private:
+        explicit TransformBin(const std::string &name);
+        ~TransformBin();
+
+    private:
+        void init() override;
+
+        void link() override;
+
         GstElement *scale;
-        GstElement* tee;
+        //GstElement* tee;
     };
 }
 #endif //COMMONBIN_H
