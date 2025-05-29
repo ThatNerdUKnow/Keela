@@ -23,9 +23,9 @@ namespace Keela {
 
         void link() override;
 
-        GstElement *videorate;
-        GstElement *glsink;
-        GstElement *sink;
+        GstElement *videorate = nullptr;
+        GstElement *glsink = nullptr;
+        GstElement *sink = nullptr;
     };
 }
 #endif //PRESENTATIONBIN_H

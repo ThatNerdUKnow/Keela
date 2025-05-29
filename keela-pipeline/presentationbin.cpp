@@ -15,10 +15,13 @@ Keela::PresentationBin::PresentationBin(const std::string &name):Bin(name) {
     if (glsink) {
         ret |= gst_element_set_name(GST_OBJECT(glsink), name.c_str());
     }
+    if (!ret) {
+        spdlog::warn("{} Failed to name elements",__func__);
+    }
     PresentationBin::link();
 }
 
-Keela::PresentationBin::PresentationBin() {
+Keela::PresentationBin::PresentationBin():Bin() {
     PresentationBin::init();
     PresentationBin::link();
 

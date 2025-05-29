@@ -23,6 +23,12 @@ namespace Keela {
 
     protected:
         GstBin *bin;
+
+        /**
+         * Create a ghost pad for an internal GstElement
+         */
+        void add_ghost_pad(GstElement* element, const std::string &pad_name) const;
+
     private:
         /* Create required elements and add them to the bin
          */

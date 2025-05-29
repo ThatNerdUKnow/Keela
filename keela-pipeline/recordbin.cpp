@@ -8,7 +8,7 @@
 #include "keela-pipeline/gst-helpers.h"
 
 using namespace spdlog;
-Keela::RecordBin::RecordBin(const std::string &name): Bin(name) {
+Keela::RecordBin::RecordBin(const std::string &name): QueueBin(name) {
     RecordBin::init();
     gboolean ret = false;
 
@@ -45,9 +45,10 @@ void Keela::RecordBin::link() {
     if (!ret) {
         throw std::runtime_error("Could not link elements");
     }
+    link_queue(enc);
 }
 
-Keela::RecordBin::RecordBin() {
+Keela::RecordBin::RecordBin():QueueBin() {
     RecordBin::init();
     RecordBin::link();
 }

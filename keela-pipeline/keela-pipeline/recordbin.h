@@ -5,9 +5,10 @@
 #ifndef RECORDBIN_H
 #define RECORDBIN_H
 #include "bin.h"
+#include "queuebin.h"
 
 namespace Keela {
-    class RecordBin : public Bin {
+    class RecordBin : public QueueBin {
         public:
         explicit RecordBin(const std::string &name);
 

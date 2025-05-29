@@ -7,6 +7,8 @@ add_library(keela-pipeline presentationbin.cpp keela-pipeline/presentationbin.h
         keela-pipeline/bin.h
         keela-pipeline/gst-helpers.h
         gst-helpers.cpp
+        queuebin.cpp
+        keela-pipeline/queuebin.h
 )
 target_link_libraries(keela-pipeline PUBLIC PkgConfig::GSTREAMER PkgConfig::SPDLOG)
 
