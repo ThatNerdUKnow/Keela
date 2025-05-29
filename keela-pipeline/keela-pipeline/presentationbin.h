@@ -5,11 +5,10 @@
 #ifndef PRESENTATIONBIN_H
 #define PRESENTATIONBIN_H
 #include <gstreamer-1.0/gst/gst.h>
-
-#include "bin.h"
+#include "queuebin.h"
 
 namespace Keela {
-    class PresentationBin: public Bin {
+    class PresentationBin: public QueueBin {
         public:
         explicit  PresentationBin(const std::string &name);
         PresentationBin();

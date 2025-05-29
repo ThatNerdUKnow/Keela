@@ -8,7 +8,7 @@
 #include <spdlog/spdlog.h>
 
 
-Keela::PresentationBin::PresentationBin(const std::string &name):Bin(name) {
+Keela::PresentationBin::PresentationBin(const std::string &name):QueueBin(name) {
     PresentationBin::init();
     gboolean ret = false;
     ret = gst_element_set_name(GST_OBJECT(videorate), (name+"_videorate").c_str());
@@ -21,7 +21,7 @@ Keela::PresentationBin::PresentationBin(const std::string &name):Bin(name) {
     PresentationBin::link();
 }
 
-Keela::PresentationBin::PresentationBin():Bin() {
+Keela::PresentationBin::PresentationBin():QueueBin() {
     PresentationBin::init();
     PresentationBin::link();
 
@@ -72,4 +72,5 @@ void Keela::PresentationBin::link() {
     } else {
         gst_bin_add_many(*this,videorate,sink,nullptr);
     }
+    link_queue(videorate);
 }

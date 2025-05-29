@@ -9,7 +9,7 @@
 
 #include "keela-pipeline/gst-helpers.h"
 
-Keela::TransformBin::TransformBin() {
+Keela::TransformBin::TransformBin():Bin() {
     TransformBin::init();
     TransformBin::link();
 }
@@ -40,5 +40,6 @@ void Keela::TransformBin::init() {
 
 void Keela::TransformBin::link() {
     gst_bin_add_many(*this,scale,nullptr);
-
+    add_ghost_pad(scale,"sink");
+    add_ghost_pad(scale,"src");
 }
