@@ -6,6 +6,7 @@
 #define CAMERACONTROLWINDOW_H
 #include <gtkmm-3.0/gtkmm.h>
 #include <keela-widgets/labeledspinbutton.h>
+#include <keela-widgets/labeledcomboboxtext.h>
 
 class CameraControlWindow final: public Gtk::Window {
     public:
@@ -20,8 +21,15 @@ private:
     // TODO: histogram
     Keela::LabeledSpinButton gain_spin = Keela::LabeledSpinButton("Gain");
     // TODO: labeled combo box
-    Gtk::ComboBox rotation_combo = Gtk::ComboBox();
+    Keela::LabeledComboBoxText rotation_combo = Keela::LabeledComboBoxText("Select Rotation");
     Gtk::CheckButton flip_horiz_check = Gtk::CheckButton("Flip Along Horizontal Center");
     Gtk::CheckButton flip_vert_check = Gtk::CheckButton("Flip Along Vertical Center");
 };
+
+#define ROTATION_NONE "No_Rotation"
+#define ROTATION_90 "Rotation_90"
+#define ROTATION_180 "Rotation_180"
+#define ROTATION_270 "Rotation_270"
+
+
 #endif //CAMERACONTROLWINDOW_H
