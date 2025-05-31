@@ -9,6 +9,8 @@
 
 #include <keela-widgets/labeledspinbutton.h>
 
+#include "cameracontrolwindow.h"
+
 class MainWindow final : public Gtk::Window {
 
     public:
@@ -32,6 +34,7 @@ class MainWindow final : public Gtk::Window {
 
     Gtk::Box container;
 
+    std::vector<std::shared_ptr<CameraControlWindow>> cameras;
 };
 
 

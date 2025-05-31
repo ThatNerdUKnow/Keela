@@ -54,6 +54,10 @@ MainWindow::MainWindow(): Gtk::Window()
 
     restart_camera_button.set_label("Restart Camera(s)");
     container.add(restart_camera_button);
+
+    auto w = std::make_shared<CameraControlWindow>(1);
+    cameras.push_back(w);
+    w->show();
     show_all_children();
 }
 
