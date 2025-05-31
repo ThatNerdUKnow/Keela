@@ -30,16 +30,16 @@ Keela::Bin::~Bin() {
     g_object_unref(bin);
 }
 
-Keela::Bin::operator struct _GstBin*() const {
-    const gchar *name = g_type_name(G_OBJECT_TYPE(bin));
-    spdlog::trace("{} Type name {}",__func__,name);
-    return bin;
-}
-
 Keela::Bin::operator struct _GstElement*() const {
     const gchar *name = g_type_name(G_OBJECT_TYPE(bin));
     spdlog::trace("{} Type name {}",__func__,name);
     return GST_ELEMENT(bin);
+}
+
+Keela::Bin::operator struct _GstBin*() const {
+    const gchar *name = g_type_name(G_OBJECT_TYPE(bin));
+    spdlog::trace("{} Type name {}",__func__,name);
+    return bin;
 }
 
 void Keela::Bin::add_ghost_pad(GstElement *element, const std::string &pad_name) const{

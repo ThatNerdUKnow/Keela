@@ -2,7 +2,7 @@
 // Created by brand on 5/26/2025.
 //
 
-#include "keela-pipeline/TransformBin.h"
+#include "keela-pipeline/transformbin.h"
 
 #include <stdexcept>
 #include <spdlog/spdlog.h>

@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include <keela-pipeline/recordbin.h>
 #include <keela-pipeline/presentationbin.h>
-#include <keela-pipeline/TransformBin.h>
+#include <keela-pipeline/transformbin.h>
 
 #include "keela-pipeline/testsrc.h"
 

@@ -1,18 +1,20 @@
 add_library(keela-pipeline presentationbin.cpp keela-pipeline/presentationbin.h
         recordbin.cpp
         keela-pipeline/recordbin.h
-        TransformBin.cpp
-        keela-pipeline/TransformBin.h
+        transformbin.cpp
+        keela-pipeline/transformbin.h
         bin.cpp
         keela-pipeline/bin.h
         keela-pipeline/gst-helpers.h
         gst-helpers.cpp
         queuebin.cpp
         keela-pipeline/queuebin.h
-        element.cpp
-        keela-pipeline/element.h
+        simpleelement.cpp
+        keela-pipeline/simpleelement.h
         testsrc.cpp
         keela-pipeline/testsrc.h
+        elementbase.cpp
+        keela-pipeline/elementbase.h
 )
 target_link_libraries(keela-pipeline PUBLIC PkgConfig::GSTREAMER PkgConfig::SPDLOG)
 

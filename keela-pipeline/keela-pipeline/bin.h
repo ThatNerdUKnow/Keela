@@ -7,19 +7,22 @@
 #include <string>
 #include <gstreamer-1.0/gst/gst.h>
 
+#include "elementbase.h"
+
 namespace Keela {
-    class Bin {
+    class Bin: public Keela::Element {
         public:
         explicit Bin(const std::string &name);
         Bin();
 
-        virtual ~Bin();
+        ~Bin() override;
 
 
 
+        operator GstElement*() const override;
         operator GstBin*() const;
 
-        operator GstElement*() const;
+        //operator GstElement*() const;
 
     protected:
         GstBin *bin;
@@ -36,7 +39,7 @@ namespace Keela {
 
         /* Link elements together
          */
-        virtual void link() {};
+        virtual void link() {}
     };
 }
 #endif //BIN_H

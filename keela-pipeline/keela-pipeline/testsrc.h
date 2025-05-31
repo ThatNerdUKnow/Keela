@@ -4,10 +4,10 @@
 
 #ifndef TESTSRC_H
 #define TESTSRC_H
-#include "element.h"
+#include "simpleelement.h"
 
 namespace Keela {
-    class TestSrc: public Keela::Element {
+    class TestSrc: public Keela::SimpleElement {
         public:
         TestSrc();
         explicit TestSrc(const std::string& name);
