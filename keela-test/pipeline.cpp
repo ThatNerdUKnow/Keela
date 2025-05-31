@@ -6,6 +6,8 @@
 #include <keela-pipeline/presentationbin.h>
 #include <keela-pipeline/TransformBin.h>
 
+#include "keela-pipeline/testsrc.h"
+
 TEST(KeelaPipeline, ConstructRecordBin) {
     auto bin = Keela::RecordBin();
 }
@@ -54,4 +56,12 @@ TEST(KeelaPipeline, LinkBins) {
     auto bin2 = Keela::RecordBin();
     // TODO: Set ghost pads on Keela::Bin
     ASSERT_TRUE(gst_element_link(bin1,bin2));
+}
+
+TEST(KeelaPipeline, ConstructTestSrc) {
+    auto src = Keela::TestSrc();
+}
+
+TEST(KeelaPipeline, ConstructNamedTestSrc) {
+    auto src = Keela::TestSrc("Foo");
 }
