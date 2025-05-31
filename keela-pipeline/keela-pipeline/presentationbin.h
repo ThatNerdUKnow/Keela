@@ -8,7 +8,7 @@
 #include "queuebin.h"
 
 namespace Keela {
-    class PresentationBin: public QueueBin {
+    class PresentationBin: public Bin {
         public:
         explicit  PresentationBin(const std::string &name);
         PresentationBin();
@@ -23,7 +23,7 @@ namespace Keela {
         void link() override;
 
         GstElement *videorate = nullptr;
-        GstElement *glsink = nullptr;
+        //GstElement *glsink = nullptr;
         GstElement *sink = nullptr;
     };
 }

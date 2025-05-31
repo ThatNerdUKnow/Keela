@@ -7,21 +7,22 @@
 #include <stdexcept>
 #include <spdlog/spdlog.h>
 
+#include <keela-pipeline/gtkglsink.h>
+#include <keela-pipeline/gtksink.h>
 
-Keela::PresentationBin::PresentationBin(const std::string &name):QueueBin(name) {
+
+Keela::PresentationBin::PresentationBin(const std::string &name):Bin(name) {
     PresentationBin::init();
     gboolean ret = false;
     ret = gst_element_set_name(GST_OBJECT(videorate), (name+"_videorate").c_str());
-    if (glsink) {
-        ret |= gst_element_set_name(GST_OBJECT(glsink), name.c_str());
-    }
+
     if (!ret) {
         spdlog::warn("{} Failed to name elements",__func__);
     }
     PresentationBin::link();
 }
 
-Keela::PresentationBin::PresentationBin():QueueBin() {
+Keela::PresentationBin::PresentationBin():Bin() {
     PresentationBin::init();
     PresentationBin::link();
 
@@ -46,31 +47,24 @@ gpointer Keela::PresentationBin::get_widget() {
 }
 
 void Keela::PresentationBin::init() {
-    // my spidey sense tells me this leaks
-    videorate = gst_element_factory_make("videorate",nullptr);
-    glsink = gst_element_factory_make("glsinkbin",nullptr);
-    sink = gst_element_factory_make("gtkglsink",nullptr);
-    if (glsink && sink) {
-        spdlog::info("Successfully created gtk opengl elements");
-        g_object_set(glsink, "sink",sink,nullptr);
-    } else {
-        spdlog::warn("Failed to create gtk opengl elements");
+    videorate = gst_element_factory_make("videorate", nullptr);
+    try {
+        sink = GtkGlSink();
+    } catch (const std::exception &e) {
+        spdlog::warn("{}", e.what());
         spdlog::info("Falling back to gtksink");
-        sink = gst_element_factory_make("gtksink",nullptr);
-        if (!sink) {
-            const std::string msg = "Failed to initialize presentation bin";
-            spdlog::error(msg);
-            throw std::runtime_error(msg);
+        try {
+            sink = GtkSink();
+        } catch (const std::exception &e) {
+            spdlog::error("{}", e.what());
+            spdlog::warn("falling back to autovideosink");
+
         }
     }
 }
 
 void Keela::PresentationBin::link() {
-
-    if (glsink) {
-        gst_bin_add_many(*this,videorate,glsink,sink,nullptr);
-    } else {
-        gst_bin_add_many(*this,videorate,sink,nullptr);
-    }
-    link_queue(videorate);
+    gst_bin_add_many(*this,videorate,sink,nullptr);
+    gst_element_link(videorate,sink);
+    add_ghost_pad(videorate,"sink");
 }
