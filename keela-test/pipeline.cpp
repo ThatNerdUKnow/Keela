@@ -65,3 +65,26 @@ TEST(KeelaPipeline, ConstructTestSrc) {
 TEST(KeelaPipeline, ConstructNamedTestSrc) {
     auto src = Keela::TestSrc("Foo");
 }
+
+TEST(KeelaPipeline, CanPlay) {
+    Keela::Bin bin;
+    ASSERT_NO_THROW(bin = Keela::Bin());
+    Keela::TestSrc src;
+    g_object_set(src,"num-buffers",100,nullptr);
+    ASSERT_NO_THROW(src = Keela::TestSrc());
+    Keela::TransformBin transform;
+    ASSERT_NO_THROW(transform = Keela::TransformBin());
+    Keela::PresentationBin presentation;
+    ASSERT_NO_THROW(presentation = Keela::PresentationBin());
+    gst_bin_add_many(bin,src,transform,presentation,nullptr);
+
+    GstCaps *caps = gst_caps_new_simple ("video/x-raw",
+     "format", G_TYPE_STRING, "GRAY8",
+     "framerate", GST_TYPE_FRACTION, 500, 1,
+     "pixel-aspect-ratio", GST_TYPE_FRACTION, 1, 1,
+     "width", G_TYPE_INT, 512,
+     "height", G_TYPE_INT, 512,
+     NULL);
+
+    ASSERT_TRUE(gst_element_link_filtered(src,transform,caps));
+}

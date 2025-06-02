@@ -12,6 +12,7 @@
 
 
 Keela::PresentationBin::PresentationBin(const std::string &name):Bin(name) {
+    spdlog::info("{}",__func__);
     PresentationBin::init();
     gboolean ret = false;
     ret = gst_element_set_name(GST_OBJECT(videorate), (name+"_videorate").c_str());
@@ -23,6 +24,7 @@ Keela::PresentationBin::PresentationBin(const std::string &name):Bin(name) {
 }
 
 Keela::PresentationBin::PresentationBin():Bin() {
+    spdlog::info("{}",__func__);
     PresentationBin::init();
     PresentationBin::link();
 

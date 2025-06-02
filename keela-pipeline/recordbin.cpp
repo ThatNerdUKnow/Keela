@@ -9,6 +9,7 @@
 
 using namespace spdlog;
 Keela::RecordBin::RecordBin(const std::string &name): QueueBin(name) {
+    spdlog::info("{}",__func__);
     RecordBin::init();
     gboolean ret = false;
 
@@ -49,6 +50,7 @@ void Keela::RecordBin::link() {
 }
 
 Keela::RecordBin::RecordBin():QueueBin() {
+    spdlog::info("{}",__func__);
     RecordBin::init();
     RecordBin::link();
 }

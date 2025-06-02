@@ -10,11 +10,13 @@
 #include "keela-pipeline/gst-helpers.h"
 
 Keela::TransformBin::TransformBin():Bin() {
+    spdlog::info("{}",__func__);
     TransformBin::init();
     TransformBin::link();
 }
 
 Keela::TransformBin::TransformBin(const std::string &name):Bin(name) {
+    spdlog::info("{}",__func__);
     TransformBin::init();
     gboolean ret = false;
     ret = gst_object_set_name(GST_OBJECT(scale), (name + "_scale").c_str());

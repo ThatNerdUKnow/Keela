@@ -24,7 +24,7 @@ class TransformBin: public Bin {
 
         void link() override;
 
-        GstElement *scale;
+        GstElement *scale = nullptr;
         //GstElement* tee;
     };
 }

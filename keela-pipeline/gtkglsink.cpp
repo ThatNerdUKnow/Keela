@@ -7,11 +7,13 @@
 #include <spdlog/spdlog.h>
 
 Keela::GtkGlSink::GtkGlSink() {
+    spdlog::info("{}",__func__);
     init();
     link();
 }
 
 Keela::GtkGlSink::GtkGlSink(const std::string &name): Bin(name) {
+    spdlog::info("{}",__func__);
     init();
     gboolean ret = false;
     ret = gst_element_set_name(GST_ELEMENT(glsink), (name + "_gl").c_str());

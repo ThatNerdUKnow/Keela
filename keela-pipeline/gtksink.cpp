@@ -8,6 +8,7 @@
 #include <spdlog/spdlog.h>
 
 Keela::GtkSink::GtkSink(): SimpleElement("gtksink") {
+    spdlog::info("{}",__func__);
 }
 
 Keela::GtkSink::GtkSink(const std::string &name): GtkSink() {

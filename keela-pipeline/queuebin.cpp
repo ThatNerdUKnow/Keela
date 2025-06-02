@@ -9,11 +9,13 @@
 #include <spdlog/spdlog.h>
 
 Keela::QueueBin::QueueBin() {
+    spdlog::info("{}",__func__);
     QueueBin::init();
     QueueBin::link();
 }
 
-Keela::QueueBin::QueueBin(const std::string &name) {
+Keela::QueueBin::QueueBin(const std::string &name): Bin(name) {
+    spdlog::info("{}",__func__);
     QueueBin::init();
     gboolean ret;
     ret = gst_element_set_name(GST_ELEMENT(queue),(name + "_queue").c_str());

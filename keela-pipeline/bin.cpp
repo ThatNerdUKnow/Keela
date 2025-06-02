@@ -11,18 +11,20 @@ Keela::Bin::Bin(const std::string &name): Bin() {
 }
 
 Keela::Bin::Bin() {
+    spdlog::info("{}",__func__);
     bin = GST_BIN(gst_bin_new(nullptr));
     if (bin == nullptr) {
         throw std::runtime_error("Failed to create bin");
     }
 
+    /*
     if (!gst_element_add_pad(*this,gst_ghost_pad_new_no_target("src",GST_PAD_SRC))) {
         throw std::runtime_error("Failed to add source ghost pad");
     }
 
     if (!gst_element_add_pad(*this,gst_ghost_pad_new_no_target("sink",GST_PAD_SINK))) {
         throw std::runtime_error("Failed to add sink ghost pad");
-    }
+    }*/
 }
 
 Keela::Bin::~Bin() {

@@ -8,8 +8,9 @@
 #include <utility>
 #include <spdlog/spdlog.h>
 
-Keela::SimpleElement::SimpleElement(std::string element) {
-    m_element = gst_element_factory_make(element.c_str(), NULL);
+Keela::SimpleElement::SimpleElement(const std::string &element) {
+    spdlog::info("{} {}",__func__, element);
+    m_element = gst_element_factory_make(element.c_str(), nullptr);
     if (!m_element) {
         std::string message = "Failed to create the element: " + element;
         spdlog::error(message);
@@ -17,7 +18,8 @@ Keela::SimpleElement::SimpleElement(std::string element) {
     }
 }
 
-Keela::SimpleElement::SimpleElement(std::string element, const std::string &name):SimpleElement(std::move(element)) {
+Keela::SimpleElement::SimpleElement(const std::string &element, const std::string &name):SimpleElement(element) {
+    spdlog::info("Named {} {}",__func__, name);
     const auto ret = gst_element_set_name(m_element, name.c_str());
     if (!ret) {
         std::string message = "Failed to set name of element";
