@@ -7,28 +7,22 @@
 #include <stdexcept>
 #include <spdlog/spdlog.h>
 Keela::Bin::Bin(const std::string &name): Bin() {
-    gst_object_set_name(GST_OBJECT(bin),name.c_str());
+    spdlog::info("Naming bin {}",name);
+    if (!gst_object_set_name(GST_OBJECT(bin),name.c_str())) {
+        spdlog::warn("Could not set name of bin");
+    }
 }
 
 Keela::Bin::Bin() {
-    spdlog::info("{}",__func__);
+    spdlog::info("{} {}",typeid(*this).name(),__func__);
     bin = GST_BIN(gst_bin_new(nullptr));
     if (bin == nullptr) {
         throw std::runtime_error("Failed to create bin");
     }
-
-    /*
-    if (!gst_element_add_pad(*this,gst_ghost_pad_new_no_target("src",GST_PAD_SRC))) {
-        throw std::runtime_error("Failed to add source ghost pad");
-    }
-
-    if (!gst_element_add_pad(*this,gst_ghost_pad_new_no_target("sink",GST_PAD_SINK))) {
-        throw std::runtime_error("Failed to add sink ghost pad");
-    }*/
 }
 
 Keela::Bin::~Bin() {
-    spdlog::debug(__func__);
+    spdlog::info("{} {}",typeid(*this).name(),__func__);
     g_object_unref(bin);
 }
 

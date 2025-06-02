@@ -37,7 +37,6 @@ void Keela::TransformBin::init() {
     }
     auto variant = Keela::gst_enum_variant_by_nick(G_OBJECT(scale),"method","bilinear");
     g_object_set(scale,"method",variant,nullptr);
-    gst_bin_add(*this,scale);
 }
 
 void Keela::TransformBin::link() {

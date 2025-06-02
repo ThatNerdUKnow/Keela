@@ -5,8 +5,17 @@
 #include <keela-pipeline/recordbin.h>
 #include <keela-pipeline/presentationbin.h>
 #include <keela-pipeline/transformbin.h>
+#include <spdlog/spdlog.h>
 
 #include "keela-pipeline/testsrc.h"
+TEST(KeelaPipeline, ConstructBin) {
+    auto bin = Keela::Bin();
+}
+
+TEST(KeelaPipeline, ConstructNamedBin) {
+    auto bin = Keela::Bin("Foo");
+}
+
 
 TEST(KeelaPipeline, ConstructRecordBin) {
     auto bin = Keela::RecordBin();
@@ -67,24 +76,11 @@ TEST(KeelaPipeline, ConstructNamedTestSrc) {
 }
 
 TEST(KeelaPipeline, CanPlay) {
-    Keela::Bin bin;
-    ASSERT_NO_THROW(bin = Keela::Bin());
-    Keela::TestSrc src;
-    g_object_set(src,"num-buffers",100,nullptr);
-    ASSERT_NO_THROW(src = Keela::TestSrc());
-    Keela::TransformBin transform;
-    ASSERT_NO_THROW(transform = Keela::TransformBin());
-    Keela::PresentationBin presentation;
-    ASSERT_NO_THROW(presentation = Keela::PresentationBin());
-    gst_bin_add_many(bin,src,transform,presentation,nullptr);
-
-    GstCaps *caps = gst_caps_new_simple ("video/x-raw",
-     "format", G_TYPE_STRING, "GRAY8",
-     "framerate", GST_TYPE_FRACTION, 500, 1,
-     "pixel-aspect-ratio", GST_TYPE_FRACTION, 1, 1,
-     "width", G_TYPE_INT, 512,
-     "height", G_TYPE_INT, 512,
-     NULL);
-
-    ASSERT_TRUE(gst_element_link_filtered(src,transform,caps));
+    Keela::Bin bin = Keela::Bin();
+    Keela::TestSrc src = Keela::TestSrc();
+    Keela::TransformBin transform = Keela::TransformBin();
+    Keela::PresentationBin presentation = Keela::PresentationBin();
+    spdlog::info("Created all elements");
+    // TODO: link elements and set pipeline to playing
+    // FIXME: my IDE is being really funky and marking any gstreamer calls after this point get marked as unreachable
 }

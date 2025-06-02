@@ -9,8 +9,8 @@
 namespace Keela {
     class Autovideosink final : public SimpleElement {
         public:
-        Autovideosink(): SimpleElement("Autovideosink") {};
-        explicit Autovideosink(const std::string &name): SimpleElement("AutoVideoSink",name) {};
+        Autovideosink(): SimpleElement("autovideosink") {};
+        explicit Autovideosink(const std::string &name): SimpleElement("autovideosink",name) {};
     };
 }
 #endif //AUTOVIDEOSINK_H
