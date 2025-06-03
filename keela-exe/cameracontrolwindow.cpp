@@ -23,9 +23,12 @@ CameraControlWindow::CameraControlWindow(const int id) {
     rotation_combo.m_combo.append(ROTATION_90, "Rotate 90 degrees clockwise");
     rotation_combo.m_combo.append(ROTATION_180, "Rotate 180 degrees");
     rotation_combo.m_combo.append(ROTATION_270, "Rotate 270 degrees clockwise");
+    rotation_combo.m_combo.set_active_id(ROTATION_NONE);
 
     container.add(rotation_combo);
     container.add(flip_horiz_check);
     container.add(flip_vert_check);
+    container.add(fetch_image_button);
     show_all_children();
+    show();
 }
