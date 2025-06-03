@@ -4,6 +4,7 @@
 
 #include "mainwindow.h"
 #include <keela-widgets/labeledspinbutton.h>
+#include <spdlog/spdlog.h>
 
 #include "keela-widgets/framebox.h"
 
@@ -42,11 +43,9 @@ MainWindow::MainWindow(): Gtk::Window()
     cv_recording_check.set_label("Calcium-Voltage Recording Setting");
     container.add(cv_recording_check);
 
-    //fetch_image_button.set_label("Fetch Image from Camera");
-    //container.add(fetch_image_button);
-
     const auto camera_limits = Gtk::Adjustment::create(1.0, 1.0, std::numeric_limits<double>::max());
     num_camera_spin.m_spin.set_adjustment(camera_limits);
+    num_camera_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this,on_camera_spin_changed));
     container.add(num_camera_spin);
 
     show_trace_check.set_label("Show Traces");
@@ -55,10 +54,26 @@ MainWindow::MainWindow(): Gtk::Window()
     restart_camera_button.set_label("Restart Camera(s)");
     container.add(restart_camera_button);
 
-    auto w = std::make_unique<CameraControlWindow>(1);
-    cameras.push_back(std::move(w));
+    //auto w = std::make_unique<CameraControlWindow>(1);
+    //cameras.push_back(std::move(w));
+    on_camera_spin_changed();
     show_all_children();
 }
 
 MainWindow::~MainWindow()
 = default;
+
+void MainWindow::on_camera_spin_changed() {
+    const auto curr = cameras.size();
+    const auto next = num_camera_spin.m_spin.get_value_as_int();
+    if (next > curr) {
+        for (guint i = curr; i < next; i++) {
+            auto c = std::make_unique<CameraControlWindow>(i + 1);
+            cameras.push_back(std::move(c));
+        }
+    } else if (next < curr) {
+        for (guint i = curr; i > next; i--) {
+            cameras.pop_back();
+        }
+    }
+}

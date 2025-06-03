@@ -4,9 +4,13 @@
 
 #include "cameracontrolwindow.h"
 
+#include <spdlog/spdlog.h>
+
 #include "keela-widgets/framebox.h"
 
-CameraControlWindow::CameraControlWindow(const int id) {
+CameraControlWindow::CameraControlWindow(const guint id) {
+    this->id = id;
+    spdlog::info("Creating {} for camera {}",__func__,id);
     set_title("Image control for Camera " + std::to_string(id));
     set_default_size(640, 480);
     set_deletable(false);
@@ -27,6 +31,7 @@ CameraControlWindow::CameraControlWindow(const int id) {
     range_frame->add(range_max_spin);
     container.add(*range_frame);
 
+    gain_spin.m_spin.set_adjustment(Gtk::Adjustment::create(0.0,0.0,100));
     container.add(gain_spin);
 
     // TODO: add rotation options
@@ -42,6 +47,10 @@ CameraControlWindow::CameraControlWindow(const int id) {
     container.add(fetch_image_button);
     show_all_children();
     show();
+}
+
+CameraControlWindow::~CameraControlWindow() {
+    spdlog::info("Destroying camera control window {}",id);
 }
 
 void CameraControlWindow::on_range_check_toggled() {

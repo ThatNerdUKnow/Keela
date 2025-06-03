@@ -28,13 +28,14 @@ class MainWindow final : public Gtk::Window {
 
     Gtk::CheckButton cv_recording_check;
     Gtk::Button fetch_image_button;
-    //Gtk::CheckButton lock_camera_check;
     Keela::LabeledSpinButton num_camera_spin = Keela::LabeledSpinButton("Number of Cameras");
     Gtk::CheckButton show_trace_check;
 
     Gtk::Box container;
 
     std::vector<std::unique_ptr<CameraControlWindow>> cameras;
+
+    void on_camera_spin_changed();
 };
 
 

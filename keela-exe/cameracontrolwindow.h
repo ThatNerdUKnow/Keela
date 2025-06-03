@@ -10,7 +10,8 @@
 
 class CameraControlWindow final: public Gtk::Window {
     public:
-    explicit CameraControlWindow(int id);
+    explicit CameraControlWindow(guint id);
+    ~CameraControlWindow() override;
 
 private:
     Gtk::Box container = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
@@ -26,6 +27,7 @@ private:
     Gtk::CheckButton flip_vert_check = Gtk::CheckButton("Flip Along Vertical Center");
     Gtk::Button fetch_image_button = Gtk::Button("Fetch Image");
 
+    guint id;
     void on_range_check_toggled();
 };
 
