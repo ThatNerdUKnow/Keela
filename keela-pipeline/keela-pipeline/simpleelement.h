@@ -10,7 +10,7 @@
 
 namespace Keela {
 
-    class SimpleElement: public Keela::Element {
+    class SimpleElement : public Keela::Element {
     public:
         explicit SimpleElement(const std::string &element);
         SimpleElement(const std::string &element, const std::string &name);

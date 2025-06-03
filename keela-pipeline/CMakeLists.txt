@@ -11,8 +11,6 @@ add_library(keela-pipeline presentationbin.cpp keela-pipeline/presentationbin.h
         keela-pipeline/queuebin.h
         simpleelement.cpp
         keela-pipeline/simpleelement.h
-        testsrc.cpp
-        keela-pipeline/testsrc.h
         elementbase.cpp
         keela-pipeline/elementbase.h
         gtkglsink.cpp
@@ -20,7 +18,6 @@ add_library(keela-pipeline presentationbin.cpp keela-pipeline/presentationbin.h
         gtksink.cpp
         keela-pipeline/gtksink.h
         keela-pipeline/widgetelement.h
-        keela-pipeline/autovideosink.h
 )
 target_link_libraries(keela-pipeline PUBLIC PkgConfig::GSTREAMER PkgConfig::SPDLOG)
 

@@ -7,7 +7,8 @@
 #include <keela-pipeline/transformbin.h>
 #include <spdlog/spdlog.h>
 
-#include "keela-pipeline/testsrc.h"
+#include <keela-pipeline/simpleelement.h>
+
 TEST(KeelaPipeline, ConstructBin) {
     auto bin = Keela::Bin();
 }
@@ -69,17 +70,9 @@ TEST(KeelaPipeline, LinkBins) {
     ASSERT_TRUE(gst_element_link(bin1,bin2));
 }
 
-TEST(KeelaPipeline, ConstructTestSrc) {
-    auto src = Keela::TestSrc();
-}
-
-TEST(KeelaPipeline, ConstructNamedTestSrc) {
-    auto src = Keela::TestSrc("Foo");
-}
-
 TEST(KeelaPipeline, CanPlay) {
     Keela::Bin bin("Playbin");
-    Keela::TestSrc src("TestSrc0");
+    Keela::SimpleElement src("videotestsrc","TestSrc");
     Keela::TransformBin transform("TransformBin");
     Keela::PresentationBin presentation("PresentationBin");
     spdlog::info("Created all elements");

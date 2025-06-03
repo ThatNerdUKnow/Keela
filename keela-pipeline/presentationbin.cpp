@@ -10,7 +10,6 @@
 #include <keela-pipeline/gtkglsink.h>
 #include <keela-pipeline/gtksink.h>
 
-#include "keela-pipeline/autovideosink.h"
 
 
 Keela::PresentationBin::PresentationBin(const std::string &name):Bin(name) {
@@ -62,7 +61,7 @@ void Keela::PresentationBin::init() {
         } catch (const std::exception &e2) {
             spdlog::error("{}", e2.what());
             spdlog::warn("falling back to autovideosink");
-            sink = Autovideosink();
+            sink = Keela::SimpleElement("autovideosink");
         }
     }
 }
