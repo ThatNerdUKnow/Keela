@@ -71,16 +71,31 @@ TEST(KeelaPipeline, LinkBins) {
 }
 
 TEST(KeelaPipeline, CanPlay) {
-    Keela::Bin bin("Playbin");
+    GstElement* b = gst_pipeline_new("Playbin");
+    ASSERT_TRUE(b != nullptr);
     Keela::SimpleElement src("videotestsrc","TestSrc");
     Keela::TransformBin transform("TransformBin");
-    Keela::PresentationBin presentation("PresentationBin");
+    Keela::SimpleElement presentation("autovideosink","Presentation");
+    //Keela::PresentationBin presentation("PresentationBin");
     spdlog::info("Created all elements");
-    GstBin* b = bin;
     GstElement* s = src;
     GstElement* t = transform;
     GstElement* p = presentation;
-    gst_bin_add_many(b,s,t,p,nullptr); // which causes this C function to fail
+    g_object_set(s,"num-buffers",10,nullptr);
+    gst_bin_add_many(GST_BIN(b),s,t,p,nullptr); // which causes this C function to fail
     ASSERT_TRUE(gst_element_link_many(s,t,p,nullptr));
     // TODO: link elements and set pipeline to playing
+
+    gst_debug_bin_to_dot_file(GST_BIN(b),GST_DEBUG_GRAPH_SHOW_ALL,"CanPlay.dot");
+    GstBus* bus = gst_element_get_bus(GST_ELEMENT(b));
+    ASSERT_TRUE(bus != nullptr);
+    spdlog::info("Starting playback");
+    GstStateChangeReturn ret = gst_element_set_state(GST_ELEMENT(b),GST_STATE_PLAYING);
+    ASSERT_TRUE(ret != GST_STATE_CHANGE_FAILURE);
+    GstMessage* msg = nullptr;
+    while ((msg = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE, GST_MESSAGE_EOS))) {
+        spdlog::info("Got EOS");
+        gst_message_unref(msg);
+        break;
+    }
 }

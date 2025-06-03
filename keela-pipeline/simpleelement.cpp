@@ -12,9 +12,7 @@ Keela::SimpleElement::SimpleElement(const std::string &element) {
     spdlog::info("{} {}",__func__, element);
     m_element = gst_element_factory_make(element.c_str(), nullptr);
     if (!m_element) {
-        std::string message = "Failed to create the element: " + element;
-        spdlog::error(message);
-        throw std::runtime_error(message);
+        throw std::runtime_error("Failed to create element: " + element);
     }
 }
 
@@ -22,9 +20,7 @@ Keela::SimpleElement::SimpleElement(const std::string &element, const std::strin
     spdlog::info("Named {} {}",__func__, name);
     const auto ret = gst_element_set_name(m_element, name.c_str());
     if (!ret) {
-        std::string message = "Failed to set name of element";
-        spdlog::error(message);
-        throw std::runtime_error(message);
+        throw std::runtime_error("Failed to set name of element");
     }
 }
 
