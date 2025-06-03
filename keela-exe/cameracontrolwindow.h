@@ -25,6 +25,8 @@ private:
     Gtk::CheckButton flip_horiz_check = Gtk::CheckButton("Flip Along Horizontal Center");
     Gtk::CheckButton flip_vert_check = Gtk::CheckButton("Flip Along Vertical Center");
     Gtk::Button fetch_image_button = Gtk::Button("Fetch Image");
+
+    void on_range_check_toggled();
 };
 
 #define ROTATION_NONE "No_Rotation"
