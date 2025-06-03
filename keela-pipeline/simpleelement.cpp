@@ -30,6 +30,13 @@ Keela::SimpleElement::SimpleElement(const std::string &element, const std::strin
 
 Keela::SimpleElement::operator struct _GstElement*() const {
     if (m_element) {
+        const gchar *tname = g_type_name(G_OBJECT_TYPE(m_element));
+        const gchar* name = gst_element_get_name(m_element);
+        if (!name) {
+            spdlog::trace("{} Type name {}",__func__, tname);
+        } else {
+            spdlog::trace("{}::{} Type name {}",name,__func__, tname);
+        }
         return m_element;
     }else {
         const std::string message = "Internal element is not initialized";
@@ -37,14 +44,3 @@ Keela::SimpleElement::operator struct _GstElement*() const {
         throw std::runtime_error(message);
     }
 }
-
-/*
-Keela::SimpleElement::operator struct _GstElement*() const {
-    if (m_element) {
-        return m_element;
-    }else {
-        const std::string message = "Internal element is not initialized";
-        spdlog::error(message);
-        throw std::runtime_error(message);
-    }
-}*/

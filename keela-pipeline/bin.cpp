@@ -23,18 +23,31 @@ Keela::Bin::Bin() {
 
 Keela::Bin::~Bin() {
     spdlog::info("{} {}",typeid(*this).name(),__func__);
-    g_object_unref(bin);
+    auto parent = gst_element_get_parent(GST_ELEMENT(bin));
+    if (!parent) {
+        g_object_unref(bin);
+    }
 }
 
 Keela::Bin::operator struct _GstElement*() const {
-    const gchar *name = g_type_name(G_OBJECT_TYPE(bin));
-    spdlog::trace("{} Type name {}",__func__,name);
+    const gchar *tname = g_type_name(G_OBJECT_TYPE(bin));
+    const gchar *name = gst_element_get_name(GST_ELEMENT(bin));
+    if (!name) {
+        spdlog::trace("{} Type name {}",__func__,tname);
+    } else {
+        spdlog::trace("{}::{} Type name {}",name,__func__,tname);
+    }
     return GST_ELEMENT(bin);
 }
 
 Keela::Bin::operator struct _GstBin*() const {
-    const gchar *name = g_type_name(G_OBJECT_TYPE(bin));
-    spdlog::trace("{} Type name {}",__func__,name);
+    const gchar *tname = g_type_name(G_OBJECT_TYPE(bin));
+    const gchar *name = gst_element_get_name(GST_ELEMENT(bin));
+    if (!name) {
+        spdlog::trace("{} Type name {}",__func__,tname);
+    }else {
+        spdlog::trace("{}::{} Type name {}",name,__func__,tname);
+    }
     return bin;
 }
 

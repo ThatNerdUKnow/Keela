@@ -59,8 +59,8 @@ void Keela::PresentationBin::init() {
         spdlog::info("Falling back to gtksink");
         try {
             sink = GtkSink();
-        } catch (const std::exception &e) {
-            spdlog::error("{}", e.what());
+        } catch (const std::exception &e2) {
+            spdlog::error("{}", e2.what());
             spdlog::warn("falling back to autovideosink");
             sink = Autovideosink();
         }

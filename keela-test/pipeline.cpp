@@ -43,19 +43,22 @@ TEST(KeelaPipeline, ConstructNamedTransformBin) {
 
 #pragma region demonstrably false tests
 TEST(KeelaPipeline, UseBinAsGstBin) {
-    GstBin* bin = Keela::Bin();
-    if (!GST_IS_BIN(bin))
-        GTEST_SKIP();
+    Keela::Bin bin("bin");
+    GstBin* b = bin;
+    ASSERT_TRUE(GST_IS_BIN(b));
 }
 
 TEST(KeelaPipeline, UseBinAsGstElement) {
-    GstElement* bin = Keela::Bin();
-    if (!GST_IS_ELEMENT(bin))
-        GTEST_SKIP();
+    Keela::Bin bin("bin");
+    GstBin* b = bin;
+    ASSERT_TRUE(GST_IS_ELEMENT(b));
+
 }
 #pragma endregion
 
 TEST(KeelaPipeline, DuplicateNamedBins) {
+    // WARN: this is only valid if the two bins are not added to the same parent bin
+    // which at runtime I believe should never happen as each camera should be getting a unique name
     auto bin1 = Keela::Bin("Foo");
     auto bin2 = Keela::Bin("Foo");
 }
@@ -63,7 +66,6 @@ TEST(KeelaPipeline, DuplicateNamedBins) {
 TEST(KeelaPipeline, LinkBins) {
     auto bin1 = Keela::TransformBin();
     auto bin2 = Keela::RecordBin();
-    // TODO: Set ghost pads on Keela::Bin
     ASSERT_TRUE(gst_element_link(bin1,bin2));
 }
 
@@ -76,11 +78,16 @@ TEST(KeelaPipeline, ConstructNamedTestSrc) {
 }
 
 TEST(KeelaPipeline, CanPlay) {
-    Keela::Bin bin = Keela::Bin();
-    Keela::TestSrc src = Keela::TestSrc();
-    Keela::TransformBin transform = Keela::TransformBin();
-    Keela::PresentationBin presentation = Keela::PresentationBin();
+    Keela::Bin bin("Playbin");
+    Keela::TestSrc src("TestSrc0");
+    Keela::TransformBin transform("TransformBin");
+    Keela::PresentationBin presentation("PresentationBin");
     spdlog::info("Created all elements");
+    GstBin* b = bin;
+    GstElement* s = src;
+    GstElement* t = transform;
+    GstElement* p = presentation;
+    gst_bin_add_many(b,s,t,p,nullptr); // which causes this C function to fail
+    ASSERT_TRUE(gst_element_link_many(s,t,p,nullptr));
     // TODO: link elements and set pipeline to playing
-    // FIXME: my IDE is being really funky and marking any gstreamer calls after this point get marked as unreachable
 }
