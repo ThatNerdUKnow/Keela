@@ -76,12 +76,12 @@ TEST(KeelaPipeline, CanPlay) {
     Keela::SimpleElement src("videotestsrc","TestSrc");
     Keela::TransformBin transform("TransformBin");
     Keela::SimpleElement presentation("autovideosink","Presentation");
-    //Keela::PresentationBin presentation("PresentationBin");
     spdlog::info("Created all elements");
+
     GstElement* s = src;
     GstElement* t = transform;
     GstElement* p = presentation;
-    g_object_set(s,"num-buffers",10,nullptr);
+    g_object_set(s,"num-buffers",0,nullptr); // set this to anything other than zero to see the window
     gst_bin_add_many(GST_BIN(b),s,t,p,nullptr); // which causes this C function to fail
     ASSERT_TRUE(gst_element_link_many(s,t,p,nullptr));
     // TODO: link elements and set pipeline to playing

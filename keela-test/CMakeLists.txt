@@ -13,9 +13,11 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-add_executable(keela-test main.cpp pipeline.cpp)
+add_executable(keela-test main.cpp pipeline.cpp
+        keela-exe.cpp
+        reference.cpp)
 
-target_link_libraries(keela-test PRIVATE GTest::gtest keela-pipeline PkgConfig::GSTREAMER)
+target_link_libraries(keela-test PRIVATE libkeela GTest::gtest keela-pipeline PkgConfig::GSTREAMER)
 
 include(GoogleTest)
 gtest_discover_tests(keela-test)

@@ -14,7 +14,7 @@ namespace Keela {
     public:
         explicit SimpleElement(const std::string &element);
         SimpleElement(const std::string &element, const std::string &name);
-
+        SimpleElement(const SimpleElement &simpleelement);
         operator GstElement*() const override;
 
         //operator GstElement*() const;

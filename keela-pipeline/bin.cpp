@@ -13,6 +13,18 @@ Keela::Bin::Bin(const std::string &name): Bin() {
     }
 }
 
+// apparently needed when using bin in gst functions
+Keela::Bin::Bin(const Bin &bin) {
+    GstBin* b = bin;
+    auto name = gst_element_get_name(b);
+    assert(name != nullptr);
+    const auto other = gst_object_ref(bin.bin);
+    auto refcount = GST_OBJECT_REFCOUNT(other);
+    spdlog::trace("{} copy constructor: Increased refcount of {} to {}",__func__,name,refcount);
+    g_free(name);
+    this->bin = GST_BIN(other);
+}
+
 Keela::Bin::Bin() {
     spdlog::info("{} {}",typeid(*this).name(),__func__);
     bin = GST_BIN(gst_bin_new(nullptr));
@@ -22,7 +34,8 @@ Keela::Bin::Bin() {
 }
 
 Keela::Bin::~Bin() {
-    spdlog::info("{} {}",typeid(*this).name(),__func__);
+    auto refcount = GST_OBJECT_REFCOUNT(bin);
+    spdlog::trace("{} refcount {}",__func__,refcount);
     auto parent = gst_element_get_parent(GST_ELEMENT(bin));
     if (!parent) {
         g_object_unref(bin);

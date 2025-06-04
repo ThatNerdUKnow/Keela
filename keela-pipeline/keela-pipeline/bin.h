@@ -13,6 +13,7 @@ namespace Keela {
     class Bin: public Keela::Element {
         public:
         explicit Bin(const std::string &name);
+        Bin(const Bin &bin);
         Bin();
 
         ~Bin() override;
