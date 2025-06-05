@@ -10,7 +10,7 @@
 
 #include <keela-pipeline/utils.h>
 
-Keela::CameraManager::CameraManager(guint id, bool split_streams): camera("autovideosrc"), caps_filter("capsfilter"),
+Keela::CameraManager::CameraManager(guint id, bool split_streams): camera("videotestsrc"), caps_filter("capsfilter"),
                                                                    tee("tee"), Bin("camerabin_" + id) {
     try {
         spdlog::info("Creating camera manager " + id);

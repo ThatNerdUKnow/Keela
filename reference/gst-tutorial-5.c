@@ -1,6 +1,4 @@
-//
-// Created by brand on 5/27/2025.
-//
+// source: https://gstreamer.freedesktop.org/documentation/tutorials/basic/toolkit-integration.html?gi-language=c
 #include <string.h>
 
 #include <gtk/gtk.h>
