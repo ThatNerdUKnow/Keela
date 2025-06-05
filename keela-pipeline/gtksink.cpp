@@ -12,7 +12,7 @@ Keela::GtkSink::GtkSink(): SimpleElement("gtksink") {
 }
 
 Keela::GtkSink::GtkSink(const std::string &name): GtkSink() {
-    gst_element_set_name(m_element, name.c_str());
+    gst_element_set_name(*m_element, name.c_str());
 }
 
 Keela::GtkSink::~GtkSink() {
@@ -20,8 +20,8 @@ Keela::GtkSink::~GtkSink() {
 
 gpointer Keela::GtkSink::get_widget() {
     GObject* o = nullptr;
-    g_object_get(m_element, "widget", &o,nullptr);
-    if (!m_element) {
+    g_object_get(*m_element, "widget", &o,nullptr);
+    if (!o) {
         throw std::runtime_error("Could not get widget");
     }
     spdlog::info("Got widget");

@@ -41,7 +41,7 @@ void Keela::RecordBin::init() {
 }
 
 void Keela::RecordBin::link() {
-    gst_bin_add_many (GST_BIN(bin), enc, mux, sink, nullptr);
+    gst_bin_add_many (GST_BIN(*bin), enc, mux, sink, nullptr);
     gboolean ret = gst_element_link_many (enc, mux, sink, nullptr);
     if (!ret) {
         throw std::runtime_error("Could not link elements");

@@ -43,7 +43,8 @@ void Keela::QueueBin::init() {
 }
 
 void Keela::QueueBin::link() {
-    if (!gst_bin_add(*this,queue)) {
+    GstElement *b = *this;
+    if (!gst_bin_add(GST_BIN(b),queue)) {
         throw std::runtime_error("Failed to add queue to bin");
     }
     add_ghost_pad(queue,"sink");

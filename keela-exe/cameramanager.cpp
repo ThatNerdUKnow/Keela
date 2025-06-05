@@ -8,26 +8,25 @@
 #include <stdexcept>
 #include <spdlog/spdlog.h>
 
+#include <keela-pipeline/utils.h>
 
-Keela::CameraManager::CameraManager(guint id, bool split_streams): camera("autovideosrc"), caps_filter("capsfilter"), tee("tee"), Bin("camerabin_"+id) {
+Keela::CameraManager::CameraManager(guint id, bool split_streams): camera("autovideosrc"), caps_filter("capsfilter"),
+                                                                   tee("tee"), Bin("camerabin_" + id) {
     try {
         spdlog::info("Creating camera manager " + id);
         this->id = id;
-        GstBin *bin = *this;
+        GstElement *bin = *this;
         std::string name = "camerabin_" + id;
-        gst_bin_add_many(*this,camera,caps_filter,transform,tee,presentation,nullptr);
-        auto ret = gst_element_link_many(camera,caps_filter,transform,tee,presentation,nullptr);
-        if (!ret) {
-            throw std::runtime_error("Failed to link elements");
-        }
+        add_elements(camera, caps_filter, transform, tee, presentation);
+        element_link_many(camera, caps_filter, transform, tee, presentation);
+
         spdlog::info("Created camera manager " + id);
     } catch (const std::exception &e) {
-
         std::stringstream ss;
 
-        ss << "camera"<<id<<".dot";
-        spdlog::error("could not create camera manager. attempting to dump bin to {}",ss.str());
-        gst_debug_bin_to_dot_file(bin,GST_DEBUG_GRAPH_SHOW_ALL,ss.str().c_str());
+        ss << "camera" << id << ".dot";
+        spdlog::error("could not create camera manager. attempting to dump bin to {}", ss.str());
+        gst_debug_bin_to_dot_file(*bin, GST_DEBUG_GRAPH_SHOW_ALL, ss.str().c_str());
         throw;
     }
 }

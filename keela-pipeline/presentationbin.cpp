@@ -67,7 +67,8 @@ void Keela::PresentationBin::init() {
 }
 
 void Keela::PresentationBin::link() {
-    gst_bin_add_many(*this,videorate,sink,nullptr);
+    GstElement *b = *this;
+    gst_bin_add_many(GST_BIN(b),videorate,sink,nullptr);
     gst_element_link(videorate,sink);
     add_ghost_pad(videorate,"sink");
 }

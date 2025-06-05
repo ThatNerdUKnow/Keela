@@ -18,6 +18,7 @@ add_library(keela-pipeline presentationbin.cpp keela-pipeline/presentationbin.h
         gtksink.cpp
         keela-pipeline/gtksink.h
         keela-pipeline/widgetelement.h
+        keela-pipeline/utils.h
 )
 target_link_libraries(keela-pipeline PUBLIC PkgConfig::GSTREAMER PkgConfig::SPDLOG)
 

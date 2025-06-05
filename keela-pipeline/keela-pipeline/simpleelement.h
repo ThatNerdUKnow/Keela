@@ -4,6 +4,7 @@
 
 #ifndef ELEMENT_H
 #define ELEMENT_H
+#include <memory>
 #include <string>
 #include <gstreamer-1.0/gst/gst.h>
 #include "elementbase.h"
@@ -14,12 +15,12 @@ namespace Keela {
     public:
         explicit SimpleElement(const std::string &element);
         SimpleElement(const std::string &element, const std::string &name);
-        SimpleElement(const SimpleElement &simpleelement);
+        //SimpleElement(const SimpleElement &simpleelement);
         operator GstElement*() const override;
 
         //operator GstElement*() const;
     protected:
-        GstElement* m_element;
+        std::shared_ptr<GstElement*> m_element;
     };
 }
 #endif //ELEMENT_H

@@ -39,7 +39,8 @@ void Keela::GtkGlSink::init() {
 }
 
 void Keela::GtkGlSink::link() {
-    gst_bin_add_many(*this,glsink,gtkglsink, NULL);
+    GstElement* b = *this;
+    gst_bin_add_many(GST_BIN(b),glsink,gtkglsink, NULL);
     add_ghost_pad(glsink,"sink");
 }
 

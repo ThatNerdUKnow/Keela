@@ -45,13 +45,13 @@ TEST(KeelaPipeline, ConstructNamedTransformBin) {
 #pragma region demonstrably false tests
 TEST(KeelaPipeline, UseBinAsGstBin) {
     Keela::Bin bin("bin");
-    GstBin* b = bin;
+    GstElement* b = bin;
     ASSERT_TRUE(GST_IS_BIN(b));
 }
 
 TEST(KeelaPipeline, UseBinAsGstElement) {
     Keela::Bin bin("bin");
-    GstBin* b = bin;
+    GstElement* b = bin;
     ASSERT_TRUE(GST_IS_ELEMENT(b));
 
 }
