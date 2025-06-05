@@ -13,17 +13,19 @@
 #include "elementbase.h"
 
 namespace Keela {
-    class Bin: public Keela::Element {
-        public:
+    class Bin : public Keela::Element {
+    public:
         explicit Bin(const std::string &name);
+
         //Bin(const Bin &bin);
         Bin();
 
         ~Bin() override;
 
 
+        operator GstElement *() const override;
 
-        operator GstElement*() const override;
+        operator GstBin *() const;
 
         /**
          * use this function to add many elements to the bin. If we use `gst_bin_add_many` directly,
@@ -31,10 +33,10 @@ namespace Keela {
          * `GstElement` refcount.
          * @tparam First any type which can convert to GstElement*
          */
-        template <typename First, typename ...Rest>
+        template<typename First, typename... Rest>
         void add_elements(First first, Rest... rest) {
-            GstElement* e = first;
-            GstElement* b = *this;
+            GstElement *e = first;
+            GstElement *b = *this;
             gst_bin_add(GST_BIN(b), GST_ELEMENT(e));
             // gst_bin_add is void, so this is how we check if the element *actually* got added
             auto parent = gst_element_get_parent(e);
@@ -48,27 +50,28 @@ namespace Keela {
         }
 
         static void add_elements() {
-            spdlog::info("{} Added all elements to bin",__func__);
+            spdlog::info("{} Added all elements to bin", __func__);
         };
 
-
     protected:
-        std::shared_ptr<GstBin*> bin;
+        std::shared_ptr<GstBin *> bin;
         //GstBin *bin;
 
         /**
          * Create a ghost pad for an internal GstElement
          */
-        void add_ghost_pad(GstElement* element, const std::string &pad_name) const;
+        void add_ghost_pad(GstElement *element, const std::string &pad_name) const;
 
     private:
         /* Create required elements and add them to the bin
          */
-        virtual void init() {};
+        virtual void init() {
+        };
 
         /* Link elements together
          */
-        virtual void link() {}
+        virtual void link() {
+        }
     };
 }
 #endif //BIN_H

@@ -8,9 +8,12 @@
 #include <keela-widgets/labeledspinbutton.h>
 #include <keela-widgets/labeledcomboboxtext.h>
 
-class CameraControlWindow final: public Gtk::Window {
-    public:
+#include "cameramanager.h"
+
+class CameraControlWindow final : public Gtk::Window {
+public:
     explicit CameraControlWindow(guint id);
+
     ~CameraControlWindow() override;
 
 private:
@@ -28,6 +31,9 @@ private:
     Gtk::Button fetch_image_button = Gtk::Button("Fetch Image");
 
     guint id;
+
+    std::unique_ptr<Keela::CameraManager> camera_manager;
+
     void on_range_check_toggled();
 };
 

@@ -6,9 +6,10 @@
 
 #include <stdexcept>
 #include <spdlog/spdlog.h>
+
 Keela::Bin::Bin(const std::string &name): Bin() {
-    spdlog::info("Naming bin {}",name);
-    if (!gst_object_set_name(GST_OBJECT(*bin),name.c_str())) {
+    spdlog::info("Naming bin {}", name);
+    if (!gst_object_set_name(GST_OBJECT(*bin), name.c_str())) {
         spdlog::warn("Could not set name of bin");
     }
 }
@@ -27,64 +28,65 @@ Keela::Bin::Bin(const Bin &bin) {
 }*/
 
 Keela::Bin::Bin() {
-    spdlog::info("{} {}",typeid(*this).name(),__func__);
+    spdlog::info("{} {}", typeid(*this).name(), __func__);
     auto b = GST_BIN(gst_bin_new(nullptr));
     if (b == nullptr) {
         throw std::runtime_error("Failed to create bin");
     }
 
-    bin = std::make_shared<GstBin*>(b);
+    bin = std::make_shared<GstBin *>(b);
 }
 
 Keela::Bin::~Bin() {
     auto refcount = GST_OBJECT_REFCOUNT(*bin);
-    spdlog::trace("{} refcount {}",__func__,refcount);
+    spdlog::trace("{} refcount {}", __func__, refcount);
     auto parent = gst_element_get_parent(GST_ELEMENT(*bin));
     if (!parent) {
         g_object_unref(*bin);
     }
 }
 
-Keela::Bin::operator struct _GstElement*() const {
+Keela::Bin::operator struct _GstElement *() const {
     const gchar *tname = g_type_name(G_OBJECT_TYPE(*bin));
     const gchar *name = gst_element_get_name(GST_ELEMENT(*bin));
     if (!name) {
-        spdlog::trace("{} Type name {}",__func__,tname);
+        spdlog::trace("{} Type name {}", __func__, tname);
     } else {
-        spdlog::trace("{}::{} Type name {}",name,__func__,tname);
+        spdlog::trace("{}::{} Type name {}", name, __func__, tname);
     }
     return GST_ELEMENT(*bin);
 }
-/*
-Keela::Bin::operator struct _GstBin*() const {
+
+
+Keela::Bin::operator struct _GstBin *() const {
     auto b = *bin;
     const gchar *tname = g_type_name(G_OBJECT_TYPE(b));
     const gchar *name = gst_element_get_name(GST_ELEMENT(b));
     if (!name) {
-        spdlog::trace("{} Type name {}",__func__,tname);
-    }else {
-        spdlog::trace("{}::{} Type name {}",name,__func__,tname);
+        spdlog::trace("{} Type name {}", __func__, tname);
+    } else {
+        spdlog::trace("{}::{} Type name {}", name, __func__, tname);
     }
     return GST_BIN(*bin);
-}*/
+}
 
-void Keela::Bin::add_ghost_pad(GstElement *element, const std::string &pad_name) const{
-    spdlog::info("{} {}",__func__,pad_name);
-    GstObject* parent = gst_object_get_parent(GST_OBJECT(element));
+void Keela::Bin::add_ghost_pad(GstElement *element, const std::string &pad_name) const {
+    spdlog::debug("{} {}", __func__, pad_name);
+    GstObject *parent = gst_object_get_parent(GST_OBJECT(element));
     GstElement *bin = *this;
     if (GST_BIN(parent) != GST_BIN(bin)) {
         throw std::runtime_error("Element is not owned by this bin");
     }
     gst_object_unref(GST_OBJECT(parent));
 
-    GstPad* target = gst_element_get_static_pad(element, pad_name.c_str());
+    GstPad *target = gst_element_get_static_pad(element, pad_name.c_str());
     if (!target) {
         throw std::runtime_error("Failed to get target pad");
     }
-    GstPad* ghost =  gst_ghost_pad_new(nullptr, target);
+    GstPad *ghost = gst_ghost_pad_new(nullptr, target);
     if (!ghost) {
         throw std::runtime_error("Failed to create ghost pad");
     }
     gst_object_unref(target);
-    gst_element_add_pad(*this,ghost);
+    gst_element_add_pad(*this, ghost);
 }
