@@ -20,7 +20,7 @@ CameraControlWindow::CameraControlWindow(const guint id) {
     const auto range_frame = Gtk::make_managed<Keela::FrameBox>("Range",Gtk::ORIENTATION_VERTICAL);
     range_check = Gtk::CheckButton("Range");
     // TODO: connect to changed signal on range check to control sensitivity value of range min/max spin
-    range_check.signal_toggled().connect(sigc::mem_fun(*this,on_range_check_toggled));
+    range_check.signal_toggled().connect(sigc::mem_fun(*this,&CameraControlWindow::on_range_check_toggled));
     range_frame->add(range_check);
 
     range_min_spin.set_sensitive(false);

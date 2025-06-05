@@ -45,7 +45,7 @@ MainWindow::MainWindow(): Gtk::Window()
 
     const auto camera_limits = Gtk::Adjustment::create(1.0, 1.0, std::numeric_limits<double>::max());
     num_camera_spin.m_spin.set_adjustment(camera_limits);
-    num_camera_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this,on_camera_spin_changed));
+    num_camera_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this,&MainWindow::on_camera_spin_changed));
     container.add(num_camera_spin);
 
     show_trace_check.set_label("Show Traces");
