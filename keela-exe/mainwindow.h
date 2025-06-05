@@ -12,18 +12,19 @@
 #include "cameracontrolwindow.h"
 
 class MainWindow final : public Gtk::Window {
-
-    public:
+public:
     MainWindow();
+
     ~MainWindow() override;
-    private:
+
+private:
+    GstPipeline *pipeline = nullptr;
     Gtk::Button record_button;
     Gtk::Button restart_camera_button;
 
     Keela::LabeledSpinButton framerate_spin = Keela::LabeledSpinButton("Framerate (Hz)");
     Keela::LabeledSpinButton data_matrix_w_spin = Keela::LabeledSpinButton("Data Width");
     Keela::LabeledSpinButton data_matrix_h_spin = Keela::LabeledSpinButton("Data Height");
-
 
 
     Gtk::CheckButton cv_recording_check;
@@ -33,11 +34,10 @@ class MainWindow final : public Gtk::Window {
 
     Gtk::Box container;
 
-    std::vector<std::unique_ptr<CameraControlWindow>> cameras;
+    std::vector<std::unique_ptr<CameraControlWindow> > cameras;
 
     void on_camera_spin_changed();
 };
-
 
 
 #endif //MAINWINDOW_H

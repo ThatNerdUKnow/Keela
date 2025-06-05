@@ -9,3 +9,7 @@ TEST(KeelaExe, ConstructCameraManager) {
     GstElement *b = cm;
     gst_debug_bin_to_dot_file(GST_BIN(b), GST_DEBUG_GRAPH_SHOW_ALL, "cameramanager1");
 }
+
+TEST(KeelaExe, PlayCameraManager) {
+    auto pipeline = gst_pipeline_new("pipeline");
+}

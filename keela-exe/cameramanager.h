@@ -13,22 +13,26 @@
 
 namespace Keela {
     class CameraManager final : public Keela::Bin {
-        public:
+    public:
         explicit CameraManager(guint id, bool split_streams);
+
         ~CameraManager();
 
         void set_framerate(double framerate);
-        void set_resolution(guint width, guint height);
-    private:
 
-        guint id;
-        bool split_streams;
+        void set_resolution(guint width, guint height);
 
         SimpleElement camera;
         SimpleElement caps_filter;
         TransformBin transform;
-        SimpleElement tee;
         PresentationBin presentation;
+
+    private:
+        guint id;
+        bool split_streams;
+
+
+        SimpleElement tee;
     };
 }
 #endif //CAMERAMANAGER_H

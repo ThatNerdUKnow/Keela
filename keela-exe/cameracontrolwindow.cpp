@@ -6,7 +6,8 @@
 
 #include <spdlog/spdlog.h>
 
-#include "keela-widgets/framebox.h"
+#include <keela-pipeline/widgetelement.h>
+#include <keela-widgets/framebox.h>
 
 CameraControlWindow::CameraControlWindow(const guint id) {
     this->id = id;
@@ -46,6 +47,8 @@ CameraControlWindow::CameraControlWindow(const guint id) {
     container.add(flip_horiz_check);
     container.add(flip_vert_check);
     camera_manager = std::make_unique<Keela::CameraManager>(id, false);
+
+    // TODO: dynamically cast camera_manager->presentation to a WidgetElement to get a handle to a widget to add to the window
     container.add(fetch_image_button);
     show_all_children();
     show();

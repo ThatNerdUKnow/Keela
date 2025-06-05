@@ -16,6 +16,8 @@ public:
 
     ~CameraControlWindow() override;
 
+    std::unique_ptr<Keela::CameraManager> camera_manager;
+
 private:
     Gtk::Box container = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
     Gtk::CheckButton range_check = Gtk::CheckButton("Range");
@@ -32,7 +34,6 @@ private:
 
     guint id;
 
-    std::unique_ptr<Keela::CameraManager> camera_manager;
 
     void on_range_check_toggled();
 };
