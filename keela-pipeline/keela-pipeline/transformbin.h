@@ -4,11 +4,12 @@
 
 #ifndef COMMONBIN_H
 #define COMMONBIN_H
+#include "simpleelement.h"
 #include "keela-pipeline/bin.h"
 
 namespace Keela {
-class TransformBin: public Bin {
-        public:
+    class TransformBin : public Bin {
+    public:
         TransformBin();
 
         /**
@@ -17,6 +18,7 @@ class TransformBin: public Bin {
          * @param subsample whether to subsample the video stream
          */
         explicit TransformBin(const std::string &name);
+
         ~TransformBin();
 
     private:
@@ -24,8 +26,8 @@ class TransformBin: public Bin {
 
         void link() override;
 
-        GstElement *scale = nullptr;
-        //GstElement* tee;
+        Keela::SimpleElement scale = SimpleElement("videoscale");
+        //GstElement *scale = nullptr;
     };
 }
 #endif //COMMONBIN_H

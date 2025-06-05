@@ -8,7 +8,7 @@
 
 namespace Keela {
     template<typename First, typename Second, typename... Rest>
-    void element_link_many(First first, Second second, Rest... rest) {
+    inline void element_link_many(First first, Second second, Rest... rest) {
         GstElement *f = first;
         GstElement *s = second;
         auto fname = gst_element_get_name(f);
@@ -23,7 +23,7 @@ namespace Keela {
         element_link_many(second, rest...);
     }
 
-    void element_link_many(GstElement *_) {
+    inline void element_link_many(GstElement *_) {
         spdlog::info("{} no more elements left to link", __func__);
     }
 }

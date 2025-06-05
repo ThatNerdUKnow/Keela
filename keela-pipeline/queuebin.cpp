@@ -9,18 +9,18 @@
 #include <spdlog/spdlog.h>
 
 Keela::QueueBin::QueueBin() {
-    spdlog::info("{}",__func__);
+    spdlog::info("{}", __func__);
     QueueBin::init();
     QueueBin::link();
 }
 
 Keela::QueueBin::QueueBin(const std::string &name): Bin(name) {
-    spdlog::info("{}",__func__);
+    spdlog::info("{}", __func__);
     QueueBin::init();
     gboolean ret;
-    ret = gst_element_set_name(GST_ELEMENT(queue),(name + "_queue").c_str());
+    ret = gst_element_set_name(GST_ELEMENT(queue), (name + "_queue").c_str());
     if (!ret) {
-        spdlog::warn("{} Failed to name queue element",__func__);
+        spdlog::warn("{} Failed to name queue element", __func__);
     }
     QueueBin::link();
 }
@@ -35,7 +35,7 @@ void Keela::QueueBin::link_queue(GstElement *sink) const {
 }
 
 void Keela::QueueBin::init() {
-    queue = gst_element_factory_make("queue",nullptr);
+    queue = gst_element_factory_make("queue", nullptr);
     if (!queue) {
         throw std::runtime_error("Failed to create queue element");
     }
@@ -44,8 +44,9 @@ void Keela::QueueBin::init() {
 
 void Keela::QueueBin::link() {
     GstElement *b = *this;
-    if (!gst_bin_add(GST_BIN(b),queue)) {
-        throw std::runtime_error("Failed to add queue to bin");
-    }
-    add_ghost_pad(queue,"sink");
+    add_elements(queue);
+    //if (!gst_bin_add(GST_BIN(b), queue)) {
+    //    throw std::runtime_error("Failed to add queue to bin");
+    //}
+    add_ghost_pad(queue, "sink");
 }

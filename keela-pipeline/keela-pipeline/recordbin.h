@@ -6,26 +6,26 @@
 #define RECORDBIN_H
 #include "bin.h"
 #include "queuebin.h"
+#include "simpleelement.h"
 
 namespace Keela {
     class RecordBin : public QueueBin {
-        public:
+    public:
         explicit RecordBin(const std::string &name);
 
 
-
         RecordBin();
-        ~RecordBin();
 
-        private:
-        void init() override;
+        ~RecordBin() override;
+
+    private:
         void link() override;
 
     private:
         std::string name;
-        GstElement *enc = nullptr;
-        GstElement *mux = nullptr;
-        GstElement *sink = nullptr;
+        Keela::SimpleElement enc = SimpleElement("x264enc");
+        Keela::SimpleElement mux = SimpleElement("mp4mux");
+        Keela::SimpleElement sink = SimpleElement("filesink");
     };
 }
 #endif //RECORDBIN_H
