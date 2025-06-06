@@ -26,5 +26,13 @@ namespace Keela {
     inline void element_link_many(GstElement *_) {
         spdlog::info("{} no more elements left to link", __func__);
     }
+
+    /// custom deleter to use for `GstBin*` managed by `std::shared_ptr`
+    void delete_bin(GstBin *bin);
+
+    /// custom deleter to use for `GstElement*` managed by `std::shared_ptr`
+    void delete_element(GstElement *e);
 }
+
+
 #endif //UTILS_H

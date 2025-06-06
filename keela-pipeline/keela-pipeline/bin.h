@@ -54,7 +54,7 @@ namespace Keela {
         };
 
     protected:
-        std::shared_ptr<GstBin *> bin;
+        std::shared_ptr<GstBin> bin;
         //GstBin *bin;
 
         /**

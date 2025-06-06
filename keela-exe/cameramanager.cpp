@@ -26,7 +26,7 @@ Keela::CameraManager::CameraManager(guint id, bool split_streams): camera("video
 
         ss << "camera" << id << ".dot";
         spdlog::error("could not create camera manager. attempting to dump bin to {}", ss.str());
-        gst_debug_bin_to_dot_file(*bin, GST_DEBUG_GRAPH_SHOW_ALL, ss.str().c_str());
+        gst_debug_bin_to_dot_file(bin.get(), GST_DEBUG_GRAPH_SHOW_ALL, ss.str().c_str());
         throw;
     }
 }

@@ -10,17 +10,16 @@
 #include "elementbase.h"
 
 namespace Keela {
-
     class SimpleElement : public Keela::Element {
     public:
         explicit SimpleElement(const std::string &element);
-        SimpleElement(const std::string &element, const std::string &name);
-        //SimpleElement(const SimpleElement &simpleelement);
-        operator GstElement*() const override;
 
-        //operator GstElement*() const;
+        SimpleElement(const std::string &element, const std::string &name);
+
+        operator GstElement *() const override;
+
     protected:
-        std::shared_ptr<GstElement*> m_element;
+        std::shared_ptr<GstElement> m_element;
     };
 }
 #endif //ELEMENT_H

@@ -7,25 +7,15 @@
 #include <stdexcept>
 #include <spdlog/spdlog.h>
 
+#include "keela-pipeline/utils.h"
+
+
 Keela::Bin::Bin(const std::string &name): Bin() {
     spdlog::info("Naming bin {}", name);
-    if (!gst_object_set_name(GST_OBJECT(*bin), name.c_str())) {
+    if (!gst_object_set_name(GST_OBJECT(bin.get()), name.c_str())) {
         spdlog::warn("Could not set name of bin");
     }
 }
-
-// apparently needed when using bin in gst functions
-/*
-Keela::Bin::Bin(const Bin &bin) {
-    GstBin* b = bin;
-    auto name = gst_element_get_name(b);
-    assert(name != nullptr);
-    const auto other = gst_object_ref(bin.bin);
-    auto refcount = GST_OBJECT_REFCOUNT(other);
-    spdlog::trace("{} copy constructor: Increased refcount of {} to {}",__func__,name,refcount);
-    g_free(name);
-    this->bin = GST_BIN(other);
-}*/
 
 Keela::Bin::Bin() {
     spdlog::info("{} {}", typeid(*this).name(), __func__);
@@ -33,41 +23,34 @@ Keela::Bin::Bin() {
     if (b == nullptr) {
         throw std::runtime_error("Failed to create bin");
     }
-
-    bin = std::make_shared<GstBin *>(b);
+    bin = std::shared_ptr<GstBin>(b, Keela::delete_bin);
 }
 
 Keela::Bin::~Bin() {
-    auto refcount = GST_OBJECT_REFCOUNT(*bin);
-    spdlog::trace("{} refcount {}", __func__, refcount);
-    auto parent = gst_element_get_parent(GST_ELEMENT(*bin));
-    if (!parent) {
-        g_object_unref(*bin);
-    }
+    spdlog::trace("{}", __func__);
 }
 
 Keela::Bin::operator struct _GstElement *() const {
-    const gchar *tname = g_type_name(G_OBJECT_TYPE(*bin));
-    const gchar *name = gst_element_get_name(GST_ELEMENT(*bin));
+    const gchar *tname = g_type_name(G_OBJECT_TYPE(bin.get()));
+    const gchar *name = gst_element_get_name(GST_ELEMENT(bin.get()));
     if (!name) {
         spdlog::trace("{} Type name {}", __func__, tname);
     } else {
         spdlog::trace("{}::{} Type name {}", name, __func__, tname);
     }
-    return GST_ELEMENT(*bin);
+    return GST_ELEMENT(bin.get());
 }
 
 
 Keela::Bin::operator struct _GstBin *() const {
-    auto b = *bin;
-    const gchar *tname = g_type_name(G_OBJECT_TYPE(b));
-    const gchar *name = gst_element_get_name(GST_ELEMENT(b));
+    const gchar *tname = g_type_name(G_OBJECT_TYPE(bin.get()));
+    const gchar *name = gst_element_get_name(GST_ELEMENT(bin.get()));
     if (!name) {
         spdlog::trace("{} Type name {}", __func__, tname);
     } else {
         spdlog::trace("{}::{} Type name {}", name, __func__, tname);
     }
-    return GST_BIN(*bin);
+    return GST_BIN(bin.get());
 }
 
 void Keela::Bin::add_ghost_pad(GstElement *element, const std::string &pad_name) const {

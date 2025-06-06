@@ -8,19 +8,19 @@
 #include <spdlog/spdlog.h>
 
 Keela::GtkSink::GtkSink(): SimpleElement("gtksink") {
-    spdlog::info("{}",__func__);
+    spdlog::info("{}", __func__);
 }
 
 Keela::GtkSink::GtkSink(const std::string &name): GtkSink() {
-    gst_element_set_name(*m_element, name.c_str());
+    gst_element_set_name(m_element.get(), name.c_str());
 }
 
 Keela::GtkSink::~GtkSink() {
 }
 
 gpointer Keela::GtkSink::get_widget() {
-    GObject* o = nullptr;
-    g_object_get(*m_element, "widget", &o,nullptr);
+    GObject *o = nullptr;
+    g_object_get(m_element.get(), "widget", &o, nullptr);
     if (!o) {
         throw std::runtime_error("Could not get widget");
     }
