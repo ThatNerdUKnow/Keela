@@ -73,19 +73,27 @@ void MainWindow::on_camera_spin_changed() {
     gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
     if (next > curr) {
         for (guint i = curr; i < next; i++) {
-            auto c = std::make_unique<CameraControlWindow>(i + 1);
-            gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
+            auto camera_id = i+1;
+            auto c = std::make_unique<CameraControlWindow>(camera_id);
+            auto ret = gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
+            if (!ret)
+            {
+                std::stringstream ss = std::stringstream();
+                ss << "Failed to add camera " << std::to_string(camera_id) << " to pipeline";
+                throw std::runtime_error(ss.str());
+
+            }
             cameras.push_back(std::move(c));
         }
     } else if (next < curr) {
         for (guint i = curr; i > next; i--) {
             auto camera_win = std::move(cameras.back());
             // no need to unlink since every cameramanager is a standalone bin with no ghost pads
-            auto ret = gst_element_set_state(
-                GST_ELEMENT(static_cast<GstElement*>(*camera_win->camera_manager)), GST_STATE_NULL);
-            if (ret == GST_STATE_CHANGE_FAILURE) {
-                throw std::runtime_error("Failed to set camera control state");
-            }
+            //auto ret = gst_element_set_state(
+            //    GST_ELEMENT(static_cast<GstElement*>(*camera_win->camera_manager)), GST_STATE_NULL);
+            //if (ret == GST_STATE_CHANGE_FAILURE) {
+            //    throw std::runtime_error("Failed to set camera control state");
+            //}
             gst_bin_remove(GST_BIN(pipeline), *camera_win->camera_manager);
             cameras.pop_back();
         }
