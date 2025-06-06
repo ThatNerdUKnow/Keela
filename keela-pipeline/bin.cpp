@@ -31,6 +31,7 @@ Keela::Bin::~Bin() {
 }
 
 Keela::Bin::operator struct _GstElement *() const {
+    assert(GST_IS_ELEMENT(bin.get()));
     const gchar *tname = g_type_name(G_OBJECT_TYPE(bin.get()));
     const gchar *name = gst_element_get_name(GST_ELEMENT(bin.get()));
     if (!name) {

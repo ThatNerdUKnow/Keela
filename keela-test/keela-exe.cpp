@@ -4,6 +4,7 @@
 //
 // Created by brand on 6/3/2025.
 //
+
 TEST(KeelaExe, ConstructCameraManager) {
     Keela::CameraManager cm(1, false);
     GstElement *b = cm;
@@ -12,4 +13,16 @@ TEST(KeelaExe, ConstructCameraManager) {
 
 TEST(KeelaExe, PlayCameraManager) {
     auto pipeline = gst_pipeline_new("pipeline");
+    Keela::CameraManager *camera = new Keela::CameraManager(1, false);
+    guint *refcount = &GST_OBJECT_REFCOUNT(static_cast<GstElement*>(*camera));
+    EXPECT_EQ(*refcount, 1);
+    spdlog::info("adding cameramanager to pipeline");
+    gst_bin_add(GST_BIN(pipeline), *camera);
+    EXPECT_EQ(*refcount, 1);
+    spdlog::info("removing cameramanager from pipeline");
+    gst_bin_remove(GST_BIN(pipeline), *camera);
+    EXPECT_EQ(*refcount, 0);
+    spdlog::info("deleting cameramanager");
+    delete camera;
+    g_object_unref(pipeline);
 }

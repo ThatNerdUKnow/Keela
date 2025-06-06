@@ -37,15 +37,18 @@ namespace Keela {
         void add_elements(First first, Rest... rest) {
             GstElement *e = first;
             GstElement *b = *this;
-            gst_bin_add(GST_BIN(b), GST_ELEMENT(e));
+            auto ret = gst_bin_add(GST_BIN(b), GST_ELEMENT(e));
+            if (!ret) {
+                throw std::runtime_error("Failed to add element to bin");
+            }
             // gst_bin_add is void, so this is how we check if the element *actually* got added
-            auto parent = gst_element_get_parent(e);
+            /*auto parent = gst_element_get_parent(e);
 
             if (GST_ELEMENT(parent) != b) {
                 throw std::runtime_error("could not add element to bin");
             }
             // gst_element_get_parent will ref this bin, so keep our ref count in check
-            g_object_unref(parent);
+            g_object_unref(parent);*/
             add_elements(rest...);
         }
 

@@ -7,6 +7,11 @@
 #include "bin.h"
 
 namespace Keela {
+    template<typename Last>
+    inline void element_link_many(Last _) {
+        spdlog::info("{} no more elements left to link", __func__);
+    }
+
     template<typename First, typename Second, typename... Rest>
     inline void element_link_many(First first, Second second, Rest... rest) {
         GstElement *f = first;
@@ -20,12 +25,9 @@ namespace Keela {
         if (!ret) {
             throw std::runtime_error("failed to link elements");
         }
-        element_link_many(second, rest...);
+        Keela::element_link_many(second, rest...);
     }
 
-    inline void element_link_many(GstElement *_) {
-        spdlog::info("{} no more elements left to link", __func__);
-    }
 
     /// custom deleter to use for `GstBin*` managed by `std::shared_ptr`
     void delete_bin(GstBin *bin);

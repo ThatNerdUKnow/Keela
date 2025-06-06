@@ -5,13 +5,15 @@
 #ifndef GTKGLSINK_H
 #define GTKGLSINK_H
 #include "bin.h"
+#include "simpleelement.h"
 #include "widgetelement.h"
 
 namespace Keela {
     /// Creates an OpenGL based GtkWidget to display video
     class GtkGlSink final : public Bin, public WidgetElement {
-        public:
+    public:
         GtkGlSink();
+
         explicit GtkGlSink(const std::string &name);
 
         ~GtkGlSink() override;
@@ -25,8 +27,10 @@ namespace Keela {
         gpointer get_widget() override;
 
     private:
-        GstElement* glsink = nullptr;
-        GstElement* gtkglsink = nullptr;
+        Keela::SimpleElement glsink = SimpleElement("glsink");
+        Keela::SimpleElement gtkglsink = SimpleElement("gtkglsink");
+        //GstElement* glsink = nullptr;
+        //GstElement* gtkglsink = nullptr;
     };
 }
 #endif //GTKGLSINK_H

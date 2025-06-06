@@ -5,20 +5,25 @@
 #ifndef QUEUEBIN_H
 #define QUEUEBIN_H
 #include <keela-pipeline/bin.h>
+
+#include "simpleelement.h"
+
 namespace Keela {
-    class QueueBin: public Bin {
-        public:
+    class QueueBin : public Bin {
+    public:
         QueueBin();
+
         explicit QueueBin(const std::string &name);
-        protected:
-        void link_queue(GstElement* sink) const;
+
+    protected:
+        void link_queue(GstElement *sink) const;
 
     private:
         void init() override;
 
         void link() override;
 
-        GstElement* queue = nullptr;
+        Keela::SimpleElement queue = SimpleElement("queue");
     };
 }
 #endif //QUEUEBIN_H
