@@ -11,16 +11,16 @@
 #include <keela-pipeline/utils.h>
 
 Keela::CameraManager::CameraManager(guint id, bool split_streams): camera("videotestsrc"), caps_filter("capsfilter"),
-                                                                   tee("tee"), Bin("camerabin_" + id) {
+                                                                   tee("tee"), Bin("camerabin_" + std::to_string(id)) {
     try {
-        spdlog::info("Creating camera manager " + id);
+        spdlog::info("Creating camera manager {}", id);
         this->id = id;
         GstElement *bin = *this;
-        std::string name = "camerabin_" + id;
+        //std::string name = "camerabin_" + std::to_string(id);
         add_elements(camera, caps_filter, transform, tee, presentation);
         element_link_many(camera, caps_filter, transform, tee, presentation);
 
-        spdlog::info("Created camera manager " + id);
+        spdlog::info("Created camera manager {}", id);
     } catch (const std::exception &e) {
         std::stringstream ss;
 

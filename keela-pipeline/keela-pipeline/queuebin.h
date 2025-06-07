@@ -13,6 +13,8 @@ namespace Keela {
     public:
         QueueBin();
 
+        ~QueueBin() override;
+
         explicit QueueBin(const std::string &name);
 
     protected:

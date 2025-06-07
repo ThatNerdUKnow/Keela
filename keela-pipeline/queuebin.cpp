@@ -14,6 +14,10 @@ Keela::QueueBin::QueueBin() {
     QueueBin::link();
 }
 
+Keela::QueueBin::~QueueBin() {
+    spdlog::debug("{}", __func__);
+}
+
 Keela::QueueBin::QueueBin(const std::string &name): Bin(name) {
     spdlog::info("{}", __func__);
     QueueBin::init();

@@ -14,11 +14,14 @@ namespace Keela {
     public:
         explicit SimpleElement(const std::string &element);
 
+        ~SimpleElement() override;
+
         SimpleElement(const std::string &element, const std::string &name);
 
         operator GstElement *() const override;
 
     protected:
+        std::string element_name;
         std::shared_ptr<GstElement> m_element;
     };
 }

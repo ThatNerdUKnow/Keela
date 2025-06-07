@@ -42,7 +42,8 @@ void Keela::TransformBin::init() {
 
 void Keela::TransformBin::link() {
     GstElement *b = *this;
-    gst_bin_add_many(GST_BIN(b), scale, nullptr);
+    add_elements(scale);
+    //gst_bin_add_many(GST_BIN(b), scale, nullptr);
     //add_ghost_pad(scale, "sink");
     link_queue(scale);
     add_ghost_pad(scale, "src");

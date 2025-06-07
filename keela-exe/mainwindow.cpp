@@ -20,7 +20,7 @@ MainWindow::MainWindow(): Gtk::Window() {
 
     // Record button
     record_button.set_label("Start Recording");
-    record_button.signal_clicked().connect(sigc::mem_fun(this,&MainWindow::on_record_button_clicked));
+    record_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_record_button_clicked));
     Gdk::RGBA red;
     red.set_red(1.0);
     red.set_alpha(1.0);
@@ -71,22 +71,20 @@ MainWindow::~MainWindow() {
 void MainWindow::on_camera_spin_changed() {
     const auto curr = cameras.size();
     const auto next = num_camera_spin.m_spin.get_value_as_int();
-    auto ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_READY);
-    if (ret == GST_STATE_CHANGE_FAILURE)
-    {
+    auto ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
+    if (ret == GST_STATE_CHANGE_FAILURE) {
         spdlog::error("Failed to set state of pipeline");
     }
     if (next > curr) {
         for (guint i = curr; i < next; i++) {
-            auto camera_id = i+1;
+            auto camera_id = i + 1;
             auto c = std::make_unique<CameraControlWindow>(camera_id);
+            g_object_ref(static_cast<GstElement*>(*c->camera_manager));
             auto ret = gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
-            if (!ret)
-            {
+            if (!ret) {
                 std::stringstream ss = std::stringstream();
                 ss << "Failed to add camera " << std::to_string(camera_id) << " to pipeline";
                 throw std::runtime_error(ss.str());
-
             }
             cameras.push_back(std::move(c));
         }
@@ -98,17 +96,15 @@ void MainWindow::on_camera_spin_changed() {
         }
     }
     ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
-    if (ret == GST_STATE_CHANGE_FAILURE)
-    {
+    if (ret == GST_STATE_CHANGE_FAILURE) {
         spdlog::error("Failed to set state of pipeline");
     }
-    gst_debug_bin_to_dot_file(GST_BIN(pipeline),GST_DEBUG_GRAPH_SHOW_ALL,"keelapipeline");
+    gst_debug_bin_to_dot_file(GST_BIN(pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "keelapipeline");
 }
 
-void MainWindow::on_record_button_clicked()
-{
+void MainWindow::on_record_button_clicked() {
     is_recording = !is_recording;
-    auto button_text = is_recording? "Recording":"Start Recording";
+    auto button_text = is_recording ? "Recording" : "Start Recording";
     record_button.set_label(button_text);
     // set_sensitive
     framerate_spin.set_sensitive(!is_recording);
@@ -118,15 +114,11 @@ void MainWindow::on_record_button_clicked()
     num_camera_spin.set_sensitive(!is_recording);
     show_trace_check.set_sensitive(!is_recording);
     restart_camera_button.set_sensitive(!is_recording);
-    if (is_recording)
-    {
-
+    if (is_recording) {
         auto message_dialog = Gtk::MessageDialog("Remember to set the experiment output to a new directory");
         message_dialog.run();
         // TODO: show file dialog
-    }else
-    {
-
+    } else {
         auto message_dialog = Gtk::MessageDialog("Remember to take calibration photos");
         message_dialog.run();
     }

@@ -10,6 +10,7 @@
 #include "keela-pipeline/utils.h"
 
 Keela::SimpleElement::SimpleElement(const std::string &element) {
+    element_name = element;
     spdlog::info("{} {}", __func__, element);
     auto e = gst_element_factory_make(element.c_str(), nullptr);
     if (!e) {
@@ -17,6 +18,10 @@ Keela::SimpleElement::SimpleElement(const std::string &element) {
     }
 
     m_element = std::shared_ptr<GstElement>(e, Keela::delete_element);
+}
+
+Keela::SimpleElement::~SimpleElement() {
+    spdlog::debug("{} {}", __func__, element_name);
 }
 
 Keela::SimpleElement::SimpleElement(const std::string &element, const std::string &name): SimpleElement(element) {
