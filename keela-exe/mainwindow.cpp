@@ -19,7 +19,8 @@ MainWindow::MainWindow(): Gtk::Window() {
     MainWindow::add(container);
 
     // Record button
-    record_button.set_label("Record");
+    record_button.set_label("Start Recording");
+    record_button.signal_clicked().connect(sigc::mem_fun(this,&MainWindow::on_record_button_clicked));
     Gdk::RGBA red;
     red.set_red(1.0);
     red.set_alpha(1.0);
@@ -102,4 +103,20 @@ void MainWindow::on_camera_spin_changed() {
         spdlog::error("Failed to set state of pipeline");
     }
     gst_debug_bin_to_dot_file(GST_BIN(pipeline),GST_DEBUG_GRAPH_SHOW_ALL,"keelapipeline");
+}
+
+void MainWindow::on_record_button_clicked()
+{
+    is_recording = !is_recording;
+    auto button_text = is_recording? "Recording":"Start Recording";
+    record_button.set_label(button_text);
+    // set_sensitive
+    framerate_spin.set_sensitive(!is_recording);
+    data_matrix_w_spin.set_sensitive(!is_recording);
+    data_matrix_h_spin.set_sensitive(!is_recording);
+    cv_recording_check.set_sensitive(!is_recording);
+    num_camera_spin.set_sensitive(!is_recording);
+    show_trace_check.set_sensitive(!is_recording);
+    restart_camera_button.set_sensitive(!is_recording);
+
 }
