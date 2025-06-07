@@ -118,5 +118,16 @@ void MainWindow::on_record_button_clicked()
     num_camera_spin.set_sensitive(!is_recording);
     show_trace_check.set_sensitive(!is_recording);
     restart_camera_button.set_sensitive(!is_recording);
+    if (is_recording)
+    {
 
+        auto message_dialog = Gtk::MessageDialog("Remember to set the experiment output to a new directory");
+        message_dialog.run();
+        // TODO: show file dialog
+    }else
+    {
+
+        auto message_dialog = Gtk::MessageDialog("Remember to take calibration photos");
+        message_dialog.run();
+    }
 }
