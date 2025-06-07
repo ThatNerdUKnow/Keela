@@ -73,7 +73,7 @@ void MainWindow::on_camera_spin_changed() {
     auto ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_READY);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
-        throw std::runtime_error("Failed to set state of pipeline");
+        spdlog::error("Failed to set state of pipeline");
     }
     if (next > curr) {
         for (guint i = curr; i < next; i++) {
@@ -99,7 +99,7 @@ void MainWindow::on_camera_spin_changed() {
     ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
-        throw std::runtime_error("Failed to set state of pipeline");
+        spdlog::error("Failed to set state of pipeline");
     }
     gst_debug_bin_to_dot_file(GST_BIN(pipeline),GST_DEBUG_GRAPH_SHOW_ALL,"keelapipeline");
 }
