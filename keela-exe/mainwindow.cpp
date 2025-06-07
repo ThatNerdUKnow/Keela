@@ -51,6 +51,7 @@ MainWindow::MainWindow(): Gtk::Window() {
     show_trace_check.set_label("Show Traces");
     container.add(show_trace_check);
 
+    restart_camera_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::reset_cameras));
     restart_camera_button.set_label("Restart Camera(s)");
     container.add(restart_camera_button);
 
@@ -121,5 +122,24 @@ void MainWindow::on_record_button_clicked() {
     } else {
         auto message_dialog = Gtk::MessageDialog("Remember to take calibration photos");
         message_dialog.run();
+    }
+}
+
+void MainWindow::reset_cameras() {
+    auto ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
+    switch (ret) {
+        case GST_STATE_CHANGE_FAILURE:
+            throw std::runtime_error("Failed to set state of pipeline to NULL");
+        case GST_STATE_CHANGE_ASYNC:
+            ret = gst_element_get_state(GST_ELEMENT(pipeline), nullptr, nullptr, GST_CLOCK_TIME_NONE);
+            if (ret == GST_STATE_CHANGE_FAILURE) {
+                throw std::runtime_error("Async state change failed");
+            }
+            break;
+    }
+    // TODO: apply changes to camera settings here
+    ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
+    if (ret == GST_STATE_CHANGE_FAILURE) {
+        throw std::runtime_error("Failed to set state of pipeline to playing");
     }
 }

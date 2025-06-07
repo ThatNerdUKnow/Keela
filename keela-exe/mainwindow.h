@@ -35,7 +35,11 @@ private:
     std::vector<std::unique_ptr<CameraControlWindow> > cameras;
 
     void on_camera_spin_changed();
+
     void on_record_button_clicked();
+
+    void reset_cameras();
+
     bool is_recording = false;
 };
 
