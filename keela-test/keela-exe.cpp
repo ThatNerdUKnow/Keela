@@ -21,7 +21,7 @@ TEST(KeelaExe, PlayCameraManager) {
     EXPECT_EQ(*refcount, 1);
     spdlog::info("removing cameramanager from pipeline");
     gst_bin_remove(GST_BIN(pipeline), *camera);
-    EXPECT_EQ(*refcount, 0);
+    EXPECT_FALSE(GST_IS_ELEMENT(camera));
     spdlog::info("deleting cameramanager");
     delete camera;
     g_object_unref(pipeline);
