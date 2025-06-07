@@ -11,7 +11,7 @@
 #include <keela-pipeline/utils.h>
 
 Keela::CameraManager::CameraManager(guint id, bool split_streams): camera("videotestsrc"), caps_filter("capsfilter"),
-                                                                   tee("tee"), Bin("camerabin_" + std::to_string(id)) {
+                                                                   tee("tee"), Bin("camera_" + std::to_string(id)) {
     try {
         spdlog::info("Creating camera manager {}", id);
         this->id = id;

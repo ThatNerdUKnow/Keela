@@ -24,8 +24,8 @@ namespace Keela {
 
         SimpleElement camera;
         SimpleElement caps_filter;
-        TransformBin transform;
-        PresentationBin presentation;
+        TransformBin transform = TransformBin("transform");
+        PresentationBin presentation = PresentationBin("presentation");
 
     private:
         guint id;
