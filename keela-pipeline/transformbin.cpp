@@ -9,13 +9,13 @@
 
 #include "keela-pipeline/gst-helpers.h"
 
-Keela::TransformBin::TransformBin(): Bin() {
+Keela::TransformBin::TransformBin(): QueueBin() {
     spdlog::info("{}", __func__);
     TransformBin::init();
     TransformBin::link();
 }
 
-Keela::TransformBin::TransformBin(const std::string &name): Bin(name) {
+Keela::TransformBin::TransformBin(const std::string &name): QueueBin(name) {
     spdlog::info("{}", __func__);
     TransformBin::init();
     gboolean ret = false;
@@ -43,6 +43,7 @@ void Keela::TransformBin::init() {
 void Keela::TransformBin::link() {
     GstElement *b = *this;
     gst_bin_add_many(GST_BIN(b), scale, nullptr);
-    add_ghost_pad(scale, "sink");
+    //add_ghost_pad(scale, "sink");
+    link_queue(scale);
     add_ghost_pad(scale, "src");
 }

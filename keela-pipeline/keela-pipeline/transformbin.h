@@ -4,11 +4,12 @@
 
 #ifndef COMMONBIN_H
 #define COMMONBIN_H
+#include "queuebin.h"
 #include "simpleelement.h"
 #include "keela-pipeline/bin.h"
 
 namespace Keela {
-    class TransformBin : public Bin {
+    class TransformBin : public QueueBin {
     public:
         TransformBin();
 
