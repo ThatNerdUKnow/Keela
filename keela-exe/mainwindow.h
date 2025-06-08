@@ -40,6 +40,8 @@ private:
 
     void reset_cameras();
 
+    void set_framerate();
+
     bool is_recording = false;
 };
 

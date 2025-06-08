@@ -20,6 +20,8 @@ add_library(keela-pipeline presentationbin.cpp keela-pipeline/presentationbin.h
         keela-pipeline/widgetelement.h
         keela-pipeline/utils.h
         utils.cpp
+        caps.cpp
+        keela-pipeline/caps.h
 )
 target_link_libraries(keela-pipeline PUBLIC PkgConfig::GSTREAMER PkgConfig::SPDLOG)
 

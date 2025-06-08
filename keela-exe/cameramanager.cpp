@@ -15,8 +15,9 @@ Keela::CameraManager::CameraManager(guint id, bool split_streams): camera("video
     try {
         spdlog::info("Creating camera manager {}", id);
         this->id = id;
-        GstElement *bin = *this;
-        //std::string name = "camerabin_" + std::to_string(id);
+
+        gst_caps_set_simple(base_caps, "format",G_TYPE_STRING, "GRAY8", nullptr);
+        g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
         add_elements(camera, caps_filter, transform, tee, presentation);
         element_link_many(camera, caps_filter, transform, tee, presentation);
 
@@ -35,4 +36,11 @@ Keela::CameraManager::~CameraManager() {
 }
 
 void Keela::CameraManager::set_framerate(double framerate) {
+    spdlog::info("Setting framerate to {}", framerate);
+    int numerator = static_cast<int>(framerate * 10);
+    // TODO: caps need to be writable
+    gst_caps_set_simple(base_caps, "FRAMERATE", GST_TYPE_FRACTION, numerator, 10, nullptr);
+
+    // through experimentation, I believe that changes to the original caps reference do not affect the capsfilter
+    g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
 }

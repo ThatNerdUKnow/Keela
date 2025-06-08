@@ -28,7 +28,8 @@ MainWindow::MainWindow(): Gtk::Window() {
     container.add(record_button);
 
     // Framerate controls
-    framerate_spin.m_spin.set_adjustment(Gtk::Adjustment::create(500, 1, 1000));
+    framerate_spin.m_spin.set_adjustment(Gtk::Adjustment::create(500, 1, 1000, 0.1));
+    framerate_spin.m_spin.set_digits(1);
     container.add(framerate_spin);
 
     const auto dm_frame = Gtk::make_managed<Keela::FrameBox>("Data Matrix Dimensions", Gtk::ORIENTATION_VERTICAL);
@@ -60,7 +61,10 @@ MainWindow::MainWindow(): Gtk::Window() {
     if (!pipeline) {
         throw std::runtime_error("Failed to create pipeline");
     }
+
+    // Initialize recording settings here
     on_camera_spin_changed();
+    set_framerate();
     gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
     show_all_children();
 }
@@ -138,8 +142,15 @@ void MainWindow::reset_cameras() {
             break;
     }
     // TODO: apply changes to camera settings here
+    set_framerate();
     ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
     if (ret == GST_STATE_CHANGE_FAILURE) {
         throw std::runtime_error("Failed to set state of pipeline to playing");
+    }
+}
+
+void MainWindow::set_framerate() {
+    for (const auto &c: cameras) {
+        c->camera_manager->set_framerate(framerate_spin.m_spin.get_value());
     }
 }

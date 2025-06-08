@@ -34,6 +34,8 @@ namespace Keela {
 
     /// custom deleter to use for `GstElement*` managed by `std::shared_ptr`
     void delete_element(GstElement *e);
+
+    void delete_caps(GstCaps *caps);
 }
 
 

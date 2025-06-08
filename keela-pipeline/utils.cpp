@@ -26,3 +26,14 @@ void Keela::delete_element(GstElement *e) {
     if (refcount > 0)
         g_object_unref(e);
 }
+
+void Keela::delete_caps(GstCaps *caps) {
+    if (!GST_IS_CAPS(caps)) {
+        spdlog::warn("{} can not release invalid element", __func__);
+        return;
+    }
+    auto refcount = GST_OBJECT_REFCOUNT(caps);
+    spdlog::debug("{} {} refcount {}", __func__, refcount);
+    if (refcount > 0)
+        gst_caps_unref(caps);
+}

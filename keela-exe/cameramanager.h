@@ -5,11 +5,10 @@
 #ifndef CAMERAMANAGER_H
 #define CAMERAMANAGER_H
 #include <keela-pipeline/bin.h>
-
 #include <keela-pipeline/simpleelement.h>
-
-#include "keela-pipeline/presentationbin.h"
-#include "keela-pipeline/transformbin.h"
+#include <keela-pipeline/caps.h>
+#include <keela-pipeline/presentationbin.h>
+#include <keela-pipeline/transformbin.h>
 
 namespace Keela {
     class CameraManager final : public Keela::Bin {
@@ -31,6 +30,11 @@ namespace Keela {
         guint id;
         bool split_streams;
 
+        // caps filter to apply to the entire stream
+        Caps base_caps;
+
+        // caps filter determining the stream caps after scaling
+        Caps scaled_caps;
 
         SimpleElement tee;
     };
