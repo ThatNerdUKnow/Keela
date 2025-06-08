@@ -45,15 +45,14 @@ TEST(KeelaPipeline, ConstructNamedTransformBin) {
 #pragma region demonstrably false tests
 TEST(KeelaPipeline, UseBinAsGstBin) {
     Keela::Bin bin("bin");
-    GstElement* b = bin;
+    GstElement *b = bin;
     ASSERT_TRUE(GST_IS_BIN(b));
 }
 
 TEST(KeelaPipeline, UseBinAsGstElement) {
     Keela::Bin bin("bin");
-    GstElement* b = bin;
+    GstElement *b = bin;
     ASSERT_TRUE(GST_IS_ELEMENT(b));
-
 }
 #pragma endregion
 
@@ -71,31 +70,47 @@ TEST(KeelaPipeline, LinkBins) {
 }
 
 TEST(KeelaPipeline, CanPlay) {
-    GstElement* b = gst_pipeline_new("Playbin");
+    GstElement *b = gst_pipeline_new("Playbin");
     ASSERT_TRUE(b != nullptr);
-    Keela::SimpleElement src("videotestsrc","TestSrc");
+    Keela::SimpleElement src("videotestsrc", "TestSrc");
     Keela::TransformBin transform("TransformBin");
-    Keela::SimpleElement presentation("autovideosink","Presentation");
+    Keela::SimpleElement presentation("autovideosink", "Presentation");
     spdlog::info("Created all elements");
 
-    GstElement* s = src;
-    GstElement* t = transform;
-    GstElement* p = presentation;
-    g_object_set(s,"num-buffers",0,nullptr); // set this to anything other than zero to see the window
-    gst_bin_add_many(GST_BIN(b),s,t,p,nullptr); // which causes this C function to fail
+    GstElement *s = src;
+    GstElement *t = transform;
+    GstElement *p = presentation;
+    g_object_set(s, "num-buffers", 0, nullptr); // set this to anything other than zero to see the window
+    gst_bin_add_many(GST_BIN(b), s, t, p, nullptr); // which causes this C function to fail
     ASSERT_TRUE(gst_element_link_many(s,t,p,nullptr));
     // TODO: link elements and set pipeline to playing
 
-    gst_debug_bin_to_dot_file(GST_BIN(b),GST_DEBUG_GRAPH_SHOW_ALL,"CanPlay.dot");
-    GstBus* bus = gst_element_get_bus(GST_ELEMENT(b));
+    gst_debug_bin_to_dot_file(GST_BIN(b), GST_DEBUG_GRAPH_SHOW_ALL, "CanPlay.dot");
+    GstBus *bus = gst_element_get_bus(GST_ELEMENT(b));
     ASSERT_TRUE(bus != nullptr);
     spdlog::info("Starting playback");
-    GstStateChangeReturn ret = gst_element_set_state(GST_ELEMENT(b),GST_STATE_PLAYING);
+    GstStateChangeReturn ret = gst_element_set_state(GST_ELEMENT(b), GST_STATE_PLAYING);
     ASSERT_TRUE(ret != GST_STATE_CHANGE_FAILURE);
-    GstMessage* msg = nullptr;
+    GstMessage *msg = nullptr;
     while ((msg = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE, GST_MESSAGE_EOS))) {
         spdlog::info("Got EOS");
         gst_message_unref(msg);
         break;
     }
+}
+
+TEST(KeelaPipeline, CreateCaps) {
+    auto caps = Keela::Caps();
+    caps.set_framerate(5000, 10);
+    caps.set_resolution(640, 480);
+    // caps2 aliases the shared pointer in caps
+    auto caps2 = Keela::Caps(caps);
+}
+
+TEST(KeelaPipeline, CopyCaps) {
+    auto caps1 = Keela::Caps();
+    caps1.set_framerate(5000, 10);
+    caps1.set_resolution(640, 480);
+    auto caps2 = Keela::Caps(static_cast<GstCaps *>(caps1));
+    ASSERT_TRUE(gst_caps_is_equal(caps1,caps2));
 }

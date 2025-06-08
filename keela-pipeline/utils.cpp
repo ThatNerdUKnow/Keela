@@ -33,7 +33,7 @@ void Keela::delete_caps(GstCaps *caps) {
         return;
     }
     auto refcount = GST_OBJECT_REFCOUNT(caps);
-    spdlog::debug("{} {} refcount {}", __func__, refcount);
+    spdlog::debug("{} refcount {}", __func__, refcount);
     if (refcount > 0)
         gst_caps_unref(caps);
 }

@@ -33,3 +33,11 @@ Keela::Caps::~Caps() {
 Keela::Caps::operator struct _GstCaps *() const {
     return m_caps.get();
 }
+
+void Keela::Caps::set_framerate(const int numerator, const int denominator) {
+    set_props("framerate",GST_TYPE_FRACTION, numerator, denominator);
+}
+
+void Keela::Caps::set_resolution(const int width, const int height) {
+    set_props("width",G_TYPE_INT, width, "height",G_TYPE_INT, height);
+}
