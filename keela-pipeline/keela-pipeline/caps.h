@@ -12,6 +12,8 @@ namespace Keela {
     public:
         Caps();
 
+        explicit Caps(GstCaps *c);
+
         ~Caps();
 
         operator GstCaps *() const;

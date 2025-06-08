@@ -5,6 +5,8 @@
 #ifndef PRESENTATIONBIN_H
 #define PRESENTATIONBIN_H
 #include <gstreamer-1.0/gst/gst.h>
+
+#include "caps.h"
 #include "queuebin.h"
 #include "simpleelement.h"
 
@@ -15,9 +17,9 @@ namespace Keela {
 
         PresentationBin();
 
-        ~PresentationBin();
+        ~PresentationBin() override;
 
-        void set_framerate(int framerate);
+        void set_presentation_framerate(guint framerate);
 
         gpointer get_widget();
 
@@ -26,10 +28,9 @@ namespace Keela {
 
         void link() override;
 
-        Keela::SimpleElement videorate = Keela::SimpleElement("videorate");
-        //GstElement *videorate = nullptr;
-        //GstElement *glsink = nullptr;
-        //GstElement *sink = nullptr;
+        Keela::SimpleElement videorate = SimpleElement("videorate");
+        Keela::SimpleElement caps_filter = SimpleElement("capsfilter");
+        Keela::Caps presentation_caps = Caps();
         std::shared_ptr<Keela::Element> sink;
     };
 }

@@ -35,8 +35,11 @@ Keela::PresentationBin::~PresentationBin() {
     spdlog::debug(__func__);
 }
 
-void Keela::PresentationBin::set_framerate(int framerate) {
-    // TODO:
+void Keela::PresentationBin::set_presentation_framerate(const guint framerate) {
+    // we do not want to inherit the old caps
+    presentation_caps = Caps();
+    gst_caps_set_simple(presentation_caps, "framerate",GST_TYPE_FRACTION, framerate, 1, nullptr);
+    g_object_set(caps_filter, "caps", static_cast<GstCaps *>(presentation_caps), nullptr);
 }
 
 gpointer Keela::PresentationBin::get_widget() {
@@ -66,10 +69,8 @@ void Keela::PresentationBin::init() {
 }
 
 void Keela::PresentationBin::link() {
-    GstElement *b = *this;
-    add_elements(videorate, static_cast<GstElement *>(*sink));
-    element_link_many(videorate, static_cast<GstElement *>(*sink));
-    //gst_bin_add_many(GST_BIN(b), videorate, sink, nullptr);
-    //gst_element_link(videorate, *sink);
+    set_presentation_framerate(60);
+    add_elements(videorate, caps_filter, static_cast<GstElement *>(*sink));
+    element_link_many(videorate, caps_filter, static_cast<GstElement *>(*sink));
     add_ghost_pad(videorate, "sink");
 }
