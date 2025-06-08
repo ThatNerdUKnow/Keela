@@ -85,6 +85,8 @@ void MainWindow::on_camera_spin_changed() {
         for (guint i = curr; i < next; i++) {
             auto camera_id = i + 1;
             auto c = std::make_unique<CameraControlWindow>(camera_id);
+            set_framerate(c->camera_manager.get());
+            set_resolution(c->camera_manager.get());
             g_object_ref(static_cast<GstElement*>(*c->camera_manager));
             auto ret = gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
             if (!ret) {
@@ -153,16 +155,27 @@ void MainWindow::reset_cameras() {
 }
 
 void MainWindow::set_framerate() const {
-    const auto fr = framerate_spin.m_spin.get_value();
     for (const auto &c: cameras) {
-        c->camera_manager->set_framerate(fr);
+        set_framerate(c->camera_manager.get());
     }
+}
+
+void MainWindow::set_framerate(Keela::CameraManager *cm) const {
+    const auto fr = framerate_spin.m_spin.get_value();
+    cm->set_framerate(fr);
 }
 
 void MainWindow::set_resolution() const {
     const auto w = data_matrix_w_spin.m_spin.get_value_as_int();
     const auto h = data_matrix_h_spin.m_spin.get_value_as_int();
     for (const auto &c: cameras) {
+        set_resolution(c->camera_manager.get());
         c->camera_manager->set_resolution(w, h);
     }
+}
+
+void MainWindow::set_resolution(Keela::CameraManager *m) const {
+    const auto w = data_matrix_w_spin.m_spin.get_value_as_int();
+    const auto h = data_matrix_h_spin.m_spin.get_value_as_int();
+    m->set_resolution(w, h);
 }

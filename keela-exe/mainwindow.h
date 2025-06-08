@@ -42,7 +42,11 @@ private:
 
     void set_framerate() const;
 
+    void set_framerate(Keela::CameraManager *cm) const;
+
     void set_resolution() const;
+
+    void set_resolution(Keela::CameraManager *m) const;
 
     bool is_recording = false;
 };
