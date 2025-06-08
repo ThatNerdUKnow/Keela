@@ -19,7 +19,7 @@ namespace Keela {
 
         void set_framerate(double framerate);
 
-        void set_resolution(guint width, guint height);
+        void set_resolution(int width, int height);
 
         SimpleElement camera;
         SimpleElement caps_filter;

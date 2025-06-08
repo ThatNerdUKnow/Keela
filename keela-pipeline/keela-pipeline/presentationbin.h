@@ -28,7 +28,9 @@ namespace Keela {
 
         void link() override;
 
-        Keela::SimpleElement videorate = SimpleElement("videorate");
+        /// Used to skip frames for the purposes of presentation
+        Keela::SimpleElement video_rate = SimpleElement("videorate");
+        /// Controls the target presentation framerate
         Keela::SimpleElement caps_filter = SimpleElement("capsfilter");
         Keela::Caps presentation_caps = Caps();
         std::shared_ptr<Keela::Element> sink;

@@ -10,7 +10,8 @@
 
 #include <keela-pipeline/utils.h>
 
-Keela::CameraManager::CameraManager(guint id, bool split_streams): Bin("camera_" + std::to_string(id)), camera("videotestsrc"),
+Keela::CameraManager::CameraManager(guint id, bool split_streams): Bin("camera_" + std::to_string(id)),
+                                                                   camera("videotestsrc"),
                                                                    caps_filter("capsfilter"), tee("tee") {
     try {
         spdlog::info("Creating camera manager {}", id);
@@ -40,8 +41,19 @@ void Keela::CameraManager::set_framerate(double framerate) {
     int numerator = static_cast<int>(framerate * 10);
     // TODO: caps need to be writable
     base_caps = Caps(static_cast<GstCaps *>(base_caps));
-    gst_caps_set_simple(base_caps, "framerate", GST_TYPE_FRACTION, numerator, 10, nullptr);
+    base_caps.set_framerate(numerator, 10);
+    //gst_caps_set_simple(base_caps, "framerate", GST_TYPE_FRACTION, numerator, 10, nullptr);
 
     // through experimentation, I believe that changes to the original caps reference do not affect the capsfilter
+    g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
+}
+
+void Keela::CameraManager::set_resolution(const int width, const int height) {
+    if (width <= 0 || height <= 0) {
+        throw std::invalid_argument("width and height must be greater than zero");
+    }
+    // create a copy of our current caps
+    base_caps = Caps(static_cast<GstCaps *>(base_caps));
+    base_caps.set_resolution(width, height);
     g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
 }

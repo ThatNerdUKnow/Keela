@@ -65,6 +65,7 @@ MainWindow::MainWindow(): Gtk::Window() {
     // Initialize recording settings here
     on_camera_spin_changed();
     set_framerate();
+    set_resolution();
     gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
     show_all_children();
 }
@@ -143,14 +144,25 @@ void MainWindow::reset_cameras() {
     }
     // TODO: apply changes to camera settings here
     set_framerate();
+    set_resolution();
+
     ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
     if (ret == GST_STATE_CHANGE_FAILURE) {
         throw std::runtime_error("Failed to set state of pipeline to playing");
     }
 }
 
-void MainWindow::set_framerate() {
+void MainWindow::set_framerate() const {
+    const auto fr = framerate_spin.m_spin.get_value();
     for (const auto &c: cameras) {
-        c->camera_manager->set_framerate(framerate_spin.m_spin.get_value());
+        c->camera_manager->set_framerate(fr);
+    }
+}
+
+void MainWindow::set_resolution() const {
+    const auto w = data_matrix_w_spin.m_spin.get_value_as_int();
+    const auto h = data_matrix_h_spin.m_spin.get_value_as_int();
+    for (const auto &c: cameras) {
+        c->camera_manager->set_resolution(w, h);
     }
 }
