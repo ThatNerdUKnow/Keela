@@ -64,8 +64,6 @@ MainWindow::MainWindow(): Gtk::Window() {
 
     // Initialize recording settings here
     on_camera_spin_changed();
-    set_framerate();
-    set_resolution();
     gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
     show_all_children();
 }
