@@ -36,6 +36,12 @@ private:
 
 
     void on_range_check_toggled();
+
+    void on_rotation_changed() const;
+
+    void on_flip_horiz_changed() const;
+
+    void on_flip_vert_changed() const;
 };
 
 #define ROTATION_NONE "No_Rotation"

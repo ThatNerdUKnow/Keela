@@ -12,6 +12,8 @@
 CameraControlWindow::CameraControlWindow(const guint id) {
     this->id = id;
     spdlog::info("Creating {} for camera {}", __func__, id);
+
+    camera_manager = std::make_unique<Keela::CameraManager>(id, false);
     set_title("Image control for Camera " + std::to_string(id));
     set_default_size(640, 480);
     set_deletable(false);
@@ -37,6 +39,7 @@ CameraControlWindow::CameraControlWindow(const guint id) {
     container.add(gain_spin);
 
     // TODO: add rotation options
+    rotation_combo.m_combo.signal_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_rotation_changed));
     rotation_combo.m_combo.append(ROTATION_NONE, "---");
     rotation_combo.m_combo.append(ROTATION_90, "Rotate 90 degrees clockwise");
     rotation_combo.m_combo.append(ROTATION_180, "Rotate 180 degrees");
@@ -44,9 +47,10 @@ CameraControlWindow::CameraControlWindow(const guint id) {
     rotation_combo.m_combo.set_active_id(ROTATION_NONE);
 
     container.add(rotation_combo);
+    flip_horiz_check.signal_toggled().connect(sigc::mem_fun(*this, &CameraControlWindow::on_flip_horiz_changed));
     container.add(flip_horiz_check);
+    flip_vert_check.signal_toggled().connect(sigc::mem_fun(*this, &CameraControlWindow::on_flip_vert_changed));
     container.add(flip_vert_check);
-    camera_manager = std::make_unique<Keela::CameraManager>(id, false);
 
     // TODO: dynamically cast camera_manager->presentation to a WidgetElement to get a handle to a widget to add to the window
     container.add(fetch_image_button);
@@ -62,4 +66,30 @@ void CameraControlWindow::on_range_check_toggled() {
     const auto active = range_check.get_active();
     range_min_spin.set_sensitive(active);
     range_max_spin.set_sensitive(active);
+}
+
+void CameraControlWindow::on_rotation_changed() const {
+    // NOTE: this appears to mess with the caps of the video stream
+    const auto value = rotation_combo.m_combo.get_active_id();
+    if (value == ROTATION_NONE) {
+        camera_manager->transform.rotate_identity();
+    } else if (value == ROTATION_90) {
+        camera_manager->transform.rotate_90();
+    } else if (value == ROTATION_180) {
+        camera_manager->transform.rotate_180();
+    } else if (value == ROTATION_270) {
+        camera_manager->transform.rotate_270();
+    } else {
+        throw std::runtime_error(value + "is an invalid rotation");
+    }
+}
+
+void CameraControlWindow::on_flip_horiz_changed() const {
+    const auto value = flip_horiz_check.get_active();
+    camera_manager->transform.flip_horizontal(value);
+}
+
+void CameraControlWindow::on_flip_vert_changed() const {
+    const auto value = flip_vert_check.get_active();
+    camera_manager->transform.flip_vertical(value);
 }

@@ -8,6 +8,7 @@
 #include <spdlog/spdlog.h>
 
 #include "keela-pipeline/gst-helpers.h"
+#include "keela-pipeline/utils.h"
 
 Keela::TransformBin::TransformBin(): QueueBin() {
     spdlog::info("{}", __func__);
@@ -30,21 +31,70 @@ Keela::TransformBin::~TransformBin() {
     spdlog::debug(__func__);
 }
 
+void Keela::TransformBin::flip_horizontal(const bool apply_flip) const {
+    auto direction = apply_flip ? FLIP_HORIZONTAL : IDENTITY;
+    try {
+        const auto variant =
+                gst_enum_variant_by_nick(G_OBJECT(static_cast<GstElement *>(flip_h)), FLIP_PROP, direction);
+
+        g_object_set(flip_h, FLIP_PROP.c_str(), variant, nullptr);
+    } catch (const std::exception &e) {
+        spdlog::error("Could not set horizontal flip of transformbin: {}", e.what());
+        throw;
+    }
+}
+
+void Keela::TransformBin::flip_vertical(bool apply_flip) const {
+    auto direction = apply_flip ? FLIP_VERTICAL : IDENTITY;
+    try {
+        const auto variant =
+                gst_enum_variant_by_nick(G_OBJECT(static_cast<GstElement *>(flip_v)), FLIP_PROP, direction);
+
+        g_object_set(flip_v, FLIP_PROP.c_str(), variant, nullptr);
+    } catch (const std::exception &e) {
+        spdlog::error("Could not set vertical flip of transformbin: {}", e.what());
+        throw;
+    }
+}
+
+void Keela::TransformBin::rotate_identity() const {
+    rotate(IDENTITY);
+}
+
+void Keela::TransformBin::rotate_90() const {
+    rotate(ROTATE_90);
+}
+
+void Keela::TransformBin::rotate_180() const {
+    rotate(ROTATE_180);
+}
+
+void Keela::TransformBin::rotate_270() const {
+    rotate(ROTATE_270);
+}
+
+void Keela::TransformBin::rotate(const std::string &direction) const {
+    try {
+        const auto variant =
+                gst_enum_variant_by_nick(G_OBJECT(static_cast<GstElement *>(rotation)), FLIP_PROP, direction);
+
+        g_object_set(rotation, FLIP_PROP.c_str(), variant, nullptr);
+    } catch (const std::exception &e) {
+        spdlog::error("Could not set rotation of transformbin: {}", e.what());
+        throw;
+    }
+}
+
 void Keela::TransformBin::init() {
-    /*
-    scale = gst_element_factory_make("videoscale", nullptr);
-    if (!scale) {
-        throw std::runtime_error("Failed to initialize elements");
-    }*/
     auto variant = Keela::gst_enum_variant_by_nick(G_OBJECT(static_cast<GstElement*>(scale)), "method", "bilinear");
     g_object_set(scale, "method", variant, nullptr);
 }
 
 void Keela::TransformBin::link() {
     GstElement *b = *this;
-    add_elements(scale);
-    //gst_bin_add_many(GST_BIN(b), scale, nullptr);
-    //add_ghost_pad(scale, "sink");
+    add_elements(scale, rotation, flip_h, flip_v);
+    element_link_many(scale, rotation, flip_h, flip_v);
     link_queue(scale);
-    add_ghost_pad(scale, "src");
+
+    add_ghost_pad(flip_v, "src");
 }
