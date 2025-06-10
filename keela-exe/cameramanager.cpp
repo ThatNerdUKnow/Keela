@@ -55,4 +55,5 @@ void Keela::CameraManager::set_resolution(const int width, const int height) {
     base_caps = Caps(static_cast<GstCaps *>(base_caps));
     base_caps.set_resolution(width, height);
     g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
+    transform.scale(width, height);
 }

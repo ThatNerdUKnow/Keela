@@ -4,9 +4,10 @@
 
 #ifndef TRANSFORMBIN_H
 #define TRANSFORMBIN_H
+#include "caps.h"
 #include "queuebin.h"
 #include "simpleelement.h"
-#include "keela-pipeline/bin.h"
+#include "bin.h"
 
 namespace Keela {
     class TransformBin : public QueueBin {
@@ -33,6 +34,14 @@ namespace Keela {
         void rotate_180() const;
 
         void rotate_270() const;
+
+
+        /**
+         * scale video by 1/2 in each direction using the provided base resolution
+         * @param width base width
+         * @param height base height
+         */
+        void scale(int width, int height);
 
     private:
         const std::string IDENTITY = "identity";
@@ -65,7 +74,9 @@ namespace Keela {
 
         void link() override;
 
-        Keela::SimpleElement scale = SimpleElement("videoscale");
+        Keela::SimpleElement video_scale = SimpleElement("videoscale");
+        Keela::SimpleElement caps_filter = SimpleElement("capsfilter");
+        Keela::Caps caps;
         Keela::SimpleElement rotation = SimpleElement("videoflip");
         Keela::SimpleElement flip_h = SimpleElement("videoflip");
         Keela::SimpleElement flip_v = SimpleElement("videoflip");
