@@ -27,6 +27,7 @@ namespace Keela {
         SimpleElement caps_filter = SimpleElement("capsfilter");
         TransformBin transform = TransformBin("transform");
         PresentationBin presentation = PresentationBin("presentation");
+        SnapshotBin snapshot;
 
     private:
         guint id;
@@ -39,7 +40,6 @@ namespace Keela {
         Caps scaled_caps;
 
         SimpleElement tee = SimpleElement("tee");
-        SnapshotBin snapshot;
         SimpleElement auto_video_convert = SimpleElement("autovideoconvert");
     };
 }
