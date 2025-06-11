@@ -7,15 +7,14 @@
 #include <gstreamer-1.0/gst/gst.h>
 
 namespace Keela {
-
     /**
      * Base class to enable interchangable use of Keela::SimpleElement and Keela::Bin in a pipeline
      */
     class Element {
-        public:
+    public:
         virtual ~Element() = default;
 
-        virtual operator GstElement*() const = 0;
+        virtual operator GstElement *() const = 0;
     };
 }
 #endif //ELEMENTBASE_H

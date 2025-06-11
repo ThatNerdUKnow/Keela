@@ -24,7 +24,7 @@ namespace Keela {
     private:
         std::string name;
         Keela::SimpleElement enc = SimpleElement("x264enc");
-        Keela::SimpleElement mux = SimpleElement("mp4mux");
+        Keela::SimpleElement mux = SimpleElement("matroskamux");
         Keela::SimpleElement sink = SimpleElement("filesink");
     };
 }

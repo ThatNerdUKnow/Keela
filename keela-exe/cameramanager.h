@@ -10,6 +10,8 @@
 #include <keela-pipeline/presentationbin.h>
 #include <keela-pipeline/transformbin.h>
 
+#include "keela-pipeline/snapshotbin.h"
+
 namespace Keela {
     class CameraManager final : public Keela::Bin {
     public:
@@ -37,6 +39,7 @@ namespace Keela {
         Caps scaled_caps;
 
         SimpleElement tee = SimpleElement("tee");
+        SnapshotBin snapshot;
         SimpleElement auto_video_convert = SimpleElement("autovideoconvert");
     };
 }
