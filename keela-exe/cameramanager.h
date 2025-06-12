@@ -37,7 +37,7 @@ namespace Keela {
         Caps scaled_caps;
 
         SimpleElement tee = SimpleElement("tee");
-        SimpleElement auto_video_convert = SimpleElement("autovideoconvert");
+        SimpleElement auto_video_convert = SimpleElement("videoconvert");
     };
 }
 #endif //CAMERAMANAGER_H
