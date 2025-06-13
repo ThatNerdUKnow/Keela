@@ -10,6 +10,8 @@
 #include <keela-pipeline/presentationbin.h>
 #include <keela-pipeline/transformbin.h>
 
+#include "keela-pipeline/snapshotbin.h"
+
 namespace Keela {
     class CameraManager final : public Keela::Bin {
     public:
@@ -25,6 +27,7 @@ namespace Keela {
         SimpleElement caps_filter = SimpleElement("capsfilter");
         TransformBin transform = TransformBin("transform");
         PresentationBin presentation = PresentationBin("presentation");
+        SnapshotBin snapshot;
 
     private:
         guint id;

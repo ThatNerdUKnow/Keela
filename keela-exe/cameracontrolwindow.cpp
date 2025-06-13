@@ -53,6 +53,8 @@ CameraControlWindow::CameraControlWindow(const guint id) {
     container.add(flip_vert_check);
 
     // TODO: dynamically cast camera_manager->presentation to a WidgetElement to get a handle to a widget to add to the window
+    fetch_image_button.signal_clicked().connect(
+        sigc::mem_fun(camera_manager->snapshot, &Keela::SnapshotBin::take_snapshot));
     container.add(fetch_image_button);
     show_all_children();
     show();
