@@ -20,7 +20,7 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
     set_deletable(false);
     v_container.set_spacing(10);
     v_container.set_border_width(10);
-    h_container.add(v_container);
+    h_container.pack_start(v_container, false, false, 10);
     Window::add(h_container);
     const auto range_frame = Gtk::make_managed<Keela::FrameBox>("Range", Gtk::ORIENTATION_VERTICAL);
     range_check = Gtk::CheckButton("Range");
@@ -61,7 +61,9 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
 
     gl_area.set_size_request(640, 480);
     set_vexpand(false);
-    h_container.pack_end(gl_area, false, false, 10);
+    auto gl_bin = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
+    gl_bin->add(gl_area);
+    h_container.pack_start(*gl_bin, false, false, 10);
     show_all_children();
     show();
 }
@@ -78,7 +80,10 @@ void Keela::CameraControlWindow::on_range_check_toggled() {
 
 void Keela::CameraControlWindow::set_resolution(const int width, const int height) {
     this->camera_manager->set_resolution(width, height);
+    // TODO: can we set a minimum size or allow the user to scale the gl area themselves?
     gl_area.set_size_request(width, height);
+    // force the window to recalculate its size with respect to the size requests of its children
+    resize(1, 1);
 }
 
 void Keela::CameraControlWindow::on_rotation_changed() const {
