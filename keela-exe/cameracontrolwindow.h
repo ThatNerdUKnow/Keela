@@ -10,39 +10,45 @@
 
 #include "cameramanager.h"
 
-class CameraControlWindow final : public Gtk::Window {
-public:
-    explicit CameraControlWindow(guint id);
+namespace Keela {
+    class CameraControlWindow final : public Gtk::Window {
+    public:
+        explicit CameraControlWindow(guint id);
 
-    ~CameraControlWindow() override;
+        ~CameraControlWindow() override;
 
-    std::unique_ptr<Keela::CameraManager> camera_manager;
+        std::unique_ptr<Keela::CameraManager> camera_manager;
 
-private:
-    Gtk::Box container = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
-    Gtk::CheckButton range_check = Gtk::CheckButton("Range");
-    Keela::LabeledSpinButton range_min_spin = Keela::LabeledSpinButton("Minimum");
-    Keela::LabeledSpinButton range_max_spin = Keela::LabeledSpinButton("Maximum");
+        void set_resolution(int width, int height);
 
-    // TODO: histogram
-    Keela::LabeledSpinButton gain_spin = Keela::LabeledSpinButton("Gain");
+    private:
+        Gtk::Box h_container = Gtk::Box();
+        Gtk::Box v_container = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
+        Gtk::CheckButton range_check = Gtk::CheckButton("Range");
+        Keela::LabeledSpinButton range_min_spin = Keela::LabeledSpinButton("Minimum");
+        Keela::LabeledSpinButton range_max_spin = Keela::LabeledSpinButton("Maximum");
 
-    Keela::LabeledComboBoxText rotation_combo = Keela::LabeledComboBoxText("Select Rotation");
-    Gtk::CheckButton flip_horiz_check = Gtk::CheckButton("Flip Along Horizontal Center");
-    Gtk::CheckButton flip_vert_check = Gtk::CheckButton("Flip Along Vertical Center");
-    Gtk::Button fetch_image_button = Gtk::Button("Fetch Image");
+        // TODO: histogram
+        Keela::LabeledSpinButton gain_spin = Keela::LabeledSpinButton("Gain");
 
-    guint id;
+        Keela::LabeledComboBoxText rotation_combo = Keela::LabeledComboBoxText("Select Rotation");
+        Gtk::CheckButton flip_horiz_check = Gtk::CheckButton("Flip Along Horizontal Center");
+        Gtk::CheckButton flip_vert_check = Gtk::CheckButton("Flip Along Vertical Center");
+        Gtk::Button fetch_image_button = Gtk::Button("Fetch Image");
+        Gtk::GLArea gl_area;
+        guint id;
 
 
-    void on_range_check_toggled();
+        void on_range_check_toggled();
 
-    void on_rotation_changed() const;
 
-    void on_flip_horiz_changed() const;
+        void on_rotation_changed() const;
 
-    void on_flip_vert_changed() const;
-};
+        void on_flip_horiz_changed() const;
+
+        void on_flip_vert_changed() const;
+    };
+}
 
 #define ROTATION_NONE "No_Rotation"
 #define ROTATION_90 "Rotation_90"
