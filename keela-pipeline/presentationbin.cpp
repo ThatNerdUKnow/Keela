@@ -53,6 +53,8 @@ gpointer Keela::PresentationBin::get_widget() {
 }
 
 void Keela::PresentationBin::init() {
+    sink = std::make_shared<SimpleElement>("autovideosink");
+    /*
     try {
         sink = std::make_shared<GtkGlSink>();
     } catch (const std::exception &e) {
@@ -65,7 +67,7 @@ void Keela::PresentationBin::init() {
             spdlog::warn("falling back to autovideosink");
             sink = std::make_shared<SimpleElement>("autovideosink");
         }
-    }
+    }*/
 }
 
 void Keela::PresentationBin::link() {
