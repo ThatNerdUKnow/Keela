@@ -15,9 +15,10 @@ enable_testing()
 
 add_executable(keela-test main.cpp pipeline.cpp
         keela-exe.cpp
-        reference.cpp)
+        reference.cpp
+        widgets.cpp)
 
-target_link_libraries(keela-test PRIVATE libkeela GTest::gtest keela-pipeline PkgConfig::GSTREAMER)
+target_link_libraries(keela-test PRIVATE libkeela GTest::gtest keela-pipeline keela-widgets PkgConfig::GSTREAMER)
 
 include(GoogleTest)
 gtest_discover_tests(keela-test)

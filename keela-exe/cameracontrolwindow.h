@@ -9,6 +9,7 @@
 #include <keela-widgets/labeledcomboboxtext.h>
 
 #include "cameramanager.h"
+#include "keela-widgets/GLCameraRender.h"
 
 namespace Keela {
     class CameraControlWindow final : public Gtk::Window {
@@ -35,7 +36,8 @@ namespace Keela {
         Gtk::CheckButton flip_horiz_check = Gtk::CheckButton("Flip Along Horizontal Center");
         Gtk::CheckButton flip_vert_check = Gtk::CheckButton("Flip Along Vertical Center");
         Gtk::Button fetch_image_button = Gtk::Button("Fetch Image");
-        Gtk::GLArea gl_area;
+        //Gtk::GLArea gl_area;
+        Keela::GLCameraRender gl_area;
         guint id;
 
 
