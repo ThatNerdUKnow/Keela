@@ -19,11 +19,6 @@ namespace Keela {
 
     private:
         SimpleElement app_sink = SimpleElement("appsink");
-        SimpleElement app_source = SimpleElement("appsrc");
-        SimpleElement identity = SimpleElement("identity");
-        SimpleElement file_sink = SimpleElement("autovideosink");
-
-        static GstPadProbeReturn appsink_caps_changed(GstPad *pad, GstPadProbeInfo *info, SnapshotBin *usr);
 
         void init() override;
 
