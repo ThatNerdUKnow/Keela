@@ -78,7 +78,7 @@ void Keela::CameraControlWindow::on_range_check_toggled() {
 
 void Keela::CameraControlWindow::set_resolution(const int width, const int height) {
     this->camera_manager->set_resolution(width, height);
-    // do we need to resize the gl area?
+    gl_area.set_size_request(width, height);
 }
 
 void Keela::CameraControlWindow::on_rotation_changed() const {
