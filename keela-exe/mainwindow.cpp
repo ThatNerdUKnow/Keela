@@ -5,7 +5,7 @@
 #include "mainwindow.h"
 #include <keela-widgets/labeledspinbutton.h>
 #include <spdlog/spdlog.h>
-
+#include "cameracontrolwindow.h"
 #include "keela-widgets/framebox.h"
 
 MainWindow::MainWindow(): Gtk::Window() {
@@ -82,9 +82,9 @@ void MainWindow::on_camera_spin_changed() {
     if (next > curr) {
         for (guint i = curr; i < next; i++) {
             auto camera_id = i + 1;
-            auto c = std::make_unique<CameraControlWindow>(camera_id);
+            auto c = std::make_unique<Keela::CameraControlWindow>(camera_id);
             set_framerate(c->camera_manager.get());
-            set_resolution(c->camera_manager.get());
+            set_resolution(c.get());
             g_object_ref(static_cast<GstElement*>(*c->camera_manager));
             auto ret = gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
             if (!ret) {
@@ -167,13 +167,14 @@ void MainWindow::set_resolution() const {
     const auto w = data_matrix_w_spin.m_spin.get_value_as_int();
     const auto h = data_matrix_h_spin.m_spin.get_value_as_int();
     for (const auto &c: cameras) {
-        set_resolution(c->camera_manager.get());
-        c->camera_manager->set_resolution(w, h);
+        set_resolution(c.get());
+        //set_resolution(c->camera_manager.get());
+        //c->camera_manager->set_resolution(w, h);
     }
 }
 
-void MainWindow::set_resolution(Keela::CameraManager *m) const {
+void MainWindow::set_resolution(Keela::CameraControlWindow *c) const {
     const auto w = data_matrix_w_spin.m_spin.get_value_as_int();
     const auto h = data_matrix_h_spin.m_spin.get_value_as_int();
-    m->set_resolution(w, h);
+    c->set_resolution(w, h);
 }

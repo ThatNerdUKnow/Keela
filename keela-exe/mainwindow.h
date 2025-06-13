@@ -32,7 +32,7 @@ private:
     Gtk::CheckButton show_trace_check;
 
     Gtk::Box container;
-    std::vector<std::unique_ptr<CameraControlWindow> > cameras;
+    std::vector<std::unique_ptr<Keela::CameraControlWindow> > cameras;
 
     void on_camera_spin_changed();
 
@@ -46,7 +46,7 @@ private:
 
     void set_resolution() const;
 
-    void set_resolution(Keela::CameraManager *m) const;
+    void set_resolution(Keela::CameraControlWindow *c) const;
 
     bool is_recording = false;
 };
