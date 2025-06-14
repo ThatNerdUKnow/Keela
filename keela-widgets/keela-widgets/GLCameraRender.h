@@ -44,6 +44,7 @@ namespace Keela {
         unsigned int vertexShader;
         unsigned int fragmentShader;
         unsigned int shaderProgram;
+        unsigned int VAO;
     };
 }
 #endif //GLCAMERARENDER_H

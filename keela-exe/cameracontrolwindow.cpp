@@ -15,7 +15,6 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
 
     camera_manager = std::make_unique<Keela::CameraManager>(id, false);
     set_title("Image control for Camera " + std::to_string(id));
-    //set_default_size(640, 480);
     set_resizable(false);
     set_deletable(false);
     v_container.set_spacing(10);

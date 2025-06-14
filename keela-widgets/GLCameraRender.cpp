@@ -21,6 +21,9 @@ void Keela::GLCameraRender::on_realize() {
         throw std::runtime_error("Failed to load OpenGL symbols");
     }
 
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,GL_STATIC_DRAW);
@@ -76,6 +79,7 @@ void Keela::GLCameraRender::on_realize() {
 
 bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &context) {
     glUseProgram(shaderProgram);
-
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
     return GLArea::on_render(context);
 }
