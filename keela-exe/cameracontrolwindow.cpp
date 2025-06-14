@@ -6,7 +6,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include <keela-pipeline/widgetelement.h>
 #include <keela-widgets/framebox.h>
 
 Keela::CameraControlWindow::CameraControlWindow(const guint id) {

@@ -4,14 +4,48 @@
 
 #include "keela-widgets/GLCameraRender.h"
 #include <glad/glad.h>
-
-#include "keela-widgets/shader-resources.h"
+#include <gio/gio.h>
+#include <spdlog/spdlog.h>
 
 Keela::GLCameraRender::GLCameraRender() {
-    //g_resources_register(shader_resources_get_resource());
+    GError *error = nullptr;
+    spdlog::debug("Loading vertex shader resource");
+    auto vertex_res = g_resources_lookup_data("/org/gatech/keela/shaders/hello-triangle-vertex.glsl",
+                                              G_RESOURCE_LOOKUP_FLAGS_NONE, &error);
+    if (!vertex_res && !error) {
+        std::stringstream ss;
+        ss << "Could not load vertex shader resource: " << error->message;
+        throw std::runtime_error(ss.str());
+    }
+    spdlog::debug("Loading fragment shader resource");
+    auto fragment_res = g_resources_lookup_data("/org/gatech/keela/shaders/hello-triangle-fragment.glsl",
+                                                G_RESOURCE_LOOKUP_FLAGS_NONE, &error);
+    if (!fragment_res && !error) {
+        std::stringstream ss;
+        ss << "Could not load fragment shader resource: " << error->message;
+        throw std::runtime_error(ss.str());
+    }
+
+    auto vertex_shader_size = g_bytes_get_size(vertex_res);
+    auto vertex_shader_data = g_bytes_get_data(vertex_res, &vertex_shader_size);
+    auto vertex_shader_dup = g_strndup(static_cast<const gchar *>(vertex_shader_data), vertex_shader_size);
+
+    vertexShaderSource = std::string(vertex_shader_dup);
+    // uncommenting these appear to crash the program. it's somewhat unclear who owns these
+    g_bytes_unref(vertex_res);
+    g_free(vertex_shader_dup);
+
+    auto frag_shader_size = g_bytes_get_size(fragment_res);
+    auto frag_shader_data = g_bytes_get_data(fragment_res, &frag_shader_size);
+    auto frag_shader_dup = g_strndup(static_cast<const gchar *>(frag_shader_data), frag_shader_size);
+
+    fragmentShaderSource = std::string(frag_shader_dup);
+    g_bytes_unref(fragment_res);
+    g_free(frag_shader_dup);
 }
 
 Keela::GLCameraRender::~GLCameraRender() {
+    spdlog::debug(__func__);
 }
 
 void Keela::GLCameraRender::on_realize() {
@@ -43,6 +77,7 @@ void Keela::GLCameraRender::on_realize() {
         glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
         std::stringstream ss;
         ss << "Vertex shader compilation failed: " << infoLog;
+        spdlog::error("error in vertex shader\n{}", vertexShaderSource);
         throw std::runtime_error(ss.str());
     }
 
@@ -56,6 +91,7 @@ void Keela::GLCameraRender::on_realize() {
         glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
         std::stringstream ss;
         ss << "Fragment shader compilation failed: " << infoLog;
+        spdlog::error("error in fragment shader\n{}", fragmentShaderSource);
         throw std::runtime_error(ss.str());
     }
 

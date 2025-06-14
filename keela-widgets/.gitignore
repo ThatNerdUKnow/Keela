@@ -1,2 +1,2 @@
 ./shader-resources.c
-./shaders/shader-resources.h
+./shaders/shader-resources_raw.h
