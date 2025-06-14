@@ -65,8 +65,17 @@ void Keela::GLCameraRender::on_realize() {
         ss << "Program linking failed: " << infoLog;
         throw std::runtime_error(ss.str());
     }
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    // linking vertex attributes
+    // ReSharper disable once CppZeroConstantCanBeReplacedWithNullptr
+    glVertexAttribPointer(0, 3,GL_FLOAT,GL_FALSE, 3 * sizeof(float), static_cast<void *>(0));
+    glEnableVertexAttribArray(0);
 }
 
 bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &context) {
+    glUseProgram(shaderProgram);
+
     return GLArea::on_render(context);
 }
