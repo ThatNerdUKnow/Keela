@@ -5,7 +5,10 @@
 #include "keela-widgets/GLCameraRender.h"
 #include <glad/glad.h>
 
+#include "keela-widgets/shader-resources.h"
+
 Keela::GLCameraRender::GLCameraRender() {
+    //g_resources_register(shader_resources_get_resource());
 }
 
 Keela::GLCameraRender::~GLCameraRender() {
