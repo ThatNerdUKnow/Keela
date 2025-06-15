@@ -110,15 +110,24 @@ void Keela::GLCameraRender::on_realize() {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    // linking vertex attributes
-    // ReSharper disable once CppZeroConstantCanBeReplacedWithNullptr
-    glVertexAttribPointer(0, 3,GL_FLOAT,GL_FALSE, 3 * sizeof(float), static_cast<void *>(0));
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
+    // color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 }
 
 bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &context) {
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);
+
+    float greenValue = (1) / 2.0f + 0.5f;
+    int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+    glUseProgram(shaderProgram);
+    glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
     glDrawArrays(GL_TRIANGLES, 0, 3);
+
     return GLArea::on_render(context);
 }

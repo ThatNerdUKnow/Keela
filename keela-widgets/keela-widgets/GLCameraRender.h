@@ -19,12 +19,6 @@ namespace Keela {
         bool on_render(const Glib::RefPtr<Gdk::GLContext> &context) override;
 
     private:
-        float vertices[9] = {
-            -0.5f, -0.5f, 0.0f,
-            0.5f, -0.5f, 0.0f,
-            0.0f, 0.5f, 0.0f
-        };
-
         std::string vertexShaderSource;
         std::string fragmentShaderSource;
 
@@ -33,6 +27,13 @@ namespace Keela {
         unsigned int fragmentShader;
         unsigned int shaderProgram;
         unsigned int VAO;
+
+        float vertices[18] = {
+            // positions        // colors
+            -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+            0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f
+        };
     };
 }
 #endif //GLCAMERARENDER_H
