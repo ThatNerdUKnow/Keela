@@ -127,7 +127,7 @@ bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &contex
     glUseProgram(shaderProgram);
     glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
     return GLArea::on_render(context);
 }

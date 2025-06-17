@@ -28,11 +28,14 @@ namespace Keela {
         unsigned int shaderProgram;
         unsigned int VAO;
 
-        float vertices[18] = {
+        float vertices[36] = {
             // positions        // colors
-            -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-            0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f
+            1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+            1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+            1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f
         };
     };
 }
