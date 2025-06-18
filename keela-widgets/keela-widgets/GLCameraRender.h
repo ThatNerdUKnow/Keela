@@ -34,12 +34,12 @@ namespace Keela {
         unsigned int texture;
         std::shared_ptr<PresentationBin> bin;
         float vertices[24] = {
-            -1, -1, 0, 0,
-            1, 1, 1, 1,
-            -1, 1, 0, 1,
-            1, -1, 1, 0,
-            1, 1, 1, 1,
-            -1, -1, 0, 0
+            -1, -1, 0, 1,
+            1, 1, 1, 0,
+            -1, 1, 0, 0,
+            1, -1, 1, 1,
+            1, 1, 1, 0,
+            -1, -1, 0, 1
         };
     };
 }
