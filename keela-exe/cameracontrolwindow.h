@@ -37,7 +37,8 @@ namespace Keela {
         Gtk::CheckButton flip_vert_check = Gtk::CheckButton("Flip Along Vertical Center");
         Gtk::Button fetch_image_button = Gtk::Button("Fetch Image");
         //Gtk::GLArea gl_area;
-        Keela::GLCameraRender gl_area;
+        std::unique_ptr<Keela::GLCameraRender> gl_area;
+        //Keela::GLCameraRender gl_area;
         guint id;
 
 

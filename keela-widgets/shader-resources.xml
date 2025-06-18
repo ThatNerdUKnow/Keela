@@ -9,5 +9,6 @@
         <file>hello-triangle-fragment.glsl</file>
         <file>hello-triangle-vertex.glsl</file>
         <file>video-vertex.glsl</file>
+        <file>video-fragment.glsl</file>
     </gresource>
 </gresources>

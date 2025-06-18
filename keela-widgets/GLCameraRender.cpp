@@ -7,10 +7,13 @@
 #include <gio/gio.h>
 #include <spdlog/spdlog.h>
 
-Keela::GLCameraRender::GLCameraRender() {
+#include <utility>
+#include <glibmm/main.h>
+
+Keela::GLCameraRender::GLCameraRender(std::shared_ptr<PresentationBin> bin) {
     GError *error = nullptr;
     spdlog::debug("Loading vertex shader resource");
-    auto vertex_res = g_resources_lookup_data("/org/gatech/keela/shaders/hello-triangle-vertex.glsl",
+    auto vertex_res = g_resources_lookup_data("/org/gatech/keela/shaders/video-vertex.glsl",
                                               G_RESOURCE_LOOKUP_FLAGS_NONE, &error);
     if (!vertex_res && !error) {
         std::stringstream ss;
@@ -18,7 +21,7 @@ Keela::GLCameraRender::GLCameraRender() {
         throw std::runtime_error(ss.str());
     }
     spdlog::debug("Loading fragment shader resource");
-    auto fragment_res = g_resources_lookup_data("/org/gatech/keela/shaders/hello-triangle-fragment.glsl",
+    auto fragment_res = g_resources_lookup_data("/org/gatech/keela/shaders/video-fragment.glsl",
                                                 G_RESOURCE_LOOKUP_FLAGS_NONE, &error);
     if (!fragment_res && !error) {
         std::stringstream ss;
@@ -42,11 +45,40 @@ Keela::GLCameraRender::GLCameraRender() {
     fragmentShaderSource = std::string(frag_shader_dup);
     g_bytes_unref(fragment_res);
     g_free(frag_shader_dup);
+    this->bin = std::move(bin);
+    Glib::signal_timeout().connect(sigc::mem_fun(this, &GLCameraRender::on_timeout), 16);
 }
 
 Keela::GLCameraRender::~GLCameraRender() {
     spdlog::debug(__func__);
 }
+
+void Keela::GLCameraRender::new_tex_sample(GstSample *sample) {
+    assert(sample != nullptr);
+    auto buf = gst_sample_get_buffer(sample);
+    assert(buf != nullptr);
+
+    auto caps = gst_sample_get_caps(sample);
+    assert(caps != nullptr);
+
+    auto structure = gst_caps_get_structure(caps, 0);
+    assert(structure != nullptr);
+
+    gint width, height;
+    assert(gst_structure_get_int(structure, "width", &width));
+    assert(gst_structure_get_int(structure, "height", &height));
+    spdlog::trace("New tex sample width: {} height: {}", width, height);
+    GstMapInfo mapInfo;
+    if (gst_buffer_map(buf, &mapInfo, GST_MAP_READ)) {
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D, 0,GL_RED, width, height, 0,GL_RED,GL_UNSIGNED_BYTE, mapInfo.data);
+
+        gst_buffer_unmap(buf, &mapInfo);
+    } else {
+        throw std::runtime_error("Could not map sample buffer");
+    }
+}
+
 
 void Keela::GLCameraRender::on_realize() {
     // stateful nonsense
@@ -111,11 +143,19 @@ void Keela::GLCameraRender::on_realize() {
     glDeleteShader(fragmentShader);
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) 0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
     // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    // set nearest neighbors interpolation
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    guint8 tex[] = {255, 255, 255};
+    //glTexImage2D(GL_TEXTURE_2D, 0,GL_RED, 1, 1, 0,GL_RED,GL_UNSIGNED_BYTE, &tex);
 }
 
 bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &context) {
@@ -124,10 +164,27 @@ bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &contex
 
     float greenValue = (1) / 2.0f + 0.5f;
     int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+
+    // check for a new sample
+    GstSample *sample = nullptr;
+
+
+    g_signal_emit_by_name(bin->sink, "try-pull-sample", 0, &sample, nullptr);
+    if (sample) {
+        new_tex_sample(sample);
+    }
+
     glUseProgram(shaderProgram);
-    glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glUniform1i(glGetUniformLocation(shaderProgram, "videoTexture"), 0);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     return GLArea::on_render(context);
+}
+
+bool Keela::GLCameraRender::on_timeout() {
+    queue_render();
+    return true;
 }

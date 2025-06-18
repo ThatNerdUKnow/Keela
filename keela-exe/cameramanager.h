@@ -26,7 +26,7 @@ namespace Keela {
         SimpleElement camera;
         SimpleElement caps_filter = SimpleElement("capsfilter");
         TransformBin transform = TransformBin("transform");
-        PresentationBin presentation = PresentationBin("presentation");
+        std::shared_ptr<PresentationBin> presentation = std::make_shared<PresentationBin>("presentation");
         SnapshotBin snapshot;
 
     private:
