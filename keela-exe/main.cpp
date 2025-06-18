@@ -7,6 +7,7 @@
 #include <keela-widgets/shader-resources.h>
 
 int main(int argc, char **argv) {
+    spdlog::set_level(spdlog::level::trace);
     spdlog::info("Registering shader resources");
     g_resources_register(shader_resources_get_resource());
     spdlog::info("Creating app");

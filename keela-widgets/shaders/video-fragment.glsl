@@ -8,5 +8,5 @@ uniform sampler2D videoTexture;
 
 void main() {
     // for now blending texture with calculated color so I can see if shaders are broken
-    FragColor = position + texture(videoTexture, texCoord);
+    FragColor = vec4(texture(videoTexture, texCoord).xxx, 1.0);
 }

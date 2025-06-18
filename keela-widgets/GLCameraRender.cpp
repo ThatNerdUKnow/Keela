@@ -65,11 +65,12 @@ void Keela::GLCameraRender::new_tex_sample(GstSample *sample) {
     gint width, height;
     assert(gst_structure_get_int(structure, "width", &width));
     assert(gst_structure_get_int(structure, "height", &height));
+    spdlog::trace("New tex sample width: {} height: {}", width, height);
     GstMapInfo mapInfo;
     if (gst_buffer_map(buf, &mapInfo, GST_MAP_READ)) {
-        std::scoped_lock lock(tex_lock);
         glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0,GL_R8, width, height, 0,GL_R8,GL_UNSIGNED_BYTE, mapInfo.data);
+        glTexImage2D(GL_TEXTURE_2D, 0,GL_RED, width, height, 0,GL_RED,GL_UNSIGNED_BYTE, mapInfo.data);
+
         gst_buffer_unmap(buf, &mapInfo);
     } else {
         throw std::runtime_error("Could not map sample buffer");
@@ -146,15 +147,13 @@ void Keela::GLCameraRender::on_realize() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // introduce a scope when we're doing texture stuff
-    {
-        std::scoped_lock lock(tex_lock);
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        // set nearest neighbors interpolation
-        glTexParameteri(GL_TEXTURE_1D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-    }
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    // set nearest neighbors interpolation
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    guint8 tex[] = {255, 255, 255};
+    //glTexImage2D(GL_TEXTURE_2D, 0,GL_RED, 1, 1, 0,GL_RED,GL_UNSIGNED_BYTE, &tex);
 }
 
 bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &context) {
@@ -164,14 +163,19 @@ bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &contex
     float greenValue = (1) / 2.0f + 0.5f;
     int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
 
-    // wait until tex_lock is ready
-    {
-        std::scoped_lock lock(tex_lock);
-        glBindTexture(GL_TEXTURE_2D, texture);
+    // check for a new sample
+    GstSample *sample = nullptr;
+
+
+    g_signal_emit_by_name(bin->sink, "try-pull-sample", 0, &sample, nullptr);
+    if (sample) {
+        new_tex_sample(sample);
     }
+
     glUseProgram(shaderProgram);
-    //glTexImage2D(GL_TEXTURE_2D, GL_R8, width, height, 0,GL_R8,GL_UNSIGNED_BYTE, data);
-    //glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glUniform1i(glGetUniformLocation(shaderProgram, "videoTexture"), 0);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 

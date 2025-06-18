@@ -31,7 +31,6 @@ namespace Keela {
         unsigned int fragmentShader;
         unsigned int shaderProgram;
         unsigned int VAO;
-        std::mutex tex_lock;
         unsigned int texture;
         std::shared_ptr<PresentationBin> bin;
         float vertices[24] = {
