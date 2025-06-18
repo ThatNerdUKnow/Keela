@@ -8,6 +8,7 @@
 #include <spdlog/spdlog.h>
 
 #include <utility>
+#include <glibmm/main.h>
 
 Keela::GLCameraRender::GLCameraRender(std::shared_ptr<PresentationBin> bin) {
     GError *error = nullptr;
@@ -45,6 +46,7 @@ Keela::GLCameraRender::GLCameraRender(std::shared_ptr<PresentationBin> bin) {
     g_bytes_unref(fragment_res);
     g_free(frag_shader_dup);
     this->bin = std::move(bin);
+    Glib::signal_timeout().connect(sigc::mem_fun(this, &GLCameraRender::on_timeout), 16);
 }
 
 Keela::GLCameraRender::~GLCameraRender() {
@@ -180,4 +182,9 @@ bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &contex
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     return GLArea::on_render(context);
+}
+
+bool Keela::GLCameraRender::on_timeout() {
+    queue_render();
+    return true;
 }

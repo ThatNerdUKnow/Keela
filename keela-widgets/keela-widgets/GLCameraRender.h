@@ -26,6 +26,8 @@ namespace Keela {
         std::string vertexShaderSource;
         std::string fragmentShaderSource;
 
+        bool on_timeout();
+
         unsigned int VBO;
         unsigned int vertexShader;
         unsigned int fragmentShader;

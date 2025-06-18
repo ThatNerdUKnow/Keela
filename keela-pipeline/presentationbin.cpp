@@ -43,7 +43,7 @@ void Keela::PresentationBin::set_presentation_framerate(const guint framerate) {
 }
 
 void Keela::PresentationBin::init() {
-    g_object_set(sink, "max-buffers", 50, nullptr);
+    g_object_set(sink, "max-buffers", 1, nullptr);
     g_object_set(sink, "drop", true, nullptr);
 }
 
