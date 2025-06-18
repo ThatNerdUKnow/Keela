@@ -21,7 +21,9 @@ namespace Keela {
 
         void set_presentation_framerate(guint framerate);
 
-        gpointer get_widget();
+        //gpointer get_widget();
+
+        Keela::SimpleElement sink = SimpleElement("appsink");
 
     private:
         void init() override;
@@ -33,7 +35,6 @@ namespace Keela {
         /// Controls the target presentation framerate
         Keela::SimpleElement caps_filter = SimpleElement("capsfilter");
         Keela::Caps presentation_caps = Caps();
-        std::shared_ptr<Keela::Element> sink;
     };
 }
 #endif //PRESENTATIONBIN_H

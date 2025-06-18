@@ -7,10 +7,12 @@
 #include <gio/gio.h>
 #include <spdlog/spdlog.h>
 
-Keela::GLCameraRender::GLCameraRender() {
+#include <utility>
+
+Keela::GLCameraRender::GLCameraRender(std::shared_ptr<PresentationBin> bin) {
     GError *error = nullptr;
     spdlog::debug("Loading vertex shader resource");
-    auto vertex_res = g_resources_lookup_data("/org/gatech/keela/shaders/hello-triangle-vertex.glsl",
+    auto vertex_res = g_resources_lookup_data("/org/gatech/keela/shaders/video-vertex.glsl",
                                               G_RESOURCE_LOOKUP_FLAGS_NONE, &error);
     if (!vertex_res && !error) {
         std::stringstream ss;
@@ -18,7 +20,7 @@ Keela::GLCameraRender::GLCameraRender() {
         throw std::runtime_error(ss.str());
     }
     spdlog::debug("Loading fragment shader resource");
-    auto fragment_res = g_resources_lookup_data("/org/gatech/keela/shaders/hello-triangle-fragment.glsl",
+    auto fragment_res = g_resources_lookup_data("/org/gatech/keela/shaders/video-fragment.glsl",
                                                 G_RESOURCE_LOOKUP_FLAGS_NONE, &error);
     if (!fragment_res && !error) {
         std::stringstream ss;
@@ -42,11 +44,38 @@ Keela::GLCameraRender::GLCameraRender() {
     fragmentShaderSource = std::string(frag_shader_dup);
     g_bytes_unref(fragment_res);
     g_free(frag_shader_dup);
+    this->bin = std::move(bin);
 }
 
 Keela::GLCameraRender::~GLCameraRender() {
     spdlog::debug(__func__);
 }
+
+void Keela::GLCameraRender::new_tex_sample(GstSample *sample) {
+    assert(sample != nullptr);
+    auto buf = gst_sample_get_buffer(sample);
+    assert(buf != nullptr);
+
+    auto caps = gst_sample_get_caps(sample);
+    assert(caps != nullptr);
+
+    auto structure = gst_caps_get_structure(caps, 0);
+    assert(structure != nullptr);
+
+    gint width, height;
+    assert(gst_structure_get_int(structure, "width", &width));
+    assert(gst_structure_get_int(structure, "height", &height));
+    GstMapInfo mapInfo;
+    if (gst_buffer_map(buf, &mapInfo, GST_MAP_READ)) {
+        std::scoped_lock lock(tex_lock);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D, 0,GL_R8, width, height, 0,GL_R8,GL_UNSIGNED_BYTE, mapInfo.data);
+        gst_buffer_unmap(buf, &mapInfo);
+    } else {
+        throw std::runtime_error("Could not map sample buffer");
+    }
+}
+
 
 void Keela::GLCameraRender::on_realize() {
     // stateful nonsense
@@ -111,11 +140,21 @@ void Keela::GLCameraRender::on_realize() {
     glDeleteShader(fragmentShader);
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) 0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
     // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    // introduce a scope when we're doing texture stuff
+    {
+        std::scoped_lock lock(tex_lock);
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        // set nearest neighbors interpolation
+        glTexParameteri(GL_TEXTURE_1D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    }
 }
 
 bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &context) {
@@ -124,8 +163,15 @@ bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &contex
 
     float greenValue = (1) / 2.0f + 0.5f;
     int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+
+    // wait until tex_lock is ready
+    {
+        std::scoped_lock lock(tex_lock);
+        glBindTexture(GL_TEXTURE_2D, texture);
+    }
     glUseProgram(shaderProgram);
-    glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+    //glTexImage2D(GL_TEXTURE_2D, GL_R8, width, height, 0,GL_R8,GL_UNSIGNED_BYTE, data);
+    //glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 

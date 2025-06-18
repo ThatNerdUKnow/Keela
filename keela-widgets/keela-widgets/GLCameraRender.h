@@ -5,13 +5,17 @@
 #ifndef GLCAMERARENDER_H
 #define GLCAMERARENDER_H
 #include <gtkmm/glarea.h>
+#include <gstreamer-1.0/gst/gst.h>
+#include <keela-pipeline/presentationbin.h>
 
 namespace Keela {
     class GLCameraRender final : public Gtk::GLArea {
     public:
-        GLCameraRender();
+        GLCameraRender(std::shared_ptr<PresentationBin> bin);
 
         ~GLCameraRender() override;
+
+        void new_tex_sample(GstSample *sample);
 
     protected:
         void on_realize() override;
@@ -27,15 +31,16 @@ namespace Keela {
         unsigned int fragmentShader;
         unsigned int shaderProgram;
         unsigned int VAO;
-
-        float vertices[36] = {
-            // positions        // colors
-            1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-            1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-            -1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-            1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-            -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f
+        std::mutex tex_lock;
+        unsigned int texture;
+        std::shared_ptr<PresentationBin> bin;
+        float vertices[24] = {
+            -1, -1, 0, 0,
+            1, 1, 1, 1,
+            -1, 1, 0, 1,
+            1, -1, 1, 0,
+            1, 1, 1, 1,
+            -1, -1, 0, 0
         };
     };
 }
