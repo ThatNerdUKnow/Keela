@@ -45,11 +45,14 @@ namespace Keela {
         void on_range_check_toggled();
 
 
-        void on_rotation_changed() const;
+        void on_rotation_changed();
 
         void on_flip_horiz_changed() const;
 
         void on_flip_vert_changed() const;
+
+        // set width and height initially to a sentinel value
+        int m_width = -1, m_height = -1;
     };
 }
 

@@ -78,14 +78,23 @@ void Keela::CameraControlWindow::on_range_check_toggled() {
 }
 
 void Keela::CameraControlWindow::set_resolution(const int width, const int height) {
+    spdlog::trace("resolution changed");
     this->camera_manager->set_resolution(width, height);
     // TODO: can we set a minimum size or allow the user to scale the gl area themselves?
-    gl_area->set_size_request(width, height);
+    const auto rotation = rotation_combo.m_combo.get_active_id();
+    if (rotation == ROTATION_90 || rotation == ROTATION_270) {
+        gl_area->set_size_request(height, width);
+    } else {
+        gl_area->set_size_request(width, height);
+    }
+    m_width = width;
+    m_height = height;
     // force the window to recalculate its size with respect to the size requests of its children
     resize(1, 1);
 }
 
-void Keela::CameraControlWindow::on_rotation_changed() const {
+void Keela::CameraControlWindow::on_rotation_changed() {
+    spdlog::trace("rotation changed");
     // NOTE: this appears to mess with the caps of the video stream
     const auto value = rotation_combo.m_combo.get_active_id();
     if (value == ROTATION_NONE) {
@@ -98,6 +107,11 @@ void Keela::CameraControlWindow::on_rotation_changed() const {
         camera_manager->transform.rotate_270();
     } else {
         throw std::runtime_error(value + "is an invalid rotation");
+    }
+    if (m_width > 0 && m_height > 0) {
+        set_resolution(m_width, m_height);
+    } else {
+        spdlog::warn("Skipping resolution change - resolution not initialized");
     }
 }
 
