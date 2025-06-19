@@ -6,5 +6,6 @@
 #include <keela-widgets/GLCameraRender.h>
 
 TEST(KeelaWidgets, ConstructGLCameraRender) {
-    auto c = Keela::GLCameraRender();
+    auto bin = std::make_shared<Keela::PresentationBin>();
+    auto c = Keela::GLCameraRender(bin);
 }
