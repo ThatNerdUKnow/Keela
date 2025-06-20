@@ -10,6 +10,8 @@
 
 #include <keela-pipeline/utils.h>
 
+#include "keela-pipeline/recordbin.h"
+
 Keela::CameraManager::CameraManager(guint id, bool split_streams): Bin("camera_" + std::to_string(id)),
                                                                    camera("videotestsrc") {
     try {
@@ -58,4 +60,21 @@ void Keela::CameraManager::set_resolution(const int width, const int height) {
     base_caps.set_resolution(width, height);
     g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
     transform.scale(width, height);
+}
+
+void Keela::CameraManager::set_experiment_directory(const std::string &path) {
+    experiment_directory = path;
+}
+
+void Keela::CameraManager::start_recording() {
+    RecordBin record_bin;
+    std::stringstream ss;
+    ss << this->experiment_directory << "\\cam_" << std::to_string(this->id) << ".mkv";
+    record_bin.set_directory(ss.str());
+    add_elements(record_bin);
+    assert(gst_element_sync_state_with_parent(record_bin));
+    element_link_many(tee, record_bin);
+}
+
+void Keela::CameraManager::stop_recording() {
 }

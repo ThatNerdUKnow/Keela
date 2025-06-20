@@ -16,12 +16,15 @@ namespace Keela {
 
         RecordBin();
 
+        void set_directory(const std::string &full_filename);
+
         ~RecordBin() override;
 
     private:
         void link() override;
 
-    private:
+        void init() override;
+
         std::string name;
         Keela::SimpleElement enc = SimpleElement("x264enc");
         Keela::SimpleElement mux = SimpleElement("matroskamux");

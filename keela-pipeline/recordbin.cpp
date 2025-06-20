@@ -12,6 +12,7 @@ using namespace spdlog;
 
 Keela::RecordBin::RecordBin(const std::string &name): QueueBin(name) {
     spdlog::info("{}", __func__);
+    RecordBin::init();
     gboolean ret = false;
 
     ret = gst_object_set_name(GST_OBJECT(static_cast<GstElement*>(this->enc)), (name + "_enc").c_str());
@@ -29,9 +30,21 @@ void Keela::RecordBin::link() {
     link_queue(enc);
 }
 
+void Keela::RecordBin::init() {
+    g_object_set(enc, "quantizer", 0, nullptr);
+    auto variant = gst_enum_variant_by_nick(G_OBJECT(static_cast<GstElement *>(enc)), "pass", "quant");
+    g_object_set(enc, "pass", variant);
+}
+
 Keela::RecordBin::RecordBin(): QueueBin() {
     spdlog::info("{}", __func__);
+    RecordBin::init();
     RecordBin::link();
+}
+
+void Keela::RecordBin::set_directory(const std::string &full_filename) {
+    // try not to call this method once recording has started
+    g_object_set(sink, "location", full_filename.c_str(), nullptr);
 }
 
 Keela::RecordBin::~RecordBin() {

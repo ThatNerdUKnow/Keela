@@ -23,6 +23,12 @@ namespace Keela {
 
         void set_resolution(int width, int height);
 
+        void set_experiment_directory(const std::string &path);
+
+        void start_recording();
+
+        void stop_recording();
+
         SimpleElement camera;
         SimpleElement caps_filter = SimpleElement("capsfilter");
         TransformBin transform = TransformBin("transform");
@@ -38,6 +44,9 @@ namespace Keela {
 
         // caps filter determining the stream caps after scaling
         Caps scaled_caps;
+
+        // for now, experiment directory will be set to my temp directory until I figure out gtk file dialogs
+        std::string experiment_directory = "C:\\temp";
 
         SimpleElement tee = SimpleElement("tee");
         SimpleElement auto_video_convert = SimpleElement("videoconvert");
