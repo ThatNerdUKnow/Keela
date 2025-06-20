@@ -35,7 +35,7 @@ Keela::SimpleElement::SimpleElement(const std::string &element, const std::strin
 Keela::SimpleElement::operator struct _GstElement *() const {
     if (m_element) {
         const gchar *tname = g_type_name(G_OBJECT_TYPE(m_element.get()));
-        const gchar *name = gst_element_get_name(m_element.get());
+        const gchar *name = GST_ELEMENT_NAME(m_element.get());
         if (!name) {
             spdlog::trace("{} Type name {}", __func__, tname);
         } else {
