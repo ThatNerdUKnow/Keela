@@ -88,9 +88,11 @@ GstPadProbeReturn Keela::CameraManager::pad_block_callback(GstPad *pad, GstPadPr
     auto recordbin = static_cast<std::shared_ptr<RecordBin> *>(user_data);
     gst_pad_remove_probe(pad, GST_PAD_PROBE_INFO_ID(info));
 
-    auto filesinkpad = gst_element_get_static_pad((*recordbin)->sink, "sink");
-    gst_pad_add_probe(filesinkpad, GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM, event_callback, user_data, nullptr);
-    g_object_unref(filesinkpad);
+    auto file_sink_pad = gst_element_get_static_pad((*recordbin)->sink, "sink");
+    auto copy_recordbin = new std::shared_ptr<RecordBin>(*recordbin);
+    gst_pad_add_probe(file_sink_pad, GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM, event_callback, copy_recordbin, nullptr);
+    g_object_unref(file_sink_pad);
+    delete recordbin;
     return GST_PAD_PROBE_OK;
 }
 
@@ -104,8 +106,9 @@ GstPadProbeReturn Keela::CameraManager::event_callback(GstPad *pad, GstPadProbeI
 
     gst_element_set_state(**recordbin, GST_STATE_NULL);
     auto parent = GST_ELEMENT_PARENT(static_cast<GstElement*>(**recordbin));
-    // because
+    // because recordbin is supposed to be inside a pipeline, it should have a parent
     assert(parent != nullptr);
     gst_bin_remove(GST_BIN(parent), **recordbin);
+    delete recordbin;
     return GST_PAD_PROBE_DROP;
 }
