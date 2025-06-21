@@ -4,13 +4,15 @@
 
 #ifndef CAMERAMANAGER_H
 #define CAMERAMANAGER_H
+#include <set>
 #include <keela-pipeline/bin.h>
 #include <keela-pipeline/simpleelement.h>
 #include <keela-pipeline/caps.h>
 #include <keela-pipeline/presentationbin.h>
 #include <keela-pipeline/transformbin.h>
 
-#include "keela-pipeline/snapshotbin.h"
+#include <keela-pipeline/recordbin.h>
+#include <keela-pipeline/snapshotbin.h>
 
 namespace Keela {
     class CameraManager final : public Keela::Bin {
@@ -50,6 +52,15 @@ namespace Keela {
 
         SimpleElement tee = SimpleElement("tee");
         SimpleElement auto_video_convert = SimpleElement("videoconvert");
+
+        /// at any moment there may be many active record bins
+        std::set<std::shared_ptr<RecordBin> > record_bins;
+
+        /// callback unlinks recordbin, sends EOS on its src, then installs an EOS event callback to clean up the remaining data
+        static GstPadProbeReturn pad_block_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
+
+        /// callback cleans up any remaining data from the recordbin and removes it from the pipeline
+        static GstPadProbeReturn event_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     };
 }
 #endif //CAMERAMANAGER_H

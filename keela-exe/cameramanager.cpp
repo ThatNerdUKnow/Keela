@@ -67,14 +67,45 @@ void Keela::CameraManager::set_experiment_directory(const std::string &path) {
 }
 
 void Keela::CameraManager::start_recording() {
-    RecordBin record_bin;
+    std::shared_ptr<RecordBin> record_bin = std::make_shared<RecordBin>();
     std::stringstream ss;
-    ss << this->experiment_directory << "\\cam_" << std::to_string(this->id) << ".mkv";
-    record_bin.set_directory(ss.str());
-    add_elements(record_bin);
-    assert(gst_element_sync_state_with_parent(record_bin));
-    element_link_many(tee, record_bin);
+    ss << this->experiment_directory << "\\cam_" << std::to_string(this->id) << "(%d).mkv";
+    record_bin->set_directory(ss.str());
+    add_elements(*record_bin);
+    assert(gst_element_sync_state_with_parent(*record_bin));
+    element_link_many(tee, *record_bin);
+    record_bins.insert(record_bin);
 }
 
 void Keela::CameraManager::stop_recording() {
+    for (auto bin: record_bins) {
+        gst_element_get_static_pad(*bin, "sink");
+        record_bins.erase(bin);
+    }
+}
+
+GstPadProbeReturn Keela::CameraManager::pad_block_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
+    auto recordbin = static_cast<std::shared_ptr<RecordBin> *>(user_data);
+    gst_pad_remove_probe(pad, GST_PAD_PROBE_INFO_ID(info));
+
+    auto filesinkpad = gst_element_get_static_pad((*recordbin)->sink, "sink");
+    gst_pad_add_probe(filesinkpad, GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM, event_callback, user_data, nullptr);
+    g_object_unref(filesinkpad);
+    return GST_PAD_PROBE_OK;
+}
+
+GstPadProbeReturn Keela::CameraManager::event_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
+    auto recordbin = static_cast<std::shared_ptr<RecordBin> *>(user_data);
+    if (GST_EVENT_TYPE(GST_PAD_PROBE_INFO_DATA(info)) != GST_EVENT_EOS) {
+        return GST_PAD_PROBE_OK;
+    }
+
+    gst_pad_remove_probe(pad, GST_PAD_PROBE_INFO_ID(info));
+
+    gst_element_set_state(**recordbin, GST_STATE_NULL);
+    auto parent = GST_ELEMENT_PARENT(static_cast<GstElement*>(**recordbin));
+    // because
+    assert(parent != nullptr);
+    gst_bin_remove(GST_BIN(parent), **recordbin);
+    return GST_PAD_PROBE_DROP;
 }
