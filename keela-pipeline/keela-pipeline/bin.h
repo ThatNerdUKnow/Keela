@@ -27,6 +27,9 @@ namespace Keela {
 
         operator GstBin *() const;
 
+        /// dump the bin data to a graphviz graph
+        void dump_bin_graph() const;
+
         /**
          * use this function to add many elements to the bin. If we use `gst_bin_add_many` directly,
          * temporaries will be created using the implicit copy constructor which will mess up the underlying

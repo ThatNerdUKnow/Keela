@@ -30,7 +30,7 @@ Keela::CameraManager::CameraManager(guint id, bool split_streams): Bin("camera_"
 
         ss << "camera" << id << ".dot";
         spdlog::error("could not create camera manager. attempting to dump bin to {}", ss.str());
-        gst_debug_bin_to_dot_file(bin.get(), GST_DEBUG_GRAPH_SHOW_ALL, ss.str().c_str());
+        dump_bin_graph();
         throw;
     }
 }
@@ -67,7 +67,7 @@ void Keela::CameraManager::set_experiment_directory(const std::string &path) {
 }
 
 void Keela::CameraManager::start_recording() {
-    std::shared_ptr<RecordBin> record_bin = std::make_shared<RecordBin>();
+    std::shared_ptr<RecordBin> record_bin = std::make_shared<RecordBin>("recordbin");
     std::stringstream ss;
     ss << this->experiment_directory << "\\cam_" << std::to_string(this->id) << "(%d).mkv";
     record_bin->set_directory(ss.str());
@@ -78,20 +78,48 @@ void Keela::CameraManager::start_recording() {
 }
 
 void Keela::CameraManager::stop_recording() {
+    // notes from example to dynamically remove a bin from a playing pipeline:
+    // add a blocking downstream probe to the queue "src" pad
+    // inside the blocking callback, add the EOS probe to the last source pad of the bin (it is unclear if this can also be a sink pad)
+    // after installing the EOS callback, send an EOS event to the sink pad of the beginning of the bin
+    // inside the EOS callback, set the state of the bin to NULL and remove the bin from the pipeline
     for (auto bin: record_bins) {
         gst_element_get_static_pad(*bin, "sink");
-        record_bins.erase(bin);
+        auto copy = new std::shared_ptr<RecordBin>(bin);
+        // TODO: can this be the sink pad instead?
+        const auto pad = gst_element_get_static_pad(bin->queue, "src");
+        assert(pad != nullptr);
+        gst_pad_add_probe(pad,
+                          GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM,
+                          pad_block_callback, copy,
+                          nullptr);
+        g_object_unref(pad);
     }
+    record_bins.clear();
 }
 
 GstPadProbeReturn Keela::CameraManager::pad_block_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
     auto recordbin = static_cast<std::shared_ptr<RecordBin> *>(user_data);
+    auto name = GST_ELEMENT_NAME(static_cast<GstElement*>(**recordbin));
+    spdlog::info("Pad block received from {}", name);
     gst_pad_remove_probe(pad, GST_PAD_PROBE_INFO_ID(info));
 
+    spdlog::debug("setting eos callback");
+    // NOTE: This doesn't really match the reference implementation, but I don't think we have any other choice but to use the sink pad on the filesink
     auto file_sink_pad = gst_element_get_static_pad((*recordbin)->sink, "sink");
     auto copy_recordbin = new std::shared_ptr<RecordBin>(*recordbin);
-    gst_pad_add_probe(file_sink_pad, GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM, event_callback, copy_recordbin, nullptr);
+    gst_pad_add_probe(file_sink_pad,
+                      GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM,
+                      event_callback,
+                      copy_recordbin, nullptr);
     g_object_unref(file_sink_pad);
+
+    spdlog::debug("sending EOS");
+    auto queuepad = gst_element_get_static_pad((*recordbin)->queue, "sink");
+    gst_pad_send_event(queuepad, gst_event_new_eos());
+    g_object_unref(queuepad);
+
+    (*recordbin)->dump_bin_graph();
     delete recordbin;
     return GST_PAD_PROBE_OK;
 }
@@ -101,6 +129,8 @@ GstPadProbeReturn Keela::CameraManager::event_callback(GstPad *pad, GstPadProbeI
     if (GST_EVENT_TYPE(GST_PAD_PROBE_INFO_DATA(info)) != GST_EVENT_EOS) {
         return GST_PAD_PROBE_OK;
     }
+    auto name = GST_ELEMENT_NAME(static_cast<GstElement*>(**recordbin));
+    spdlog::info("EOS received from {}", name);
 
     gst_pad_remove_probe(pad, GST_PAD_PROBE_INFO_ID(info));
 
@@ -109,6 +139,7 @@ GstPadProbeReturn Keela::CameraManager::event_callback(GstPad *pad, GstPadProbeI
     // because recordbin is supposed to be inside a pipeline, it should have a parent
     assert(parent != nullptr);
     gst_bin_remove(GST_BIN(parent), **recordbin);
+    (*recordbin)->dump_bin_graph();
     delete recordbin;
     return GST_PAD_PROBE_DROP;
 }

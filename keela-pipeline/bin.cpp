@@ -4,6 +4,7 @@
 
 #include "keela-pipeline/bin.h"
 
+#include <sstream>
 #include <stdexcept>
 #include <spdlog/spdlog.h>
 
@@ -52,6 +53,13 @@ Keela::Bin::operator struct _GstBin *() const {
         spdlog::trace("{}::{} Type name {}", name, __func__, tname);
     }
     return GST_BIN(bin.get());
+}
+
+void Keela::Bin::dump_bin_graph() const {
+    const gchar *name = GST_ELEMENT_NAME(bin.get());
+    std::stringstream ss;
+    ss << name << ".dot";
+    gst_debug_bin_to_dot_file(bin.get(), GST_DEBUG_GRAPH_SHOW_ALL, ss.str().c_str());
 }
 
 void Keela::Bin::add_ghost_pad(GstElement *element, const std::string &pad_name) const {

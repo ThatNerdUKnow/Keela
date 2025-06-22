@@ -21,7 +21,7 @@ namespace Keela {
         ~RecordBin() override;
 
         // use multifilesink to not overwrite any data if user forgets to switch directories
-        Keela::SimpleElement sink = SimpleElement("multifilesink");
+        Keela::SimpleElement sink = SimpleElement("filesink");
 
     private:
         void link() override;
