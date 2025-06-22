@@ -84,16 +84,22 @@ void Keela::CameraManager::stop_recording() {
     // after installing the EOS callback, send an EOS event to the sink pad of the beginning of the bin
     // inside the EOS callback, set the state of the bin to NULL and remove the bin from the pipeline
     for (auto bin: record_bins) {
-        gst_element_get_static_pad(*bin, "sink");
         auto copy = new std::shared_ptr<RecordBin>(bin);
         // TODO: can this be the sink pad instead?
-        const auto pad = gst_element_get_static_pad(bin->queue, "src");
+        const auto pad = gst_element_get_static_pad(bin->queue, "sink");
         assert(pad != nullptr);
-        gst_pad_add_probe(pad,
+
+        auto peer = gst_pad_get_peer(pad);
+        assert(peer != nullptr);
+        auto peer_parent = gst_pad_get_parent_element(peer);
+        spdlog::debug("peer is {}",GST_ELEMENT_NAME(peer));
+        gst_pad_add_probe(peer,
                           GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM,
-                          pad_block_callback, copy,
+                          pad_block_callback,
+                          copy,
                           nullptr);
         g_object_unref(pad);
+        g_object_unref(peer);
     }
     record_bins.clear();
 }
@@ -106,7 +112,7 @@ GstPadProbeReturn Keela::CameraManager::pad_block_callback(GstPad *pad, GstPadPr
 
     spdlog::debug("setting eos callback");
     // NOTE: This doesn't really match the reference implementation, but I don't think we have any other choice but to use the sink pad on the filesink
-    auto file_sink_pad = gst_element_get_static_pad((*recordbin)->sink, "sink");
+    auto file_sink_pad = gst_element_get_static_pad((*recordbin)->queue, "sink");
     auto copy_recordbin = new std::shared_ptr<RecordBin>(*recordbin);
     gst_pad_add_probe(file_sink_pad,
                       GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM,
@@ -120,7 +126,6 @@ GstPadProbeReturn Keela::CameraManager::pad_block_callback(GstPad *pad, GstPadPr
     g_object_unref(queuepad);
 
     (*recordbin)->dump_bin_graph();
-    delete recordbin;
     return GST_PAD_PROBE_OK;
 }
 
