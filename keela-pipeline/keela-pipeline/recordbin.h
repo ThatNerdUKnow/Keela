@@ -21,6 +21,9 @@ namespace Keela {
         ~RecordBin() override;
 
         // use multifilesink to not overwrite any data if user forgets to switch directories
+
+        Keela::SimpleElement enc = SimpleElement("x264enc");
+        Keela::SimpleElement mux = SimpleElement("matroskamux");
         Keela::SimpleElement sink = SimpleElement("filesink");
 
     private:
@@ -29,8 +32,6 @@ namespace Keela {
         void init() override;
 
         std::string name;
-        Keela::SimpleElement enc = SimpleElement("x264enc");
-        Keela::SimpleElement mux = SimpleElement("matroskamux");
     };
 }
 #endif //RECORDBIN_H

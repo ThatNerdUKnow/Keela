@@ -111,13 +111,12 @@ GstPadProbeReturn Keela::CameraManager::pad_block_callback(GstPad *pad, GstPadPr
     gst_pad_remove_probe(pad, GST_PAD_PROBE_INFO_ID(info));
 
     spdlog::debug("setting eos callback");
-    // NOTE: This doesn't really match the reference implementation, but I don't think we have any other choice but to use the sink pad on the filesink
-    auto file_sink_pad = gst_element_get_static_pad((*recordbin)->queue, "sink");
-    auto copy_recordbin = new std::shared_ptr<RecordBin>(*recordbin);
+    auto file_sink_pad = gst_element_get_static_pad((*recordbin)->sink, "sink");
+    assert(file_sink_pad != nullptr);
     gst_pad_add_probe(file_sink_pad,
-                      GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM,
+                      static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM),
                       event_callback,
-                      copy_recordbin, nullptr);
+                      recordbin, nullptr);
     g_object_unref(file_sink_pad);
 
     spdlog::debug("sending EOS");
