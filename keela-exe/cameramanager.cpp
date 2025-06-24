@@ -91,7 +91,7 @@ void Keela::CameraManager::stop_recording() {
 
         auto peer = gst_pad_get_peer(pad);
         assert(peer != nullptr);
-        auto peer_parent = gst_pad_get_parent_element(peer);
+        //auto peer_parent = gst_pad_get_parent_element(peer);
         spdlog::debug("peer is {}",GST_ELEMENT_NAME(peer));
         gst_pad_add_probe(peer,
                           GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM,
@@ -113,17 +113,22 @@ GstPadProbeReturn Keela::CameraManager::pad_block_callback(GstPad *pad, GstPadPr
     spdlog::debug("setting eos callback");
     auto file_sink_pad = gst_element_get_static_pad((*recordbin)->sink, "sink");
     assert(file_sink_pad != nullptr);
+
+
     gst_pad_add_probe(file_sink_pad,
-                      static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM),
+                      GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
                       event_callback,
                       recordbin, nullptr);
     g_object_unref(file_sink_pad);
 
     spdlog::debug("sending EOS");
+
     auto queuepad = gst_element_get_static_pad((*recordbin)->queue, "sink");
+    auto queue_peer = gst_pad_get_peer(queuepad);
+    gst_pad_unlink(queue_peer, queuepad);
     gst_pad_send_event(queuepad, gst_event_new_eos());
     g_object_unref(queuepad);
-
+    g_object_unref(queue_peer);
     (*recordbin)->dump_bin_graph();
     return GST_PAD_PROBE_OK;
 }
@@ -144,6 +149,6 @@ GstPadProbeReturn Keela::CameraManager::event_callback(GstPad *pad, GstPadProbeI
     assert(parent != nullptr);
     gst_bin_remove(GST_BIN(parent), **recordbin);
     (*recordbin)->dump_bin_graph();
-    delete recordbin;
-    return GST_PAD_PROBE_DROP;
+    //delete recordbin;
+    return GST_PAD_PROBE_OK;
 }
