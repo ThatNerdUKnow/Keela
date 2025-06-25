@@ -31,6 +31,7 @@ namespace Keela {
 
         void stop_recording();
 
+
         SimpleElement camera;
         SimpleElement caps_filter = SimpleElement("capsfilter");
         TransformBin transform = TransformBin("transform");

@@ -69,11 +69,11 @@ void Keela::CameraManager::set_experiment_directory(const std::string &path) {
 void Keela::CameraManager::start_recording() {
     std::shared_ptr<RecordBin> record_bin = std::make_shared<RecordBin>("recordbin");
     std::stringstream ss;
-    ss << this->experiment_directory << "\\cam_" << std::to_string(this->id) << "(%d).mkv";
+    ss << this->experiment_directory << "\\cam_" << std::to_string(this->id) << ".mkv";
     record_bin->set_directory(ss.str());
-    add_elements(*record_bin);
+    add_elements(static_cast<GstElement *>(*record_bin));
     assert(gst_element_sync_state_with_parent(*record_bin));
-    element_link_many(tee, *record_bin);
+    element_link_many(tee, static_cast<GstElement *>(*record_bin));
     record_bins.insert(record_bin);
 }
 
@@ -84,7 +84,7 @@ void Keela::CameraManager::stop_recording() {
     // after installing the EOS callback, send an EOS event to the sink pad of the beginning of the bin
     // inside the EOS callback, set the state of the bin to NULL and remove the bin from the pipeline
     for (auto bin: record_bins) {
-        auto copy = new std::shared_ptr<RecordBin>(bin);
+        auto copy = new std::shared_ptr(bin);
         // TODO: can this be the sink pad instead?
         const auto pad = gst_element_get_static_pad(bin->queue, "sink");
         assert(pad != nullptr);
@@ -101,7 +101,25 @@ void Keela::CameraManager::stop_recording() {
         g_object_unref(pad);
         g_object_unref(peer);
     }
+
+    for (auto bin: record_bins) {
+        auto lock = std::unique_lock(bin->remove_mutex);
+        bin->remove_condition.wait(lock, [bin]() {
+            return bin->safe_to_remove;
+        });
+        lock.unlock();
+        auto state_ret = gst_element_set_state(*bin, GST_STATE_NULL);
+        auto remove_ret = gst_bin_remove(*this, *bin);
+        auto name = GST_ELEMENT_NAME(static_cast<GstElement*>(*this));
+        if (state_ret == GST_STATE_CHANGE_FAILURE || !remove_ret) {
+            spdlog::error("{} could not remove recordbin from pipeline", name);
+        } else {
+            spdlog::info("{} successfully removed recordbin from pipeline", name);
+        }
+    }
     record_bins.clear();
+    spdlog::info("Removed all recordbins from pipeline");
+    dump_bin_graph();
 }
 
 GstPadProbeReturn Keela::CameraManager::pad_block_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
@@ -111,12 +129,12 @@ GstPadProbeReturn Keela::CameraManager::pad_block_callback(GstPad *pad, GstPadPr
     gst_pad_remove_probe(pad, GST_PAD_PROBE_INFO_ID(info));
 
     spdlog::debug("setting eos callback");
-    auto file_sink_pad = gst_element_get_static_pad((*recordbin)->sink, "sink");
+    auto file_sink_pad = gst_element_get_static_pad((*recordbin)->mux, "src");
     assert(file_sink_pad != nullptr);
 
 
     gst_pad_add_probe(file_sink_pad,
-                      GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
+                      static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM),
                       event_callback,
                       recordbin, nullptr);
     g_object_unref(file_sink_pad);
@@ -143,12 +161,19 @@ GstPadProbeReturn Keela::CameraManager::event_callback(GstPad *pad, GstPadProbeI
 
     gst_pad_remove_probe(pad, GST_PAD_PROBE_INFO_ID(info));
 
-    gst_element_set_state(**recordbin, GST_STATE_NULL);
-    auto parent = GST_ELEMENT_PARENT(static_cast<GstElement*>(**recordbin));
-    // because recordbin is supposed to be inside a pipeline, it should have a parent
-    assert(parent != nullptr);
-    gst_bin_remove(GST_BIN(parent), **recordbin);
     (*recordbin)->dump_bin_graph();
-    //delete recordbin;
+    // acquire lock and set signal variable
+    {
+        auto lock = std::scoped_lock((*recordbin)->remove_mutex);
+        (*recordbin)->safe_to_remove = true;
+    }
+    (*recordbin)->remove_condition.notify_all();
+
+    //gst_element_set_state(**recordbin, GST_STATE_NULL);
+    // auto parent = GST_ELEMENT_PARENT(static_cast<GstElement*>(**recordbin));
+    // because recordbin is supposed to be inside a pipeline, it should have a parent
+    //assert(parent != nullptr);
+    //gst_bin_remove(GST_BIN(parent), **recordbin);
+    delete recordbin;
     return GST_PAD_PROBE_OK;
 }
