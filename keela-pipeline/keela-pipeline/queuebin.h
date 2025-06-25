@@ -17,6 +17,8 @@ namespace Keela {
 
         explicit QueueBin(const std::string &name);
 
+        Keela::SimpleElement queue = SimpleElement("queue");
+
     protected:
         void link_queue(GstElement *sink) const;
 
@@ -24,8 +26,6 @@ namespace Keela {
         void init() override;
 
         void link() override;
-
-        Keela::SimpleElement queue = SimpleElement("queue");
     };
 }
 #endif //QUEUEBIN_H

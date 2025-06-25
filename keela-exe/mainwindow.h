@@ -32,7 +32,7 @@ private:
     Gtk::CheckButton show_trace_check;
 
     Gtk::Box container;
-    std::vector<std::unique_ptr<Keela::CameraControlWindow> > cameras;
+    std::vector<std::shared_ptr<Keela::CameraControlWindow> > cameras;
 
     void on_camera_spin_changed();
 

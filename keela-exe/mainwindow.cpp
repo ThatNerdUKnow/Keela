@@ -82,7 +82,7 @@ void MainWindow::on_camera_spin_changed() {
     if (next > curr) {
         for (guint i = curr; i < next; i++) {
             auto camera_id = i + 1;
-            auto c = std::make_unique<Keela::CameraControlWindow>(camera_id);
+            auto c = std::make_shared<Keela::CameraControlWindow>(camera_id);
             set_framerate(c->camera_manager.get());
             set_resolution(c.get());
             g_object_ref(static_cast<GstElement*>(*c->camera_manager));
@@ -124,9 +124,15 @@ void MainWindow::on_record_button_clicked() {
         auto message_dialog = Gtk::MessageDialog("Remember to set the experiment output to a new directory");
         message_dialog.run();
         // TODO: show file dialog
+        for (const auto camera: cameras) {
+            camera->camera_manager->start_recording();
+        }
     } else {
         auto message_dialog = Gtk::MessageDialog("Remember to take calibration photos");
         message_dialog.run();
+        for (const auto camera: cameras) {
+            camera->camera_manager->stop_recording();
+        }
     }
 }
 

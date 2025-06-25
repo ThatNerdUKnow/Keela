@@ -16,16 +16,27 @@ namespace Keela {
 
         RecordBin();
 
+        void set_directory(const std::string &full_filename);
+
         ~RecordBin() override;
+
+        Keela::SimpleElement enc = SimpleElement("x264enc");
+        Keela::SimpleElement mux = SimpleElement("matroskamux");
+        Keela::SimpleElement sink = SimpleElement("filesink");
+
+
+        // these are used to control safe removal of this element from the pipeline
+
+        bool safe_to_remove = false;
+        std::mutex remove_mutex;
+        std::condition_variable remove_condition;
 
     private:
         void link() override;
 
-    private:
+        void init() override;
+
         std::string name;
-        Keela::SimpleElement enc = SimpleElement("x264enc");
-        Keela::SimpleElement mux = SimpleElement("matroskamux");
-        Keela::SimpleElement sink = SimpleElement("filesink");
     };
 }
 #endif //RECORDBIN_H
