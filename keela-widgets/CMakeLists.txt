@@ -22,7 +22,9 @@ add_library(keela-widgets labeledspinbutton.cpp keela-widgets/labeledspinbutton.
         keela-widgets/labeledcomboboxtext.h
         GLCameraRender.cpp
         keela-widgets/GLCameraRender.h ${SHADER_C} ${SHADER_H}
-        keela-widgets/shader-resources.h)
+        keela-widgets/shader-resources.h
+        tracegizmo.cpp
+        keela-widgets/tracegizmo.h)
 add_dependencies(keela-widgets shader_resources)
 target_link_libraries(keela-widgets PUBLIC keela-pipeline PkgConfig::GTKMM PkgConfig::GIO PkgConfig::SPDLOG vendor-glad)
 target_include_directories(keela-widgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

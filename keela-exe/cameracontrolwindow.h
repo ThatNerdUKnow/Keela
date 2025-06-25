@@ -10,6 +10,7 @@
 
 #include "cameramanager.h"
 #include "keela-widgets/GLCameraRender.h"
+#include "keela-widgets/tracegizmo.h"
 
 namespace Keela {
     class CameraControlWindow final : public Gtk::Window {
@@ -37,6 +38,7 @@ namespace Keela {
         Gtk::CheckButton flip_vert_check = Gtk::CheckButton("Flip Along Vertical Center");
         Gtk::Button fetch_image_button = Gtk::Button("Fetch Image");
         std::unique_ptr<Keela::GLCameraRender> gl_area;
+        Keela::TraceGizmo gizmo;
         guint id;
 
 
