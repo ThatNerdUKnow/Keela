@@ -23,7 +23,6 @@ namespace Keela {
         bool on_draw(const Cairo::RefPtr<Cairo::Context> &cr) override;
 
     private:
-        Gdk::Point center;
         Gdk::Rectangle bounds;
         bool is_dragging = false;
         bool is_enabled = true;
