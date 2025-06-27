@@ -6,6 +6,8 @@
 #define TRACEGIZMO_H
 #include <gtkmm/drawingarea.h>
 
+#include "gizmocontrol.h"
+
 namespace Keela {
     class TraceGizmo : public Gtk::DrawingArea {
     public:
@@ -26,6 +28,20 @@ namespace Keela {
         Gdk::Rectangle bounds;
         bool is_dragging = false;
         bool is_enabled = true;
+
+        enum edit_mode {
+            top_left,
+            top_right,
+            bottom_left,
+            bottom_right,
+        };
+
+        edit_mode mode;
+
+        std::unique_ptr<Keela::GizmoControl> ctrl_top_left = nullptr;
+        std::unique_ptr<Keela::GizmoControl> ctrl_top_right = nullptr;
+        std::unique_ptr<Keela::GizmoControl> ctrl_bottom_left = nullptr;
+        std::unique_ptr<Keela::GizmoControl> ctrl_bottom_right = nullptr;
     };
 }
 #endif //TRACEGIZMO_H
