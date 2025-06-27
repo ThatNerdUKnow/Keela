@@ -6,6 +6,8 @@
 #define GIZMOCONTROL_H
 #include <gtkmm-3.0/gtkmm.h>
 
+#define HALF(x) x / 2.0
+
 namespace Keela {
     class GizmoControl : public Gdk::Rectangle {
     public:
@@ -21,6 +23,7 @@ namespace Keela {
 
     private:
         bool hovered;
+        static constexpr int width = 15;
     };
 }
 #endif //GIZMOCONTROL_H

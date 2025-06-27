@@ -4,7 +4,8 @@
 
 #include "keela-widgets/gizmocontrol.h"
 
-Keela::GizmoControl::GizmoControl(const int x, const int y): Gdk::Rectangle(x, y, 15, 15) {
+Keela::GizmoControl::GizmoControl(const int x, const int y): Gdk::Rectangle(x - HALF(width), y - HALF(width), width,
+                                                                            width) {
 }
 
 Keela::GizmoControl::~GizmoControl() {

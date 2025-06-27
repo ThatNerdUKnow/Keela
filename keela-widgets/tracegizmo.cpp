@@ -6,10 +6,11 @@
 
 #include <spdlog/spdlog.h>
 
+
 Keela::TraceGizmo::TraceGizmo() {
     add_events(Gdk::POINTER_MOTION_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::BUTTON_PRESS_MASK);
     //center = Gdk::Point(250, 250);
-    bounds = Gdk::Rectangle(500, 500, 100, 200);
+    bounds = Gdk::Rectangle(250, 250, 100, 200);
     auto center_x = bounds.get_x() / 2;
     auto center_y = bounds.get_y() / 2;
     auto off_x = bounds.get_width() / 2;
@@ -58,13 +59,12 @@ bool Keela::TraceGizmo::on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
         ctrl_bottom_right->draw(cr);
     }
     cr->save();
-    cr->translate(bounds.get_x() / 2.0, bounds.get_y() / 2.0);
-    cr->scale(bounds.get_width(), bounds.get_height());
-    cr->translate(-bounds.get_width() / 2.0, -bounds.get_height() / 2.0);
-    cr->arc(bounds.get_width() / 2.0, bounds.get_height() / 2.0, 1, 0, 2 * M_PI);
+    cr->translate(HALF(bounds.get_x()), HALF(bounds.get_y()));
+    cr->scale(HALF(bounds.get_width()), HALF(bounds.get_height()));
+    cr->translate(-HALF(bounds.get_x()), -HALF(bounds.get_y()));
+    cr->arc(HALF(bounds.get_x()), HALF(bounds.get_y()), 1, 0, 2 * M_PI);
     cr->restore();
     cr->stroke();
-
 
     cr->restore();
     return DrawingArea::on_draw(cr);
