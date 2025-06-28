@@ -66,17 +66,46 @@ bool Keela::TraceGizmo::on_motion_notify_event(GdkEventMotion *motion_event) {
         ctrl_top_right->set_hovered(ctrl_top_right->intersects(pt) & (mode == top_right || mode == none));
         ctrl_bottom_left->set_hovered(ctrl_bottom_left->intersects(pt) & (mode == bottom_left || mode == none));
         ctrl_bottom_right->set_hovered(ctrl_bottom_right->intersects(pt) & (mode == bottom_right || mode == none));
+
+        GizmoControl *control = nullptr;
+        switch (mode) {
+            case top_left:
+                control = ctrl_top_left.get();
+                break;
+            case top_right:
+                control = ctrl_top_right.get();
+                break;
+            case bottom_left:
+                control = ctrl_bottom_left.get();
+                break;
+            case bottom_right:
+                control = ctrl_bottom_right.get();
+                break;
+            case none:
+                return DrawingArea::on_motion_notify_event(motion_event);
+        }
+        assert(control != nullptr);
+        control->set_center(pt);
     }
+    bounds.set_x(ctrl_top_left->get_x());
+    bounds.set_y(ctrl_top_left->get_y());
+
+    auto width = ctrl_top_right->get_x() - ctrl_top_left->get_x();
+    auto height = ctrl_bottom_left->get_y() - ctrl_top_left->get_y();
+    bounds.set_width(width);
+    bounds.set_height(height);
     return DrawingArea::on_motion_notify_event(motion_event);
 }
 
 bool Keela::TraceGizmo::on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
     cr->save();
-    cr->set_source_rgba(255, 0, 0, 1.0);
+    cr->set_source_rgb(1, 0, 0);
     cr->set_line_width(2);
     if (ctrl_top_left != nullptr & ctrl_top_right != nullptr & ctrl_bottom_left != nullptr & ctrl_bottom_right !=
         nullptr) {
+        cr->set_source_rgb(0, 1, 0);
         ctrl_top_left->draw(cr);
+        cr->set_source_rgb(1, 0, 0);
         ctrl_top_right->draw(cr);
         ctrl_bottom_left->draw(cr);
         ctrl_bottom_right->draw(cr);
@@ -89,6 +118,9 @@ bool Keela::TraceGizmo::on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
     cr->restore();
     cr->stroke();
 
+    cr->set_source_rgb(0, 0, 1);
+    cr->rectangle(bounds.get_x(), bounds.get_y(), bounds.get_width(), bounds.get_height());
+    cr->stroke();
     cr->restore();
     return DrawingArea::on_draw(cr);
 }

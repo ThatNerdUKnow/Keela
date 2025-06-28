@@ -12,3 +12,6 @@ TEST(Rect, Intersects) {
     ASSERT_TRUE(bounds.intersects(point));
 }
 
+TEST(Rect, CanHaveNegativeDimensions) {
+    Gdk::Rectangle bounds = Gdk::Rectangle(0, 0, -100, -100);
+}
