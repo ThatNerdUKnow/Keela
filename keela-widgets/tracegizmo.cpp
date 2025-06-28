@@ -101,29 +101,34 @@ bool Keela::TraceGizmo::on_motion_notify_event(GdkEventMotion *motion_event) {
 }
 
 bool Keela::TraceGizmo::on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
-    cr->save();
-    cr->set_source_rgb(1, 0, 0);
-    cr->set_line_width(2);
-    if (ctrl_top_left != nullptr & ctrl_top_right != nullptr & ctrl_bottom_left != nullptr & ctrl_bottom_right !=
-        nullptr) {
-        //cr->set_source_rgb(0, 1, 0);
-        ctrl_top_left->draw(cr);
-        //cr->set_source_rgb(1, 0, 0);
-        ctrl_top_right->draw(cr);
-        ctrl_bottom_left->draw(cr);
-        ctrl_bottom_right->draw(cr);
-    }
-    cr->save();
-    cr->translate(bounds.get_x() + HALF(bounds.get_width()), bounds.get_y() + HALF(bounds.get_height()));
-    cr->scale(HALF(bounds.get_width()), HALF(bounds.get_height()));
-    cr->translate(-HALF(bounds.get_x()), -HALF(bounds.get_y()));
-    cr->arc(HALF(bounds.get_x()), HALF(bounds.get_y()), 1, 0, 2 * M_PI);
-    cr->restore();
-    cr->stroke();
+    try {
+        cr->save();
+        cr->set_source_rgb(1, 0, 0);
+        cr->set_line_width(2);
+        if (ctrl_top_left != nullptr & ctrl_top_right != nullptr & ctrl_bottom_left != nullptr & ctrl_bottom_right !=
+            nullptr) {
+            //cr->set_source_rgb(0, 1, 0);
+            ctrl_top_left->draw(cr);
+            //cr->set_source_rgb(1, 0, 0);
+            ctrl_top_right->draw(cr);
+            ctrl_bottom_left->draw(cr);
+            ctrl_bottom_right->draw(cr);
+        }
+        cr->save();
+        cr->translate(bounds.get_x() + HALF(bounds.get_width()), bounds.get_y() + HALF(bounds.get_height()));
+        cr->scale(HALF(bounds.get_width()), HALF(bounds.get_height()));
+        cr->translate(-HALF(bounds.get_x()), -HALF(bounds.get_y()));
+        cr->arc(HALF(bounds.get_x()), HALF(bounds.get_y()), 1, 0, 2 * M_PI);
+        cr->restore();
+        cr->stroke();
 
-    cr->set_source_rgb(0, 0, 1);
-    //cr->rectangle(bounds.get_x(), bounds.get_y(), bounds.get_width(), bounds.get_height());
-    //cr->stroke();
-    cr->restore();
+        //cr->set_source_rgb(0, 0, 1);
+        //cr->rectangle(bounds.get_x(), bounds.get_y(), bounds.get_width(), bounds.get_height());
+        //cr->stroke();
+        cr->restore();
+    } catch (std::exception &e) {
+        // gtk will complain very heavily if the transformation matrix is non-invertible
+        return true;
+    }
     return DrawingArea::on_draw(cr);
 }

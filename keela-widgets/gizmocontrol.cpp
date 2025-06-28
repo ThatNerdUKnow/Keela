@@ -4,6 +4,8 @@
 
 #include "keela-widgets/gizmocontrol.h"
 
+#include <spdlog/spdlog.h>
+
 Keela::GizmoControl::GizmoControl(): Gdk::Rectangle(0, 0, width, width) {
 }
 
@@ -38,6 +40,7 @@ void Keela::GizmoControl::set_hovered(const bool hovered) {
 void Keela::GizmoControl::set_center(Gdk::Point center) {
     auto x = center.get_x() - HALF(width);
     auto y = center.get_y() - HALF(width);
+
     set_x(x);
     set_y(y);
     // I do not need to convert coordinates to center since all rectangles origin on the top left
