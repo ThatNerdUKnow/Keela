@@ -34,9 +34,10 @@ namespace Keela {
             top_right,
             bottom_left,
             bottom_right,
+            none
         };
 
-        edit_mode mode;
+        edit_mode mode = none;
 
         std::unique_ptr<Keela::GizmoControl> ctrl_top_left = nullptr;
         std::unique_ptr<Keela::GizmoControl> ctrl_top_right = nullptr;

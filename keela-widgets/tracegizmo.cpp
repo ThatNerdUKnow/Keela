@@ -19,6 +19,16 @@ Keela::TraceGizmo::TraceGizmo() {
     ctrl_top_right = std::make_unique<GizmoControl>(center_x + off_x, center_y - off_y);
     ctrl_bottom_left = std::make_unique<GizmoControl>(center_x - off_x, center_y + off_y);
     ctrl_bottom_right = std::make_unique<GizmoControl>(center_x + off_x, center_y + off_y);
+
+    ctrl_top_left->set_peer_y(*ctrl_top_right);
+    ctrl_top_right->set_peer_y(*ctrl_top_left);
+    ctrl_bottom_left->set_peer_y(*ctrl_bottom_right);
+    ctrl_bottom_right->set_peer_y(*ctrl_bottom_left);
+
+    ctrl_top_left->set_peer_x(*ctrl_bottom_left);
+    ctrl_bottom_left->set_peer_x(*ctrl_top_left);
+    ctrl_top_right->set_peer_x(*ctrl_bottom_right);
+    ctrl_bottom_right->set_peer_x(*ctrl_top_right);
 }
 
 Keela::TraceGizmo::~TraceGizmo() {
@@ -26,11 +36,24 @@ Keela::TraceGizmo::~TraceGizmo() {
 
 bool Keela::TraceGizmo::on_button_press_event(GdkEventButton *button_event) {
     spdlog::debug(__func__);
+    Gdk::Point point(button_event->x, button_event->y);
+    if (ctrl_top_left->intersects(point)) {
+        mode = top_left;
+    } else if (ctrl_top_right->intersects(point)) {
+        mode = top_right;
+    } else if (ctrl_bottom_left->intersects(point)) {
+        mode = bottom_left;
+    } else if (ctrl_bottom_right->intersects(point)) {
+        mode = bottom_right;
+    } else {
+        mode = none;
+    }
     return DrawingArea::on_button_press_event(button_event);
 }
 
 bool Keela::TraceGizmo::on_button_release_event(GdkEventButton *release_event) {
     spdlog::debug(__func__);
+    mode = none;
     return DrawingArea::on_button_release_event(release_event);
 }
 
@@ -39,10 +62,10 @@ bool Keela::TraceGizmo::on_motion_notify_event(GdkEventMotion *motion_event) {
 
     if (ctrl_top_left != nullptr & ctrl_top_right != nullptr & ctrl_bottom_left != nullptr & ctrl_bottom_right !=
         nullptr) {
-        ctrl_top_left->set_hovered(ctrl_top_left->intersects(pt));
-        ctrl_top_right->set_hovered(ctrl_top_right->intersects(pt));
-        ctrl_bottom_left->set_hovered(ctrl_bottom_left->intersects(pt));
-        ctrl_bottom_right->set_hovered(ctrl_bottom_right->intersects(pt));
+        ctrl_top_left->set_hovered(ctrl_top_left->intersects(pt) & (mode == top_left || mode == none));
+        ctrl_top_right->set_hovered(ctrl_top_right->intersects(pt) & (mode == top_right || mode == none));
+        ctrl_bottom_left->set_hovered(ctrl_bottom_left->intersects(pt) & (mode == bottom_left || mode == none));
+        ctrl_bottom_right->set_hovered(ctrl_bottom_right->intersects(pt) & (mode == bottom_right || mode == none));
     }
     return DrawingArea::on_motion_notify_event(motion_event);
 }

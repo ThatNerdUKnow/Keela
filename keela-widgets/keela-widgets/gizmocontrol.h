@@ -11,6 +11,8 @@
 namespace Keela {
     class GizmoControl : public Gdk::Rectangle {
     public:
+        GizmoControl();
+
         GizmoControl(int x, int y);
 
         ~GizmoControl();
@@ -21,9 +23,27 @@ namespace Keela {
 
         void set_hovered(bool hovered);
 
+        void set_center(Gdk::Point center);
+
+        Gdk::Point get_center() const;
+
+        /**
+        * bind two GizmoControls together to follow each other on the x axis
+        * @param peer
+        */
+        void set_peer_x(GizmoControl &peer);
+
+        /**
+         * bind two GizmoControls together to follow each other on the y axis
+         * @param peer
+         */
+        void set_peer_y(GizmoControl &peer);
+
     private:
         bool hovered;
         static constexpr int width = 15;
+        GizmoControl *peer_x = nullptr;
+        GizmoControl *peer_y = nullptr;
     };
 }
 #endif //GIZMOCONTROL_H
