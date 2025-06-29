@@ -61,6 +61,9 @@ bool Keela::TraceGizmo::on_button_release_event(GdkEventButton *release_event) {
 
 bool Keela::TraceGizmo::on_motion_notify_event(GdkEventMotion *motion_event) {
     Gdk::Point pt(motion_event->x, motion_event->y);
+    if (pt.get_x() > get_width() || pt.get_y() > get_height() || pt.get_x() < 0 || pt.get_y() < 0) {
+        return DrawingArea::on_motion_notify_event(motion_event);
+    }
 
     if (ctrl_top_left != nullptr & ctrl_top_right != nullptr & ctrl_bottom_left != nullptr & ctrl_bottom_right !=
         nullptr) {
