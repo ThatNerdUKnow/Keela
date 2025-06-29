@@ -25,7 +25,7 @@ namespace Keela {
         bool on_draw(const Cairo::RefPtr<Cairo::Context> &cr) override;
 
     private:
-        Gdk::Rectangle bounds;
+        std::unique_ptr<Gdk::Rectangle> bounds = nullptr;
         bool is_dragging = false;
         bool is_enabled = true;
 
