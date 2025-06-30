@@ -56,6 +56,7 @@ MainWindow::MainWindow(): Gtk::Window() {
     restart_camera_button.set_label("Restart Camera(s)");
     container.add(restart_camera_button);
 
+    show_trace_check.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_trace_button_clicked));
     // create the pipeline
     pipeline = GST_PIPELINE(gst_pipeline_new("pipeline"));
     if (!pipeline) {
@@ -183,4 +184,15 @@ void MainWindow::set_resolution(Keela::CameraControlWindow *c) const {
     const auto w = data_matrix_w_spin.m_spin.get_value_as_int();
     const auto h = data_matrix_h_spin.m_spin.get_value_as_int();
     c->set_resolution(w, h);
+}
+
+void MainWindow::on_trace_button_clicked() {
+    if (trace_window == nullptr) {
+        trace_window = std::make_unique<Keela::TraceWindow>();
+        // TODO: potentially need to add all current cameras to the list of traces
+        trace_window->show();
+    } else {
+        // i'm pretty sure this will delete the trace window
+        trace_window = nullptr;
+    }
 }

@@ -3,3 +3,9 @@
 //
 
 #include "keela-widgets/GLTraceRender.h"
+
+Keela::GLTraceRender::GLTraceRender() {
+}
+
+Keela::GLTraceRender::~GLTraceRender() {
+}

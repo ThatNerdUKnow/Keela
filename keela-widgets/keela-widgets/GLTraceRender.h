@@ -8,6 +8,10 @@
 
 namespace Keela {
     class GLTraceRender : public Gtk::GLArea {
+    public:
+        GLTraceRender();
+
+        virtual ~GLTraceRender();
     };
 }
 #endif //GLTRACERENDER_H

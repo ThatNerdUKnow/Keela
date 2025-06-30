@@ -10,6 +10,7 @@
 #include <keela-widgets/labeledspinbutton.h>
 
 #include "cameracontrolwindow.h"
+#include "tracewindow.h"
 
 class MainWindow final : public Gtk::Window {
 public:
@@ -33,6 +34,7 @@ private:
 
     Gtk::Box container;
     std::vector<std::shared_ptr<Keela::CameraControlWindow> > cameras;
+    std::shared_ptr<Keela::TraceWindow> trace_window = nullptr;
 
     void on_camera_spin_changed();
 
@@ -47,6 +49,8 @@ private:
     void set_resolution() const;
 
     void set_resolution(Keela::CameraControlWindow *c) const;
+
+    void on_trace_button_clicked();
 
     bool is_recording = false;
 };
