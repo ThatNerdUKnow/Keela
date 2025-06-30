@@ -77,11 +77,12 @@ void Keela::GLCameraRender::new_tex_sample(GstSample *sample) {
     } else {
         throw std::runtime_error("Could not map sample buffer");
     }
+    gst_sample_unref(sample);
 }
 
 
 void Keela::GLCameraRender::on_realize() {
-    // stateful nonsense
+    spdlog::info("GLCameraRender::{}",__func__);
     GLArea::on_realize();
     make_current();
 
