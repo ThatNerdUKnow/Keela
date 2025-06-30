@@ -10,5 +10,7 @@
         <file>hello-triangle-vertex.glsl</file>
         <file>video-vertex.glsl</file>
         <file>video-fragment.glsl</file>
+        <file>trace-vertex.glsl</file>
+        <file>trace-fragment.glsl</file>
     </gresource>
 </gresources>
