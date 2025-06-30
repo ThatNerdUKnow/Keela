@@ -1,6 +1,8 @@
 add_executable(keela main.cpp mainwindow.cpp mainwindow.h
         cameracontrolwindow.cpp
-        cameracontrolwindow.h)
+        cameracontrolwindow.h
+        TraceWindow.cpp
+        TraceWindow.h)
 
 # creating seperate keela library so that they can be used in gtest
 add_library(libkeela cameramanager.cpp cameramanager.h)
