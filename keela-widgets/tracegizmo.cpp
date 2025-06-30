@@ -142,3 +142,28 @@ bool Keela::TraceGizmo::on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
 
     return DrawingArea::on_draw(cr);
 }
+
+bool Keela::TraceGizmo::intersects(const Gdk::Point &pt) const {
+    /*
+     * https://math.stackexchange.com/questions/76457/check-if-a-point-is-within-an-ellipse
+     * The region (disk) bounded by the ellipse is given by the equation:
+        ((x−h)^2/r_x^2) + ((y−k)^2/r_y^2) ≤1
+
+    So given a test point (x,y)
+     plug it in (1)
+     If the inequality is satisfied, then it is inside the ellipse;
+     otherwise it is outside the ellipse.
+     Moreover, the point is on the boundary of the region (i.e., on the ellipse) if and only if the inequality is satisfied tightly
+     (i.e., the left hand side evaluates to 1).
+     */
+
+    auto r_x = HALF(bounds->get_width());
+    auto r_y = HALF(bounds->get_height());
+
+    auto h = bounds->get_x() + r_x;
+    auto k = bounds->get_y() + r_y;
+    auto x = pt.get_x();
+    auto y = pt.get_y();
+
+    return (std::pow((x - h), 2.0) / std::pow(r_x, 2.0)) + (std::pow((y - k), 2.0) / std::pow(r_y, 2.0)) <= 1.0;
+}
