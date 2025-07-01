@@ -93,7 +93,7 @@ void MainWindow::on_camera_spin_changed() {
                 ss << "Failed to add camera " << std::to_string(camera_id) << " to pipeline";
                 throw std::runtime_error(ss.str());
             }
-            cameras.push_back(std::move(c));
+            cameras.push_back(c);
             if (trace_window != nullptr) {
                 trace_window->addTrace(c);
             }
