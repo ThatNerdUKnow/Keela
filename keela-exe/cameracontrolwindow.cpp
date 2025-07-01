@@ -67,7 +67,6 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
     h_container.pack_start(*overlay, false, false, 10);
 
     auto gl_bin = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
-    gl_bin->add(*gl_area);
     h_container.pack_start(*gl_bin, false, false, 10);
     show_all_children();
     show();
