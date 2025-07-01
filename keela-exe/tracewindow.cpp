@@ -8,7 +8,8 @@ Keela::TraceWindow::TraceWindow() {
     set_deletable(false);
     set_default_size(640, 480);
     set_title("Traces");
-    Window::add(containter);
+    Window::add(scrolled_window);
+    scrolled_window.add(containter);
 }
 
 Keela::TraceWindow::~TraceWindow() {

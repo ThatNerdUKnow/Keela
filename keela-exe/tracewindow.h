@@ -25,6 +25,7 @@ namespace Keela {
 
     private:
         std::vector<std::shared_ptr<GLTraceRender> > traces;
+        Gtk::ScrolledWindow scrolled_window;
         Gtk::Box containter = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
     };
 }
