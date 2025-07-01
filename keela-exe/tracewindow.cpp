@@ -14,10 +14,10 @@ Keela::TraceWindow::TraceWindow() {
 Keela::TraceWindow::~TraceWindow() {
 }
 
-void Keela::TraceWindow::addTrace() {
-    auto trace = std::make_shared<GLTraceRender>();
-    traces.push_back(trace);
-    containter.add(*trace);
+void Keela::TraceWindow::addTrace(std::shared_ptr<Keela::ITraceable> trace) {
+    auto widget = std::make_shared<GLTraceRender>(trace);
+    traces.push_back(widget);
+    containter.add(*widget);
     show_all_children();
 }
 

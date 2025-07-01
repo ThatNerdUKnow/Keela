@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "../keela-exe/cameramanager.h"
+#include "../keela-widgets/keela-widgets/cameramanager.h"
 //
 // Created by brand on 6/3/2025.
 //

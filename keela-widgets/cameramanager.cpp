@@ -2,7 +2,7 @@
 // Created by brand on 6/3/2025.
 //
 
-#include "cameramanager.h"
+#include "keela-widgets/cameramanager.h"
 
 #include <sstream>
 #include <stdexcept>

@@ -95,7 +95,7 @@ void MainWindow::on_camera_spin_changed() {
             }
             cameras.push_back(std::move(c));
             if (trace_window != nullptr) {
-                trace_window->addTrace();
+                trace_window->addTrace(c);
             }
         }
     } else if (next < curr) {
@@ -201,7 +201,8 @@ void MainWindow::on_trace_button_clicked() {
 
         spdlog::debug("num traces: {}\t num cameras: {}", trace_window->num_traces(), trace_window->num_traces());
         for (int i = trace_window->num_traces(); i < cameras.size(); i++) {
-            trace_window->addTrace();
+            auto trace = cameras.at(i);
+            trace_window->addTrace(trace);
         }
     } else {
         trace_window = nullptr;

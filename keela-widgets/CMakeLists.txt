@@ -28,7 +28,9 @@ add_library(keela-widgets labeledspinbutton.cpp keela-widgets/labeledspinbutton.
         gizmocontrol.cpp
         keela-widgets/gizmocontrol.h
         GLTraceRender.cpp
-        keela-widgets/GLTraceRender.h)
+        keela-widgets/GLTraceRender.h
+        cameramanager.cpp
+        keela-widgets/cameramanager.h)
 add_dependencies(keela-widgets shader_resources)
 target_link_libraries(keela-widgets PUBLIC keela-pipeline PkgConfig::GTKMM PkgConfig::GIO PkgConfig::SPDLOG vendor-glad)
 target_include_directories(keela-widgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

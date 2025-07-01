@@ -61,8 +61,9 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
     gl_area->set_size_request(640, 480);
     set_vexpand(false);
     auto overlay = Gtk::make_managed<Gtk::Overlay>();
+    trace_gizmo = std::make_shared<TraceGizmo>();
     overlay->add(*gl_area);
-    overlay->add_overlay(gizmo);
+    overlay->add_overlay(*trace_gizmo);
     h_container.pack_start(*overlay, false, false, 10);
 
     auto gl_bin = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
@@ -128,4 +129,18 @@ void Keela::CameraControlWindow::on_flip_horiz_changed() const {
 void Keela::CameraControlWindow::on_flip_vert_changed() const {
     const auto value = flip_vert_check.get_active();
     camera_manager->transform.flip_vertical(value);
+}
+
+std::shared_ptr<Keela::CameraManager> Keela::CameraControlWindow::get_camera_manager() {
+    return camera_manager;
+}
+
+std::shared_ptr<Keela::TraceGizmo> Keela::CameraControlWindow::get_trace_gizmo() {
+    return trace_gizmo;
+}
+
+std::string Keela::CameraControlWindow::get_name() {
+    std::stringstream ss;
+    ss << "Camera " << std::to_string(id);
+    return ss.str();
 }

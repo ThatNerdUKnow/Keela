@@ -8,16 +8,34 @@
 #include <gtkmm/glarea.h>
 #include <gtkmm/label.h>
 
+#include "cameramanager.h"
+#include "tracegizmo.h"
+
 namespace Keela {
+    /**
+     * A source that can be rendered in the trace window
+     */
+    class ITraceable {
+    public:
+        virtual ~ITraceable() = default;
+
+        virtual std::shared_ptr<CameraManager> get_camera_manager() = 0;
+
+        virtual std::shared_ptr<TraceGizmo> get_trace_gizmo() = 0;
+
+        virtual std::string get_name() = 0;
+    };
+
     class GLTraceRender final : public Gtk::Box {
     public:
-        GLTraceRender();
+        explicit GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_trace);
 
-        virtual ~GLTraceRender();
+        ~GLTraceRender() override;
 
     private:
         Gtk::GLArea gl_area;
         Gtk::Label label;
+        std::shared_ptr<Keela::ITraceable> trace;
     };
 }
 #endif //GLTRACERENDER_H

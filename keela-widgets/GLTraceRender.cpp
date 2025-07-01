@@ -6,13 +6,15 @@
 
 #include <spdlog/spdlog.h>
 
-Keela::GLTraceRender::GLTraceRender() {
+Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_trace): Gtk::Box(
+    Gtk::ORIENTATION_VERTICAL) {
     spdlog::info(__func__);
     gl_area = Gtk::GLArea();
-    label = Gtk::Label("Test");
+    label = Gtk::Label(cam_to_trace->get_name());
     Container::add(label);
     Container::add(gl_area);
+    gl_area.set_size_request(300, 128);
+    trace = cam_to_trace;
 }
 
-Keela::GLTraceRender::~GLTraceRender() {
-}
+Keela::GLTraceRender::~GLTraceRender() = default;

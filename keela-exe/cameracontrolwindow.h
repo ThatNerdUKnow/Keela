@@ -8,18 +8,19 @@
 #include <keela-widgets/labeledspinbutton.h>
 #include <keela-widgets/labeledcomboboxtext.h>
 
-#include "cameramanager.h"
+#include "../keela-widgets/keela-widgets/cameramanager.h"
 #include "keela-widgets/GLCameraRender.h"
+#include "keela-widgets/GLTraceRender.h"
 #include "keela-widgets/tracegizmo.h"
 
 namespace Keela {
-    class CameraControlWindow final : public Gtk::Window {
+    class CameraControlWindow final : public Gtk::Window, public Keela::ITraceable {
     public:
         explicit CameraControlWindow(guint id);
 
         ~CameraControlWindow() override;
 
-        std::unique_ptr<Keela::CameraManager> camera_manager;
+        std::shared_ptr<Keela::CameraManager> camera_manager;
 
         void set_resolution(int width, int height);
 
@@ -38,12 +39,11 @@ namespace Keela {
         Gtk::CheckButton flip_vert_check = Gtk::CheckButton("Flip Along Vertical Center");
         Gtk::Button fetch_image_button = Gtk::Button("Fetch Image");
         std::unique_ptr<Keela::GLCameraRender> gl_area;
-        Keela::TraceGizmo gizmo;
+        std::shared_ptr<Keela::TraceGizmo> trace_gizmo;
         guint id;
 
 
         void on_range_check_toggled();
-
 
         void on_rotation_changed();
 
@@ -51,6 +51,14 @@ namespace Keela {
 
         void on_flip_vert_changed() const;
 
+    public:
+        std::shared_ptr<CameraManager> get_camera_manager() override;
+
+        std::shared_ptr<TraceGizmo> get_trace_gizmo() override;
+
+        std::string get_name() override;
+
+    private:
         // set width and height initially to a sentinel value
         int m_width = -1, m_height = -1;
     };
