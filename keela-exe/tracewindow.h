@@ -21,6 +21,8 @@ namespace Keela {
 
         void removeTrace();
 
+        int num_traces();
+
     private:
         std::vector<std::shared_ptr<GLTraceRender> > traces;
         Gtk::Box containter = Gtk::Box(Gtk::ORIENTATION_VERTICAL);

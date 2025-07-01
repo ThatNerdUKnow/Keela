@@ -94,12 +94,18 @@ void MainWindow::on_camera_spin_changed() {
                 throw std::runtime_error(ss.str());
             }
             cameras.push_back(std::move(c));
+            if (trace_window != nullptr) {
+                trace_window->addTrace();
+            }
         }
     } else if (next < curr) {
         for (guint i = curr; i > next; i--) {
             auto camera_win = std::move(cameras.back());
             gst_bin_remove(GST_BIN(pipeline), *camera_win->camera_manager);
             cameras.pop_back();
+            if (trace_window != nullptr) {
+                trace_window->removeTrace();
+            }
         }
     }
     ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
@@ -187,12 +193,17 @@ void MainWindow::set_resolution(Keela::CameraControlWindow *c) const {
 }
 
 void MainWindow::on_trace_button_clicked() {
+    spdlog::info(__func__);
     if (trace_window == nullptr) {
         trace_window = std::make_unique<Keela::TraceWindow>();
         // TODO: potentially need to add all current cameras to the list of traces
         trace_window->show();
+
+        spdlog::debug("num traces: {}\t num cameras: {}", trace_window->num_traces(), trace_window->num_traces());
+        for (int i = trace_window->num_traces(); i < cameras.size(); i++) {
+            trace_window->addTrace();
+        }
     } else {
-        // i'm pretty sure this will delete the trace window
         trace_window = nullptr;
     }
 }

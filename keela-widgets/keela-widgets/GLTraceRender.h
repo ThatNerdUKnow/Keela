@@ -4,14 +4,20 @@
 
 #ifndef GLTRACERENDER_H
 #define GLTRACERENDER_H
+#include <gtkmm/box.h>
 #include <gtkmm/glarea.h>
+#include <gtkmm/label.h>
 
 namespace Keela {
-    class GLTraceRender : public Gtk::GLArea {
+    class GLTraceRender final : public Gtk::Box {
     public:
         GLTraceRender();
 
         virtual ~GLTraceRender();
+
+    private:
+        Gtk::GLArea gl_area;
+        Gtk::Label label;
     };
 }
 #endif //GLTRACERENDER_H
