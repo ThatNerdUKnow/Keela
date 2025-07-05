@@ -12,7 +12,7 @@
 
 Keela::GLCameraRender::GLCameraRender(std::shared_ptr<PresentationBin> bin) {
     GError *error = nullptr;
-    spdlog::debug("Loading vertex shader resource");
+    spdlog::debug("{}: Loading vertex shader resource", __func__);
     auto vertex_res = g_resources_lookup_data("/org/gatech/keela/shaders/video-vertex.glsl",
                                               G_RESOURCE_LOOKUP_FLAGS_NONE, &error);
     if (!vertex_res && !error) {
@@ -20,7 +20,7 @@ Keela::GLCameraRender::GLCameraRender(std::shared_ptr<PresentationBin> bin) {
         ss << "Could not load vertex shader resource: " << error->message;
         throw std::runtime_error(ss.str());
     }
-    spdlog::debug("Loading fragment shader resource");
+    spdlog::debug("{}: Loading fragment shader resource", __func__);
     auto fragment_res = g_resources_lookup_data("/org/gatech/keela/shaders/video-fragment.glsl",
                                                 G_RESOURCE_LOOKUP_FLAGS_NONE, &error);
     if (!fragment_res && !error) {
@@ -82,7 +82,7 @@ void Keela::GLCameraRender::new_tex_sample(GstSample *sample) {
 
 
 void Keela::GLCameraRender::on_realize() {
-    spdlog::info("GLCameraRender::{}",__func__);
+    spdlog::info("GLCameraRender::{}", __func__);
     GLArea::on_realize();
     make_current();
 

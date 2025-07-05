@@ -36,6 +36,14 @@ namespace Keela {
         Gtk::GLArea gl_area;
         Gtk::Label label;
         std::shared_ptr<Keela::ITraceable> trace;
+
+        void on_realize();
+
+        unsigned int VAO;
+        unsigned int VBO;
+
+        std::string vertex_shader_source;
+        std::string fragment_shader_source;
     };
 }
 #endif //GLTRACERENDER_H
