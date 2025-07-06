@@ -17,7 +17,7 @@ Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_tr
     Container::add(gl_area);
     gl_area.set_size_request(300, 128);
     trace = cam_to_trace;
-    //gl_area.signal_realize().connect(sigc::mem_fun(this, &GLTraceRender::signal_realize));
+    gl_area.signal_realize().connect(sigc::mem_fun(this, &GLTraceRender::on_realize));
 
     spdlog::debug("{}: Loading vertex shader resource", __func__);
     GError *error = NULL;
@@ -55,6 +55,8 @@ Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_tr
 Keela::GLTraceRender::~GLTraceRender() = default;
 
 void Keela::GLTraceRender::on_realize() {
+    Box::on_realize();
+    gl_area.make_current();
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
@@ -63,6 +65,50 @@ void Keela::GLTraceRender::on_realize() {
 
     // TODO: generate static data for now
 
+    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    const char *vertex_cstr = vertex_shader_source.c_str();
+    glShaderSource(vertexShader, 1, &vertex_cstr, nullptr);
+    glCompileShader(vertexShader);
 
-    Box::on_realize();
+    int succes;
+    char infolog[512];
+    glGetShaderiv(vertexShader,GL_COMPILE_STATUS, &succes);
+    if (!succes) {
+        glGetShaderInfoLog(vertexShader, 512, nullptr, infolog);
+        std::stringstream ss;
+        ss << "Vertex shader compilation failed:\n " << infolog;
+        spdlog::error(ss.str());
+        throw std::runtime_error(ss.str());
+    }
+
+    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    const char *fragment_cstr = fragment_shader_source.c_str();
+    glShaderSource(fragmentShader, 1, &fragment_cstr, nullptr);
+    glCompileShader(fragmentShader);
+    glGetShaderiv(fragmentShader,GL_COMPILE_STATUS, &succes);
+    if (!succes) {
+        glGetShaderInfoLog(fragmentShader, 512, nullptr, infolog);
+        std::stringstream ss;
+        ss << "Fragment shader compilation failed:\n " << infolog;
+        spdlog::error(ss.str());
+        throw std::runtime_error(ss.str());
+    }
+
+    unsigned int shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+    glGetProgramiv(shaderProgram,GL_LINK_STATUS, &succes);
+    if (!succes) {
+        glGetProgramInfoLog(shaderProgram, 512, nullptr, infolog);
+        std::stringstream ss;
+        ss << "Program linking failed:\n " << infolog;
+        spdlog::error(ss.str());
+        throw std::runtime_error(ss.str());
+    }
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    // setup attribute pointers
 }

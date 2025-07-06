@@ -155,8 +155,6 @@ void Keela::GLCameraRender::on_realize() {
     // set nearest neighbors interpolation
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-    guint8 tex[] = {255, 255, 255};
-    //glTexImage2D(GL_TEXTURE_2D, 0,GL_RED, 1, 1, 0,GL_RED,GL_UNSIGNED_BYTE, &tex);
 }
 
 bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &context) {
