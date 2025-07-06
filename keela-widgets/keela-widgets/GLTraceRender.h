@@ -10,8 +10,14 @@
 
 #include "cameramanager.h"
 #include "tracegizmo.h"
+#include "glad/glad.h"
 
 namespace Keela {
+    struct PlotPoint {
+        GLfloat x;
+        GLfloat y;
+    };
+
     /**
      * A source that can be rendered in the trace window
      */
@@ -36,8 +42,11 @@ namespace Keela {
         Gtk::GLArea gl_area;
         Gtk::Label label;
         std::shared_ptr<Keela::ITraceable> trace;
+        unsigned int shader_program;
 
-        void on_realize();
+        void on_gl_realize();
+
+        bool on_gl_render(const Glib::RefPtr<Gdk::GLContext> &context);
 
         unsigned int VAO;
         unsigned int VBO;

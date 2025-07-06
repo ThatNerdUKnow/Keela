@@ -9,10 +9,10 @@ uniform uint numSamples;
 /*
 sampleMax and sampleMin are minimum and maximum values for the signals in normalized coordinates
 */
-uniform float sampleMax;
-uniform float sampleMin;
+uniform float sampleMax = 1.0;
+uniform float sampleMin = -1.0;
 
 void main() {
     float scale = sampleMax - sampleMin;
-    gl_Position = vec4(float(point.x) / numSamples, scale * point.y + sampleMin, 0.0, 1.0);
+    gl_Position = vec4((float(point.x) * 2 / numSamples) - 1, scale * point.y + sampleMin, 0.0, 1.0);
 }
