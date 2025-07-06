@@ -11,13 +11,11 @@
 Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_trace): Gtk::Box(
     Gtk::ORIENTATION_VERTICAL) {
     spdlog::info(__func__);
-    gl_area = Gtk::GLArea();
-    label = Gtk::Label(cam_to_trace->get_name());
+    label.set_text(cam_to_trace->get_name());
     Container::add(label);
     Container::add(gl_area);
     gl_area.set_size_request(300, 128);
     trace = cam_to_trace;
-    gl_area.signal_realize().connect(sigc::mem_fun(this, &GLTraceRender::on_realize));
 
     spdlog::debug("{}: Loading vertex shader resource", __func__);
     GError *error = NULL;
@@ -50,12 +48,20 @@ Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_tr
     fragment_shader_source = std::string(fragment_shader_dup);
     g_bytes_unref(fragment_res);
     g_free(fragment_shader_dup);
+
+    gl_area.signal_realize().connect(sigc::mem_fun(this, &GLTraceRender::on_realize));
+    show_all();
 }
 
 Keela::GLTraceRender::~GLTraceRender() = default;
 
 void Keela::GLTraceRender::on_realize() {
-    Box::on_realize();
+    spdlog::info("GLTraceRender::{}", __func__);
+    if (!Box::get_realized()) {
+        spdlog::warn("GLTraceRender::{}: Not realized", __func__);
+        Box::on_realize();
+        return;
+    }
     gl_area.make_current();
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -111,4 +117,5 @@ void Keela::GLTraceRender::on_realize() {
     glDeleteShader(fragmentShader);
 
     // setup attribute pointers
+    spdlog::info("GLTraceRender::{} successfully realized", __func__);
 }

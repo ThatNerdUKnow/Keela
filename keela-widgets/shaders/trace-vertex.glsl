@@ -3,8 +3,8 @@
 /*
 A point to plot in non-clip coordinates
 */
-layout (location = 0) in u8vec2 point;
-uniform uint64_t numSamples;
+layout (location = 0) in vec2 point;
+uniform uint numSamples;
 
 /*
 sampleMax and sampleMin are minimum and maximum values for the signals in normalized coordinates
