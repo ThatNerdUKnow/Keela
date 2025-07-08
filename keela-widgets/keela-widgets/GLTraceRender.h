@@ -19,7 +19,7 @@ namespace Keela {
     };
 
     /**
-     * A source that can be rendered in the trace window
+     * Abstract base class: A source that can be rendered in the trace window
      */
     class ITraceable {
     public:
@@ -38,10 +38,15 @@ namespace Keela {
 
         ~GLTraceRender() override;
 
+        void set_framerate(double framerate);
+
     private:
         Gtk::GLArea gl_area;
         Gtk::Label label;
+
+        // *basically* a pointer to the camera control window
         std::shared_ptr<Keela::ITraceable> trace;
+
         unsigned int shader_program;
 
         void on_gl_realize();

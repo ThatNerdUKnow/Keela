@@ -5,7 +5,7 @@
 #include "keela-widgets/GLTraceRender.h"
 
 #include <spdlog/spdlog.h>
-
+#include <thread>
 #include "glad/glad.h"
 
 Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_trace): Gtk::Box(
@@ -56,6 +56,10 @@ Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_tr
 
 Keela::GLTraceRender::~GLTraceRender() = default;
 
+void Keela::GLTraceRender::set_framerate(double framerate) {
+    // TODO: dynamically change buffer size to support new framerate
+}
+
 void Keela::GLTraceRender::on_gl_realize() {
     spdlog::info("GLTraceRender::{}", __func__);
     if (!Box::get_realized()) {
@@ -71,13 +75,14 @@ void Keela::GLTraceRender::on_gl_realize() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
     // TODO: generate static data for now
-    PlotPoint graph[2000];
+    std::vector<PlotPoint> graph;
     for (int i = 0; i < 2000; i++) {
         float x = i;
-        graph[i].x = x;
-        graph[i].y = sin(x);
+        float y = sin(x);
+        PlotPoint p = {x, y};
+        graph.push_back(p);
     }
-    glBufferData(GL_ARRAY_BUFFER, sizeof(graph), graph, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, graph.size() * sizeof(PlotPoint), graph.data(), GL_STATIC_DRAW);
 
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
     const char *vertex_cstr = vertex_shader_source.c_str();

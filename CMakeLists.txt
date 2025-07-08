@@ -2,6 +2,11 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.28)
 project(Keela)
 find_package(PkgConfig)
 
+# GoogleTest requires at least C++17
+# We need C++20 for jthreads
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 option(MAKE_REFERENCE "Build reference gstreamer gtk integration" false)
 pkg_search_module(GTKMM REQUIRED IMPORTED_TARGET gtkmm-3.0)
 pkg_search_module(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0)

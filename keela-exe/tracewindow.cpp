@@ -28,6 +28,9 @@ void Keela::TraceWindow::removeTrace() {
     traces.pop_back();
 }
 
-int Keela::TraceWindow::num_traces() {
+int Keela::TraceWindow::num_traces() const {
     return traces.size();
+}
+
+void Keela::TraceWindow::set_framerate(double framerate) {
 }

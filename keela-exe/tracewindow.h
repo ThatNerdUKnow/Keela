@@ -21,7 +21,9 @@ namespace Keela {
 
         void removeTrace();
 
-        int num_traces();
+        int num_traces() const;
+
+        void set_framerate(double framerate);
 
     private:
         std::vector<std::shared_ptr<GLTraceRender> > traces;
