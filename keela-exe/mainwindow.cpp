@@ -63,6 +63,8 @@ MainWindow::MainWindow(): Gtk::Window() {
         throw std::runtime_error("Failed to create pipeline");
     }
 
+    container.add(dump_graph_button);
+    dump_graph_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::dump_graph));
     // Initialize recording settings here
     on_camera_spin_changed();
     gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
@@ -112,7 +114,7 @@ void MainWindow::on_camera_spin_changed() {
     if (ret == GST_STATE_CHANGE_FAILURE) {
         spdlog::error("Failed to set state of pipeline");
     }
-    gst_debug_bin_to_dot_file(GST_BIN(pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "keelapipeline");
+    dump_graph();
 }
 
 void MainWindow::on_record_button_clicked() {
@@ -207,4 +209,9 @@ void MainWindow::on_trace_button_clicked() {
     } else {
         trace_window = nullptr;
     }
+}
+
+void MainWindow::dump_graph() const {
+    spdlog::info("{}: dumping pipeline graph", __func__);
+    gst_debug_bin_to_dot_file(GST_BIN(pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "keelapipeline");
 }

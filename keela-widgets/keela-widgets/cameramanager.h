@@ -14,6 +14,8 @@
 #include <keela-pipeline/recordbin.h>
 #include <keela-pipeline/snapshotbin.h>
 
+#include "keela-pipeline/TraceBin.h"
+
 namespace Keela {
     class CameraManager final : public Keela::Bin {
     public:
@@ -37,6 +39,7 @@ namespace Keela {
         TransformBin transform = TransformBin("transform");
         std::shared_ptr<PresentationBin> presentation = std::make_shared<PresentationBin>("presentation");
         SnapshotBin snapshot;
+        TraceBin trace;
 
     private:
         guint id;

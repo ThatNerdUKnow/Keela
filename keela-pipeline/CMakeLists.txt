@@ -24,6 +24,8 @@ add_library(keela-pipeline presentationbin.cpp keela-pipeline/presentationbin.h
         keela-pipeline/caps.h
         snapshotbin.cpp
         keela-pipeline/snapshotbin.h
+        tracebin.cpp
+        tracebin.h
 )
 target_link_libraries(keela-pipeline PUBLIC PkgConfig::GSTREAMER PkgConfig::SPDLOG)
 

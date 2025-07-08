@@ -32,6 +32,8 @@ private:
     Keela::LabeledSpinButton num_camera_spin = Keela::LabeledSpinButton("Number of Cameras");
     Gtk::CheckButton show_trace_check;
 
+    Gtk::Button dump_graph_button = Gtk::Button("Dump Pipeline Graph (debug)");
+
     Gtk::Box container;
     std::vector<std::shared_ptr<Keela::CameraControlWindow> > cameras;
     std::shared_ptr<Keela::TraceWindow> trace_window = nullptr;
@@ -51,6 +53,8 @@ private:
     void set_resolution(Keela::CameraControlWindow *c) const;
 
     void on_trace_button_clicked();
+
+    void dump_graph() const;
 
     bool is_recording = false;
 };
