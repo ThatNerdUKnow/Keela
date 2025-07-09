@@ -75,7 +75,9 @@ void Keela::GLCameraRender::new_tex_sample(GstSample *sample) {
 
         gst_buffer_unmap(buf, &mapInfo);
     } else {
-        throw std::runtime_error("Could not map sample buffer");
+        std::stringstream ss;
+        ss << __func__ << ": Could not map sample buffer";
+        throw std::runtime_error(ss.str());
     }
     gst_sample_unref(sample);
 }
@@ -161,12 +163,8 @@ bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &contex
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);
 
-    float greenValue = (1) / 2.0f + 0.5f;
-    int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-
     // check for a new sample
     GstSample *sample = nullptr;
-
 
     g_signal_emit_by_name(bin->sink, "try-pull-sample", 0, &sample, nullptr);
     if (sample) {

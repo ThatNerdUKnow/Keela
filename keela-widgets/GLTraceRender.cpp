@@ -6,6 +6,7 @@
 
 #include <spdlog/spdlog.h>
 #include <thread>
+#include <utility>
 #include "glad/glad.h"
 
 Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_trace): Gtk::Box(
@@ -52,6 +53,11 @@ Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_tr
     gl_area.signal_realize().connect(sigc::mem_fun(this, &GLTraceRender::on_gl_realize));
     gl_area.signal_render().connect(sigc::mem_fun(this, &GLTraceRender::on_gl_render));
     show_all();
+
+    // start processor
+    worker_thread = std::jthread([this](std::stop_token token) {
+        this->process_video_data(std::move(token));
+    });
 }
 
 Keela::GLTraceRender::~GLTraceRender() = default;
@@ -75,14 +81,14 @@ void Keela::GLTraceRender::on_gl_realize() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
     // TODO: generate static data for now
-    std::vector<PlotPoint> graph;
     for (int i = 0; i < 2000; i++) {
         float x = i;
         float y = sin(x);
         PlotPoint p = {x, y};
-        graph.push_back(p);
+        plot_points.push_back(p);
     }
-    glBufferData(GL_ARRAY_BUFFER, graph.size() * sizeof(PlotPoint), graph.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, static_cast<long long>(plot_points.size() * sizeof(PlotPoint)), plot_points.data(),
+                 GL_STATIC_DRAW);
 
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
     const char *vertex_cstr = vertex_shader_source.c_str();
@@ -148,8 +154,60 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
     gl_area.make_current();
     glUseProgram(shader_program);
     glBindVertexArray(VAO);
-    auto loc = glGetUniformLocation(shader_program, "numSamples");
+    const auto loc = glGetUniformLocation(shader_program, "numSamples");
     glUniform1ui(loc, 2000);
-    glDrawArrays(GL_LINE_STRIP, 0, 2000);
+    glDrawArrays(GL_LINE_STRIP, 0, static_cast<int>(plot_points.size()));
     return true;
+}
+
+void Keela::GLTraceRender::process_video_data(std::stop_token token) {
+    spdlog::debug("GLTraceRender::{}", __func__);
+    GstElement *appsink = this->trace->get_camera_manager()->trace.sink;
+    // might need to lock gizmo?
+    auto gizmo = this->trace->get_trace_gizmo();
+    guint64 current_num_buffers = 0;
+    assert(appsink != nullptr);
+    GstSample *sample = nullptr;
+    while (!token.stop_requested()) {
+        g_signal_emit_by_name(appsink, "try-pull-sample", 0, &sample, nullptr);
+        if (sample) {
+            auto buf = gst_sample_get_buffer(sample);
+            assert(buf != nullptr);
+
+            auto caps = gst_sample_get_caps(sample);
+            assert(caps != nullptr);
+            auto structure = gst_caps_get_structure(caps, 0);
+            assert(structure != nullptr);
+            gint width, height;
+            assert(gst_structure_get_int(structure, "width", &width));
+            assert(gst_structure_get_int(structure, "height", &height));
+
+
+            GstMapInfo mapInfo;
+            if (gst_buffer_map(buf, &mapInfo, GST_MAP_READ)) {
+                // do stuff with the buffer data
+                double sum = 0;
+                unsigned int count = 0;
+                for (auto x = 0; x < width; x++) {
+                    for (auto y = 0; y < height; y++) {
+                        // multiply x and y by a factor of 2 since we are binning the camera pixels
+                        // NOTE: gizmo MAY be null
+                        if (gizmo->intersects(Gdk::Point(x * 2, y * 2))) {
+                            count++;
+                            auto i = y * width + x;
+                            sum += mapInfo.data[i];
+                        }
+                    }
+                }
+                auto mean = sum / count;
+                spdlog::trace("GLTraceRender::{}: {}", __func__, mean);
+            } else {
+                std::stringstream ss;
+                ss << __func__ << "Buffer mapping failed";
+                throw std::runtime_error(ss.str());
+            }
+        }
+        gst_sample_unref(sample);
+        sample = nullptr;
+    }
 }

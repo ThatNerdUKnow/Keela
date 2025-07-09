@@ -58,6 +58,16 @@ namespace Keela {
 
         std::string vertex_shader_source;
         std::string fragment_shader_source;
+
+        std::jthread worker_thread;
+        std::mutex worker_mutex;
+        std::vector<PlotPoint> plot_points;
+
+        /**
+         * function to be used in worker_thread in order to process video data
+         * @param token
+         */
+        void process_video_data(std::stop_token token);
     };
 }
 #endif //GLTRACERENDER_H

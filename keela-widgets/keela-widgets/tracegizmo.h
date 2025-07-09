@@ -15,6 +15,8 @@ namespace Keela {
 
         ~TraceGizmo() override;
 
+        bool intersects(const Gdk::Point &pt) const;
+
     protected:
         bool on_button_press_event(GdkEventButton *button_event) override;
 
@@ -23,8 +25,6 @@ namespace Keela {
         bool on_motion_notify_event(GdkEventMotion *motion_event) override;
 
         bool on_draw(const Cairo::RefPtr<Cairo::Context> &cr) override;
-
-        bool intersects(const Gdk::Point &pt) const;
 
     private:
         std::unique_ptr<Gdk::Rectangle> bounds = nullptr;
