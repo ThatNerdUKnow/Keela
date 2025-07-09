@@ -190,45 +190,51 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
     guint64 current_num_buffers = 0;
     assert(appsink != nullptr);
     GstSample *sample = nullptr;
+
     while (!token.stop_requested()) {
+        double mean;
         g_signal_emit_by_name(appsink, "try-pull-sample", 0, &sample, nullptr);
-        if (sample) {
-            auto buf = gst_sample_get_buffer(sample);
-            assert(buf != nullptr);
+        if (!sample) {
+            continue;
+        }
 
-            auto caps = gst_sample_get_caps(sample);
-            assert(caps != nullptr);
-            auto structure = gst_caps_get_structure(caps, 0);
-            assert(structure != nullptr);
-            gint width, height;
-            assert(gst_structure_get_int(structure, "width", &width));
-            assert(gst_structure_get_int(structure, "height", &height));
+        auto buf = gst_sample_get_buffer(sample);
+        assert(buf != nullptr);
+
+        auto caps = gst_sample_get_caps(sample);
+        assert(caps != nullptr);
+        auto structure = gst_caps_get_structure(caps, 0);
+        assert(structure != nullptr);
+        gint width, height;
+        assert(gst_structure_get_int(structure, "width", &width));
+        assert(gst_structure_get_int(structure, "height", &height));
 
 
-            GstMapInfo mapInfo;
-            if (gst_buffer_map(buf, &mapInfo, GST_MAP_READ)) {
-                // do stuff with the buffer data
-                double sum = 0;
-                unsigned int count = 0;
-                for (auto x = 0; x < width; x++) {
-                    for (auto y = 0; y < height; y++) {
-                        // multiply x and y by a factor of 2 since we are binning the camera pixels
-                        // NOTE: gizmo MAY be null
-                        if (gizmo->intersects(Gdk::Point(x * 2, y * 2))) {
-                            count++;
-                            auto i = y * width + x;
-                            sum += mapInfo.data[i];
-                        }
-                    }
+        GstMapInfo mapInfo;
+        if (!gst_buffer_map(buf, &mapInfo, GST_MAP_READ)) {
+            std::stringstream ss;
+            ss << __func__ << "Buffer mapping failed";
+            throw std::runtime_error(ss.str());
+        }
+
+
+        // do stuff with the buffer data
+        double sum = 0;
+        unsigned int count = 0;
+        for (auto x = 0; x < width; x++) {
+            for (auto y = 0; y < height; y++) {
+                // multiply x and y by a factor of 2 since we are binning the camera pixels
+                // NOTE: gizmo MAY be null
+                if (gizmo->intersects(Gdk::Point(x * 2, y * 2))) {
+                    count++;
+                    auto i = y * width + x;
+                    sum += mapInfo.data[i];
                 }
-                auto mean = sum / count;
-                spdlog::trace("GLTraceRender::{}: {}", __func__, mean);
-            } else {
-                std::stringstream ss;
-                ss << __func__ << "Buffer mapping failed";
-                throw std::runtime_error(ss.str());
             }
         }
+        mean = sum / count;
+        spdlog::trace("GLTraceRender::{}: {}", __func__, mean);
+
         gst_sample_unref(sample);
         sample = nullptr;
     }
