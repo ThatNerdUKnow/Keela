@@ -64,6 +64,12 @@ namespace Keela {
         std::vector<PlotPoint> plot_points;
 
         /**
+         * target length of plot_points buffer. Should equal PLOT_DURATION_SEC * framerate
+         */
+        unsigned long long plot_length;
+
+        const int PLOT_DURATION_SEC = 10;
+        /**
          * function to be used in worker_thread in order to process video data
          * @param token
          */

@@ -63,7 +63,29 @@ Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_tr
 Keela::GLTraceRender::~GLTraceRender() = default;
 
 void Keela::GLTraceRender::set_framerate(double framerate) {
-    // TODO: dynamically change buffer size to support new framerate
+    // acquire mutex to avoid race conditions
+    std::scoped_lock _(worker_mutex);
+    // calculate new buffer size
+    plot_length = PLOT_DURATION_SEC * framerate;
+
+    // determine if current buffer needs any modification
+    if (plot_length < plot_points.size()) {
+        // essentially discards the first *diff* elements from plot_points
+        auto diff = plot_points.size() - plot_length;
+        std::ranges::rotate(plot_points, plot_points.begin() + diff);
+        plot_points.resize(plot_length);
+
+        // reset the x values of our plot points after rotation
+        // NOTE: the x values should always equal their index into the VBO...
+        // if there is a way to get the index of the vertex in opengl it would significantly simplify this class
+        int i = 0;
+        for (auto &point: plot_points) {
+            point.x = i;
+            i++;
+        }
+    } else {
+        // nothing to be done
+    }
 }
 
 void Keela::GLTraceRender::on_gl_realize() {
