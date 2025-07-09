@@ -3,7 +3,7 @@
 /*
 A point to plot in non-clip coordinates
 */
-layout (location = 0) in vec2 point;
+layout (location = 0) in float y;
 uniform uint numSamples;
 
 /*
@@ -14,9 +14,10 @@ uniform float sampleMin = 0;
 
 void main() {
     // confine min and max to be within the range 0-1 inclusive
+    float x = gl_VertexID;
     float max = clamp(sampleMax, 0, 1);
     float min = clamp(sampleMin, 0, max);
 
     float scale = max - min;
-    gl_Position = vec4((float(point.x) * 2 / numSamples) - 1, scale * point.y + min, 0.0, 1.0);
+    gl_Position = vec4((x * 2 / numSamples) - 1, scale * y + min, 0.0, 1.0);
 }

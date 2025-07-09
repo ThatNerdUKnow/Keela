@@ -66,7 +66,7 @@ void Keela::GLTraceRender::set_framerate(double framerate) {
     // acquire mutex to avoid race conditions
     std::scoped_lock _(worker_mutex);
     // calculate new buffer size
-    plot_length = PLOT_DURATION_SEC * framerate;
+    plot_length = static_cast<unsigned long long>(PLOT_DURATION_SEC * framerate);
 
     // determine if current buffer needs any modification
     if (plot_length < plot_points.size()) {
@@ -78,11 +78,11 @@ void Keela::GLTraceRender::set_framerate(double framerate) {
         // reset the x values of our plot points after rotation
         // NOTE: the x values should always equal their index into the VBO...
         // if there is a way to get the index of the vertex in opengl it would significantly simplify this class
-        int i = 0;
+        /*int i = 0;
         for (auto &point: plot_points) {
             point.x = i;
             i++;
-        }
+        }*/
     } else {
         // nothing to be done
     }
@@ -104,9 +104,9 @@ void Keela::GLTraceRender::on_gl_realize() {
 
     // TODO: generate static data for now
     for (int i = 0; i < 2000; i++) {
-        float x = i;
-        float y = sin(x);
-        PlotPoint p = {x, y};
+        //float x = i;
+        float y = sin(i);
+        PlotPoint p = {y};
         plot_points.push_back(p);
     }
     glBufferData(GL_ARRAY_BUFFER, static_cast<long long>(plot_points.size() * sizeof(PlotPoint)), plot_points.data(),
@@ -161,12 +161,12 @@ void Keela::GLTraceRender::on_gl_realize() {
     // location 0 is a vec2 representing a point in non-clip coordinates
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(
-        0, // attribute
-        2, // number of elements per vertex, here (x,y)
-        GL_FLOAT, // the type of each element
-        GL_FALSE, // take our values as-is
-        0, // no space between values
-        0 // use the vertex buffer object
+        0,
+        1,
+        GL_FLOAT,
+        GL_FALSE,
+        0,
+        0
     );
     // uint is a uniform representing the number of samples
     spdlog::info("GLTraceRender::{} successfully realized", __func__);
@@ -236,6 +236,11 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
         spdlog::trace("GLTraceRender::{}: {}", __func__, mean);
 
         gst_sample_unref(sample);
-        sample = nullptr;
+        sample = nullptr; {
+            std::scoped_lock _(worker_mutex);
+            if (plot_points.size() < plot_length) {
+                //plot_points.push_back()
+            }
+        }
     }
 }
