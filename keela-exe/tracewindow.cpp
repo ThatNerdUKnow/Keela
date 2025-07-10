@@ -33,4 +33,7 @@ int Keela::TraceWindow::num_traces() const {
 }
 
 void Keela::TraceWindow::set_framerate(double framerate) {
+    for (auto trace: traces) {
+        trace->set_framerate(framerate);
+    }
 }

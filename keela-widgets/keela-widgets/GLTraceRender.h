@@ -66,7 +66,7 @@ namespace Keela {
         /**
          * target length of plot_points buffer. Should equal PLOT_DURATION_SEC * framerate
          */
-        unsigned long long plot_length;
+        unsigned long long plot_length = 2000;
 
         const int PLOT_DURATION_SEC = 10;
         /**

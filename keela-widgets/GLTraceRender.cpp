@@ -63,6 +63,7 @@ Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_tr
 Keela::GLTraceRender::~GLTraceRender() = default;
 
 void Keela::GLTraceRender::set_framerate(double framerate) {
+    spdlog::info("GLTraceRender::{}", __func__);
     // acquire mutex to avoid race conditions
     std::scoped_lock _(worker_mutex);
     // calculate new buffer size
@@ -74,15 +75,6 @@ void Keela::GLTraceRender::set_framerate(double framerate) {
         auto diff = plot_points.size() - plot_length;
         std::ranges::rotate(plot_points, plot_points.begin() + diff);
         plot_points.resize(plot_length);
-
-        // reset the x values of our plot points after rotation
-        // NOTE: the x values should always equal their index into the VBO...
-        // if there is a way to get the index of the vertex in opengl it would significantly simplify this class
-        /*int i = 0;
-        for (auto &point: plot_points) {
-            point.x = i;
-            i++;
-        }*/
     } else {
         // nothing to be done
     }
@@ -176,8 +168,10 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
     gl_area.make_current();
     glUseProgram(shader_program);
     glBindVertexArray(VAO);
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
     const auto loc = glGetUniformLocation(shader_program, "numSamples");
-    glUniform1ui(loc, 2000);
+    glUniform1ui(loc, plot_length);
     glDrawArrays(GL_LINE_STRIP, 0, static_cast<int>(plot_points.size()));
     return true;
 }
@@ -191,6 +185,9 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
     GstSample *sample = nullptr;
 
     while (!token.stop_requested()) {
+        // refresh the data at most 30 times a second
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
+
         auto gizmo = this->trace->get_trace_gizmo();
         if (!gizmo->get_enabled()) {
             // gizmo is not currently active
@@ -242,9 +239,10 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
         gst_sample_unref(sample);
         sample = nullptr; {
             std::scoped_lock _(worker_mutex);
-            if (plot_points.size() < plot_length) {
-                //plot_points.push_back()
+            if (plot_points.size() >= plot_length) {
+                std::ranges::rotate(plot_points, plot_points.begin() + 1);
             }
+            plot_points.push_back(PlotPoint(static_cast<float>(mean)));
         }
     }
 }

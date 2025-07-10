@@ -167,7 +167,7 @@ void MainWindow::reset_cameras() {
     }
 }
 
-void MainWindow::set_framerate() const {
+void MainWindow::set_framerate() {
     const auto fr = framerate_spin.m_spin.get_value();
     for (const auto &c: cameras) {
         set_framerate(c->camera_manager.get());
@@ -180,15 +180,14 @@ void MainWindow::set_framerate() const {
 void MainWindow::set_framerate(Keela::CameraManager *cm) const {
     const auto fr = framerate_spin.m_spin.get_value();
     cm->set_framerate(fr);
+    if (trace_window) {
+        trace_window->set_framerate(fr);
+    }
 }
 
 void MainWindow::set_resolution() const {
-    const auto w = data_matrix_w_spin.m_spin.get_value_as_int();
-    const auto h = data_matrix_h_spin.m_spin.get_value_as_int();
     for (const auto &c: cameras) {
         set_resolution(c.get());
-        //set_resolution(c->camera_manager.get());
-        //c->camera_manager->set_resolution(w, h);
     }
 }
 
@@ -202,10 +201,10 @@ void MainWindow::on_trace_button_clicked() {
     spdlog::info(__func__);
     if (trace_window == nullptr) {
         trace_window = std::make_unique<Keela::TraceWindow>();
-        // TODO: potentially need to add all current cameras to the list of traces
         trace_window->show();
 
         spdlog::debug("num traces: {}\t num cameras: {}", trace_window->num_traces(), trace_window->num_traces());
+        // TODO: retroactively set the framerates of the trace widgets
         for (int i = trace_window->num_traces(); i < cameras.size(); i++) {
             auto trace = cameras.at(i);
             trace_window->addTrace(trace);

@@ -44,7 +44,7 @@ private:
 
     void reset_cameras();
 
-    void set_framerate() const;
+    void set_framerate();
 
     void set_framerate(Keela::CameraManager *cm) const;
 
