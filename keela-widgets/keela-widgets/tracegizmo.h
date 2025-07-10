@@ -17,6 +17,8 @@ namespace Keela {
 
         bool intersects(const Gdk::Point &pt) const;
 
+        bool get_enabled() const;
+
     protected:
         bool on_button_press_event(GdkEventButton *button_event) override;
 

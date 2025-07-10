@@ -167,3 +167,7 @@ bool Keela::TraceGizmo::intersects(const Gdk::Point &pt) const {
 
     return (std::pow((x - h), 2.0) / std::pow(r_x, 2.0)) + (std::pow((y - k), 2.0) / std::pow(r_y, 2.0)) <= 1.0;
 }
+
+bool Keela::TraceGizmo::get_enabled() const {
+    return bounds != nullptr;
+}

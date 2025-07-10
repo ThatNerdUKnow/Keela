@@ -186,12 +186,16 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
     spdlog::debug("GLTraceRender::{}", __func__);
     GstElement *appsink = this->trace->get_camera_manager()->trace.sink;
     // might need to lock gizmo?
-    auto gizmo = this->trace->get_trace_gizmo();
     guint64 current_num_buffers = 0;
     assert(appsink != nullptr);
     GstSample *sample = nullptr;
 
     while (!token.stop_requested()) {
+        auto gizmo = this->trace->get_trace_gizmo();
+        if (!gizmo->get_enabled()) {
+            // gizmo is not currently active
+            continue;
+        }
         double mean;
         g_signal_emit_by_name(appsink, "try-pull-sample", 0, &sample, nullptr);
         if (!sample) {
