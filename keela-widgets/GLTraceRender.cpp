@@ -93,17 +93,6 @@ void Keela::GLTraceRender::on_gl_realize() {
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    /*
-    // TODO: generate static data for now
-    for (int i = 0; i < 2000; i++) {
-        //float x = i;
-        float y = sin(i);
-        PlotPoint p = {y};
-        plot_points.push_back(p);
-    }*/
-    /*glBufferData(GL_ARRAY_BUFFER, static_cast<long long>(plot_points.size() * sizeof(PlotPoint)), plot_points.data(),
-                 GL_STATIC_DRAW);*/
-
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
     const char *vertex_cstr = vertex_shader_source.c_str();
     glShaderSource(vertexShader, 1, &vertex_cstr, nullptr);
@@ -171,8 +160,13 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
     glBindVertexArray(VAO);
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
-    const auto loc = glGetUniformLocation(shader_program, "numSamples");
+    auto loc = glGetUniformLocation(shader_program, "numSamples");
     glUniform1ui(loc, plot_length);
+    loc = glGetUniformLocation(shader_program, "sampleMax");
+    glUniform1f(loc, plot_max);
+    loc = glGetUniformLocation(shader_program, "sampleMin");
+    glUniform1f(loc, plot_min);
+
     glBufferData(GL_ARRAY_BUFFER, static_cast<long long>(plot_points.size() * sizeof(PlotPoint)), plot_points.data(),
                  GL_DYNAMIC_DRAW);
     glDrawArrays(GL_LINE_STRIP, 0, static_cast<int>(plot_points.size()));
@@ -188,7 +182,6 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
     GstSample *sample = nullptr;
 
     while (!token.stop_requested()) {
-        this->queue_draw();
         auto gizmo = this->trace->get_trace_gizmo();
         if (!gizmo->get_enabled()) {
             // gizmo is not currently active
@@ -198,6 +191,7 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
         g_signal_emit_by_name(appsink, "try-pull-sample", 0, &sample, nullptr);
         if (!sample) {
             // refresh data at most 30 times a second
+            this->queue_draw(); // if trace isn't refreshing this is a sign that this routine can not keep up
             std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
             continue;
         }
@@ -237,7 +231,7 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
             }
         }
         mean = sum / count;
-        spdlog::debug("GLTraceRender::{}: {}", __func__, mean);
+        spdlog::trace("GLTraceRender::{}: {}", __func__, mean);
 
         gst_sample_unref(sample);
         sample = nullptr; {
@@ -248,6 +242,9 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
             }
             plot_points.push_back(PlotPoint(static_cast<float>(mean)));
         }
+
+        //plot_max = std::max_element(plot_points.begin(), plot_points.end())->y;
+        //plot_min = std::min_element(plot_points.begin(), plot_points.end())->y;
     }
     spdlog::info("GLTraceRender::{} stopping", __func__);
 }

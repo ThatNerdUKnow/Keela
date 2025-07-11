@@ -14,12 +14,19 @@ uniform float sampleMin = 0;
 
 void main() {
     float x = gl_VertexID;
-    float span = sampleMax - sampleMin;
+    float max = sampleMax;
+    float min = sampleMin;
+    float span = max - min;
     float scale = 1 / span;
     float offset = 0;
 
+    // try to vertically center the plot if max == min
+    if (max == min) {
+        max += 0.1;
+        min -= 0.1;
+    }
     // offset is applied to every y coord such that sampleMin will be transformed to 0.0
-    offset = sampleMin >= 0 ? sampleMin : -sampleMin;
+    offset = min >= 0 ? min : -min;
     //float min = -1.0 - sampleMin;
     gl_Position = vec4((x * 2 / numSamples) - 1, scale * y, 0.0, 1.0);
 }
