@@ -81,7 +81,6 @@ void Keela::GLTraceRender::set_framerate(double framerate) {
 }
 
 void Keela::GLTraceRender::on_gl_realize() {
-    spdlog::info("GLTraceRender::{}", __func__);
     if (!Box::get_realized()) {
         spdlog::warn("GLTraceRender::{}: Not realized", __func__);
         Box::on_realize();
@@ -94,15 +93,16 @@ void Keela::GLTraceRender::on_gl_realize() {
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
+    /*
     // TODO: generate static data for now
     for (int i = 0; i < 2000; i++) {
         //float x = i;
         float y = sin(i);
         PlotPoint p = {y};
         plot_points.push_back(p);
-    }
-    glBufferData(GL_ARRAY_BUFFER, static_cast<long long>(plot_points.size() * sizeof(PlotPoint)), plot_points.data(),
-                 GL_STATIC_DRAW);
+    }*/
+    /*glBufferData(GL_ARRAY_BUFFER, static_cast<long long>(plot_points.size() * sizeof(PlotPoint)), plot_points.data(),
+                 GL_STATIC_DRAW);*/
 
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
     const char *vertex_cstr = vertex_shader_source.c_str();
@@ -165,6 +165,7 @@ void Keela::GLTraceRender::on_gl_realize() {
 }
 
 bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &context) {
+    std::scoped_lock _(worker_mutex);
     gl_area.make_current();
     glUseProgram(shader_program);
     glBindVertexArray(VAO);
@@ -172,6 +173,8 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
     glClear(GL_COLOR_BUFFER_BIT);
     const auto loc = glGetUniformLocation(shader_program, "numSamples");
     glUniform1ui(loc, plot_length);
+    glBufferData(GL_ARRAY_BUFFER, static_cast<long long>(plot_points.size() * sizeof(PlotPoint)), plot_points.data(),
+                 GL_DYNAMIC_DRAW);
     glDrawArrays(GL_LINE_STRIP, 0, static_cast<int>(plot_points.size()));
     return true;
 }
@@ -185,17 +188,17 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
     GstSample *sample = nullptr;
 
     while (!token.stop_requested()) {
-        // refresh the data at most 30 times a second
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
-
+        this->queue_draw();
         auto gizmo = this->trace->get_trace_gizmo();
         if (!gizmo->get_enabled()) {
             // gizmo is not currently active
             continue;
         }
-        double mean;
+        double mean = 0;
         g_signal_emit_by_name(appsink, "try-pull-sample", 0, &sample, nullptr);
         if (!sample) {
+            // refresh data at most 30 times a second
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
             continue;
         }
 
@@ -234,15 +237,17 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
             }
         }
         mean = sum / count;
-        spdlog::trace("GLTraceRender::{}: {}", __func__, mean);
+        spdlog::debug("GLTraceRender::{}: {}", __func__, mean);
 
         gst_sample_unref(sample);
         sample = nullptr; {
             std::scoped_lock _(worker_mutex);
             if (plot_points.size() >= plot_length) {
                 std::ranges::rotate(plot_points, plot_points.begin() + 1);
+                plot_points.pop_back();
             }
             plot_points.push_back(PlotPoint(static_cast<float>(mean)));
         }
     }
+    spdlog::info("GLTraceRender::{} stopping", __func__);
 }
