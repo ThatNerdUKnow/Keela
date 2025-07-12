@@ -7,6 +7,8 @@
 #include <spdlog/spdlog.h>
 #include <thread>
 #include <utility>
+#include <ranges>
+#include <execution>
 #include "glad/glad.h"
 
 Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_trace): Gtk::Box(
@@ -178,6 +180,7 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
 
 void Keela::GLTraceRender::process_video_data(std::stop_token token) {
     spdlog::debug("GLTraceRender::{}", __func__);
+    // FIXME: sometimes this segfaults
     GstElement *appsink = this->trace->get_camera_manager()->trace.sink;
     // might need to lock gizmo?
     guint64 current_num_buffers = 0;
@@ -185,7 +188,6 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
     GstSample *sample = nullptr;
 
     while (!token.stop_requested()) {
-        this->queue_draw();
         auto gizmo = this->trace->get_trace_gizmo();
         if (!gizmo->get_enabled()) {
             // gizmo is not currently active
@@ -220,20 +222,22 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
         }
 
 
-        // do stuff with the buffer data
-        double sum = 0;
-        unsigned int count = 0;
-        for (auto x = 0; x < width; x++) {
-            for (auto y = 0; y < height; y++) {
-                // multiply x and y by a factor of 2 since we are binning the camera pixels
-                // NOTE: gizmo MAY be null
-                if (gizmo->intersects(Gdk::Point(x * 2, y * 2))) {
-                    count++;
-                    auto i = y * width + x;
-                    sum += mapInfo.data[i];
-                }
+        std::atomic<unsigned int> sum = 0;
+        std::atomic<unsigned int> count = 0;
+        assert(width * height == mapInfo.size);
+        auto indices = std::ranges::views::iota(0, width * height);
+        std::for_each(std::execution::par, indices.begin(), indices.end(), [&](auto index) {
+            // protect against null pointer dereferences and division by zero
+            if (!gizmo || width == 0) {
+                return;
             }
-        }
+            auto x = index % width;
+            auto y = index / width;
+            if (gizmo->intersects(Gdk::Point(x * 2, y * 2))) {
+                count.fetch_add(1, std::memory_order_relaxed);
+                sum.fetch_add(mapInfo.data[index], std::memory_order_relaxed);
+            }
+        });
         mean = sum / count;
         spdlog::trace("GLTraceRender::{}: {}", __func__, mean);
 
@@ -241,14 +245,12 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
         sample = nullptr; {
             std::scoped_lock _(worker_mutex);
             if (plot_points.size() >= plot_length) {
-                //std::ranges::rotate(plot_points, plot_points.begin() + 1);
                 plot_points.pop_front();
             }
             plot_points.push_back(PlotPoint(static_cast<float>(mean)));
         }
 
-        //plot_max = std::max_element(plot_points.begin(), plot_points.end())->y;
-        //plot_min = std::min_element(plot_points.begin(), plot_points.end())->y;
+        // min and max calculation should probably be done by the rendering thread
     }
     spdlog::info("GLTraceRender::{} stopping", __func__);
 }
