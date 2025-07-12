@@ -143,6 +143,7 @@ bool Keela::TraceGizmo::on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
     return DrawingArea::on_draw(cr);
 }
 
+
 bool Keela::TraceGizmo::intersects(const Gdk::Point &pt) const {
     /*
      * https://math.stackexchange.com/questions/76457/check-if-a-point-is-within-an-ellipse
@@ -160,6 +161,10 @@ bool Keela::TraceGizmo::intersects(const Gdk::Point &pt) const {
     auto r_x = HALF(bounds->get_width());
     auto r_y = HALF(bounds->get_height());
 
+    // to avoid dividing by zero
+    if (r_x == 0 || r_y == 0) {
+        return false;
+    }
     auto h = bounds->get_x() + r_x;
     auto k = bounds->get_y() + r_y;
     auto x = pt.get_x();

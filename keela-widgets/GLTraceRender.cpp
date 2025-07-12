@@ -167,7 +167,10 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
     loc = glGetUniformLocation(shader_program, "sampleMin");
     glUniform1f(loc, plot_min);
 
-    glBufferData(GL_ARRAY_BUFFER, static_cast<long long>(plot_points.size() * sizeof(PlotPoint)), plot_points.data(),
+    std::vector<PlotPoint> plot_points_vec(plot_points.size());
+    std::copy(plot_points.begin(), plot_points.end(), plot_points_vec.begin());
+    glBufferData(GL_ARRAY_BUFFER, static_cast<long long>(plot_points.size() * sizeof(PlotPoint)),
+                 plot_points_vec.data(),
                  GL_DYNAMIC_DRAW);
     glDrawArrays(GL_LINE_STRIP, 0, static_cast<int>(plot_points.size()));
     return true;
@@ -182,6 +185,7 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
     GstSample *sample = nullptr;
 
     while (!token.stop_requested()) {
+        this->queue_draw();
         auto gizmo = this->trace->get_trace_gizmo();
         if (!gizmo->get_enabled()) {
             // gizmo is not currently active
@@ -237,8 +241,8 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
         sample = nullptr; {
             std::scoped_lock _(worker_mutex);
             if (plot_points.size() >= plot_length) {
-                std::ranges::rotate(plot_points, plot_points.begin() + 1);
-                plot_points.pop_back();
+                //std::ranges::rotate(plot_points, plot_points.begin() + 1);
+                plot_points.pop_front();
             }
             plot_points.push_back(PlotPoint(static_cast<float>(mean)));
         }

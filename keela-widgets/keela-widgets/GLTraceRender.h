@@ -61,7 +61,7 @@ namespace Keela {
 
         std::jthread worker_thread;
         std::mutex worker_mutex;
-        std::vector<PlotPoint> plot_points;
+        std::deque<PlotPoint> plot_points;
 
         /**
          * target length of plot_points buffer. Should equal PLOT_DURATION_SEC * framerate
