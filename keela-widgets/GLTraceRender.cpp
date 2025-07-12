@@ -180,7 +180,6 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
 
 void Keela::GLTraceRender::process_video_data(std::stop_token token) {
     spdlog::debug("GLTraceRender::{}", __func__);
-    // FIXME: sometimes this segfaults
     GstElement *appsink = this->trace->get_camera_manager()->trace.sink;
     // might need to lock gizmo?
     guint64 current_num_buffers = 0;
@@ -238,7 +237,11 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
                 sum.fetch_add(mapInfo.data[index], std::memory_order_relaxed);
             }
         });
-        mean = sum / count;
+        if (count == 0) {
+            mean = 0;
+        } else {
+            mean = sum / count;
+        }
         spdlog::trace("GLTraceRender::{}: {}", __func__, mean);
 
         gst_sample_unref(sample);
