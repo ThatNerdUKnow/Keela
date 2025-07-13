@@ -144,7 +144,7 @@ bool Keela::TraceGizmo::on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
 }
 
 
-bool Keela::TraceGizmo::intersects(const Gdk::Point &pt) const {
+bool Keela::TraceGizmo::intersects(int x, int y) const {
     /*
      * https://math.stackexchange.com/questions/76457/check-if-a-point-is-within-an-ellipse
      * The region (disk) bounded by the ellipse is given by the equation:
@@ -167,8 +167,8 @@ bool Keela::TraceGizmo::intersects(const Gdk::Point &pt) const {
     }
     auto h = bounds->get_x() + r_x;
     auto k = bounds->get_y() + r_y;
-    auto x = pt.get_x();
-    auto y = pt.get_y();
+    //auto x = x.get_x();
+    //auto y = x.get_y();
 
     return (std::pow((x - h), 2.0) / std::pow(r_x, 2.0)) + (std::pow((y - k), 2.0) / std::pow(r_y, 2.0)) <= 1.0;
 }

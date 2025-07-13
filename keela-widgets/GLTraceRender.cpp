@@ -212,7 +212,6 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
         assert(gst_structure_get_int(structure, "width", &width));
         assert(gst_structure_get_int(structure, "height", &height));
 
-
         GstMapInfo mapInfo;
         if (!gst_buffer_map(buf, &mapInfo, GST_MAP_READ)) {
             std::stringstream ss;
@@ -221,10 +220,12 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
         }
 
 
-        std::atomic<unsigned int> sum = 0;
-        std::atomic<unsigned int> count = 0;
+        std::atomic<unsigned long long> sum = 0;
+        std::atomic<unsigned long long> count = 0;
         assert(width * height == mapInfo.size);
-        auto indices = std::ranges::views::iota(0, width * height);
+        auto indices = std::vector<unsigned int>(mapInfo.size);
+        std::iota(indices.begin(), indices.end(), 0);
+
         std::for_each(std::execution::par, indices.begin(), indices.end(), [&](auto index) {
             // protect against null pointer dereferences and division by zero
             if (!gizmo || width == 0) {
@@ -232,7 +233,7 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
             }
             auto x = index % width;
             auto y = index / width;
-            if (gizmo->intersects(Gdk::Point(x * 2, y * 2))) {
+            if (gizmo->intersects(x * 2, y * 2)) {
                 count.fetch_add(1, std::memory_order_relaxed);
                 sum.fetch_add(mapInfo.data[index], std::memory_order_relaxed);
             }
@@ -243,7 +244,7 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
             mean = sum / count;
         }
         spdlog::trace("GLTraceRender::{}: {}", __func__, mean);
-
+        gst_buffer_unmap(buf, &mapInfo);
         gst_sample_unref(sample);
         sample = nullptr; {
             std::scoped_lock _(worker_mutex);

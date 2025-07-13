@@ -15,7 +15,7 @@ namespace Keela {
 
         ~TraceGizmo() override;
 
-        bool intersects(const Gdk::Point &pt) const;
+        bool intersects(int x, int y) const;
 
         bool get_enabled() const;
 
