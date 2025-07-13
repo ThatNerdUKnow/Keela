@@ -239,7 +239,7 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
             }
         });
         if (count == 0) {
-            mean = 0;
+            mean = std::numeric_limits<double>::quiet_NaN();
         } else {
             mean = sum / count;
         }
