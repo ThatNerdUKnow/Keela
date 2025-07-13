@@ -220,13 +220,13 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
         }
 
 
-        std::atomic<unsigned long long> sum = 0;
-        std::atomic<unsigned long long> count = 0;
+        unsigned long long sum = 0;
+        unsigned long long count = 0;
         assert(width * height == mapInfo.size);
         auto indices = std::vector<unsigned int>(mapInfo.size);
         std::iota(indices.begin(), indices.end(), 0);
 
-        std::for_each(std::execution::par, indices.begin(), indices.end(), [&](auto index) {
+        std::ranges::for_each(indices, [&](auto index) {
             // protect against null pointer dereferences and division by zero
             if (!gizmo || width == 0) {
                 return;
@@ -234,8 +234,8 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
             auto x = index % width;
             auto y = index / width;
             if (gizmo->intersects(x * 2, y * 2)) {
-                count.fetch_add(1, std::memory_order_relaxed);
-                sum.fetch_add(mapInfo.data[index], std::memory_order_relaxed);
+                count += 1;
+                sum += mapInfo.data[index];
             }
         });
         if (count == 0) {
@@ -252,6 +252,7 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
                 plot_points.pop_front();
             }
             plot_points.push_back(PlotPoint(static_cast<float>(mean)));
+            this->queue_draw();
         }
 
         // min and max calculation should probably be done by the rendering thread

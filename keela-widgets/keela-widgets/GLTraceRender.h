@@ -14,7 +14,6 @@
 
 namespace Keela {
     struct PlotPoint {
-        //GLfloat x;
         GLfloat y;
     };
 
