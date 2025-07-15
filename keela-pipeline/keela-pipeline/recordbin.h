@@ -9,7 +9,7 @@
 #include "simpleelement.h"
 
 namespace Keela {
-    class RecordBin : public QueueBin {
+    class RecordBin final : public QueueBin {
     public:
         explicit RecordBin(const std::string &name);
 

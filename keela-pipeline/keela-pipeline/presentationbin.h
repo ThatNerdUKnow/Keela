@@ -11,7 +11,7 @@
 #include "simpleelement.h"
 
 namespace Keela {
-    class PresentationBin : public QueueBin {
+    class PresentationBin final : public QueueBin {
     public:
         explicit PresentationBin(const std::string &name);
 

@@ -11,7 +11,7 @@ namespace Keela
     /**
      * Composition of Gtk::Label and Gtk::SpinButton
      */
-    class LabeledSpinButton: public Gtk::Box
+    class LabeledSpinButton final : public Gtk::Box
     {
     public:
 

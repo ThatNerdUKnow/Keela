@@ -10,7 +10,7 @@
 #include "bin.h"
 
 namespace Keela {
-    class TransformBin : public QueueBin {
+    class TransformBin final : public QueueBin {
     public:
         TransformBin();
 

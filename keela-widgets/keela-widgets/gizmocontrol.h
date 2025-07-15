@@ -6,7 +6,7 @@
 #define GIZMOCONTROL_H
 #include <gtkmm-3.0/gtkmm.h>
 
-#define HALF(x) x / 2.0
+#define HALF(x) (x / 2.0)
 
 namespace Keela {
     class GizmoControl : public Gdk::Rectangle {
@@ -19,13 +19,13 @@ namespace Keela {
 
         void draw(const Cairo::RefPtr<Cairo::Context> &cr) const;
 
-        bool intersects(const Gdk::Point &position) const;
+        [[nodiscard]] bool intersects(const Gdk::Point &position) const;
 
         void set_hovered(bool hovered);
 
         void set_center(Gdk::Point center);
 
-        Gdk::Point get_center() const;
+        [[nodiscard]] Gdk::Point get_center() const;
 
         /**
         * bind two GizmoControls together to follow each other on the x axis

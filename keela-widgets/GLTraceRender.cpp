@@ -21,7 +21,7 @@ Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_tr
     trace = cam_to_trace;
 
     spdlog::debug("{}: Loading vertex shader resource", __func__);
-    GError *error = NULL;
+    GError *error = nullptr;
     auto vertex_res = g_resources_lookup_data("/org/gatech/keela/shaders/trace-vertex.glsl",
                                               G_RESOURCE_LOOKUP_FLAGS_NONE, &error);
     if (!vertex_res && !error) {
@@ -74,7 +74,7 @@ void Keela::GLTraceRender::set_framerate(double framerate) {
     // determine if current buffer needs any modification
     if (plot_length < plot_points.size()) {
         // essentially discards the first *diff* elements from plot_points
-        auto diff = plot_points.size() - plot_length;
+        const int diff = static_cast<int>(plot_points.size() - plot_length);
         std::ranges::rotate(plot_points, plot_points.begin() + diff);
         plot_points.resize(plot_length);
     } else {
@@ -149,7 +149,7 @@ void Keela::GLTraceRender::on_gl_realize() {
         GL_FLOAT,
         GL_FALSE,
         0,
-        0
+        nullptr
     );
     // uint is a uniform representing the number of samples
     spdlog::info("GLTraceRender::{} successfully realized", __func__);
@@ -178,7 +178,7 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
     return true;
 }
 
-void Keela::GLTraceRender::process_video_data(std::stop_token token) {
+void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {
     spdlog::debug("GLTraceRender::{}", __func__);
     GstElement *appsink = this->trace->get_camera_manager()->trace.sink;
     assert(appsink != nullptr);
@@ -239,7 +239,7 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
         if (count == 0) {
             mean = std::numeric_limits<double>::quiet_NaN();
         } else {
-            mean = sum / count;
+            mean = static_cast<double>(sum) / static_cast<double>(count);
         }
         spdlog::trace("GLTraceRender::{}: {}", __func__, mean);
         gst_buffer_unmap(buf, &mapInfo);

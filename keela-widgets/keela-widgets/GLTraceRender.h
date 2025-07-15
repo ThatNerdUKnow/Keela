@@ -74,7 +74,7 @@ namespace Keela {
          * function to be used in worker_thread in order to process video data
          * @param token
          */
-        void process_video_data(std::stop_token token);
+        void process_video_data(const std::stop_token &token);
     };
 }
 #endif //GLTRACERENDER_H

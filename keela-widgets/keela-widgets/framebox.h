@@ -7,7 +7,7 @@
 #include <gtkmm-3.0/gtkmm.h>
 namespace Keela
 {
-    class FrameBox : public Gtk::Frame
+    class FrameBox final : public Gtk::Frame
     {
         public:
         FrameBox();

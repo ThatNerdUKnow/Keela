@@ -9,7 +9,7 @@
 #include "simpleelement.h"
 
 namespace Keela {
-    class SnapshotBin : public Keela::QueueBin {
+    class SnapshotBin final : public Keela::QueueBin {
     public:
         SnapshotBin();
 

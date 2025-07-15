@@ -12,13 +12,12 @@ Keela::TraceBin::TraceBin(): QueueBin("TraceBin") {
     TraceBin::link();
 }
 
-Keela::TraceBin::TraceBin(std::string name): QueueBin(name) {
+Keela::TraceBin::TraceBin(const std::string &name): QueueBin(name) {
     TraceBin::init();
     TraceBin::link();
 }
 
-Keela::TraceBin::~TraceBin() {
-}
+Keela::TraceBin::~TraceBin() = default;
 
 void Keela::TraceBin::enable_trace(bool do_enable) {
     auto max_buffers = do_enable ? 0 : 1;

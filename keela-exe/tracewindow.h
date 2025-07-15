@@ -15,7 +15,7 @@ namespace Keela {
     public:
         TraceWindow();
 
-        virtual ~TraceWindow();
+        ~TraceWindow() override;
 
         void addTrace(std::shared_ptr<Keela::ITraceable> trace);
 

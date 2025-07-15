@@ -7,11 +7,11 @@
 #include "queuebin.h"
 
 namespace Keela {
-    class TraceBin : public QueueBin {
+    class TraceBin final : public QueueBin {
     public:
         TraceBin();
 
-        explicit TraceBin(std::string name);
+        explicit TraceBin(const std::string &name);
 
         ~TraceBin() override;
 
