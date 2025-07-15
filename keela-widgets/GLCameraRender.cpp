@@ -65,8 +65,10 @@ void Keela::GLCameraRender::new_tex_sample(GstSample *sample) {
     assert(structure != nullptr);
 
     gint width, height;
-    assert(gst_structure_get_int(structure, "width", &width));
-    assert(gst_structure_get_int(structure, "height", &height));
+    bool ret = false;
+    ret = gst_structure_get_int(structure, "width", &width);
+    ret &= gst_structure_get_int(structure, "height", &height);
+    assert(ret);
     spdlog::trace("New tex sample width: {} height: {}", width, height);
     GstMapInfo mapInfo;
     if (gst_buffer_map(buf, &mapInfo, GST_MAP_READ)) {
