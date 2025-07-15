@@ -13,5 +13,5 @@ TEST(Rect, Intersects) {
 }
 
 TEST(Rect, CanHaveNegativeDimensions) {
-    Gdk::Rectangle bounds = Gdk::Rectangle(0, 0, -100, -100);
+    Gdk::Rectangle _ = Gdk::Rectangle(0, 0, -100, -100);
 }
