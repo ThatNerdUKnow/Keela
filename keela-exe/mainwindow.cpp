@@ -77,7 +77,7 @@ MainWindow::~MainWindow() {
 
 void MainWindow::on_camera_spin_changed() {
     const auto curr = cameras.size();
-    const auto next = num_camera_spin.m_spin.get_value_as_int();
+    const auto next = static_cast<unsigned int>(num_camera_spin.m_spin.get_value_as_int());
     auto ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
     if (ret == GST_STATE_CHANGE_FAILURE) {
         spdlog::error("Failed to set state of pipeline");
@@ -89,8 +89,8 @@ void MainWindow::on_camera_spin_changed() {
             set_framerate(c->camera_manager.get());
             set_resolution(c.get());
             g_object_ref(static_cast<GstElement*>(*c->camera_manager));
-            auto ret = gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
-            if (!ret) {
+            auto inner_ret = gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
+            if (!inner_ret) {
                 std::stringstream ss = std::stringstream();
                 ss << "Failed to add camera " << std::to_string(camera_id) << " to pipeline";
                 throw std::runtime_error(ss.str());
@@ -133,13 +133,13 @@ void MainWindow::on_record_button_clicked() {
         auto message_dialog = Gtk::MessageDialog("Remember to set the experiment output to a new directory");
         message_dialog.run();
         // TODO: show file dialog
-        for (const auto camera: cameras) {
+        for (const auto &camera: cameras) {
             camera->camera_manager->start_recording();
         }
     } else {
         auto message_dialog = Gtk::MessageDialog("Remember to take calibration photos");
         message_dialog.run();
-        for (const auto camera: cameras) {
+        for (const auto &camera: cameras) {
             camera->camera_manager->stop_recording();
         }
     }
@@ -156,7 +156,10 @@ void MainWindow::reset_cameras() {
                 throw std::runtime_error("Async state change failed");
             }
             break;
+        default:
+            break;
     }
+
     // TODO: apply changes to camera settings here
     set_framerate();
     set_resolution();
@@ -205,7 +208,7 @@ void MainWindow::on_trace_button_clicked() {
 
         spdlog::debug("num traces: {}\t num cameras: {}", trace_window->num_traces(), trace_window->num_traces());
         // TODO: retroactively set the framerates of the trace widgets
-        for (int i = trace_window->num_traces(); i < cameras.size(); i++) {
+        for (unsigned int i = trace_window->num_traces(); i < cameras.size(); i++) {
             auto trace = cameras.at(i);
             trace_window->addTrace(trace);
         }

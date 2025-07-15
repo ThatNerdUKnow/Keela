@@ -74,10 +74,10 @@ bool Keela::TraceGizmo::on_motion_notify_event(GdkEventMotion *motion_event) {
     }
 
     // update "hovered" status of each control element
-    ctrl_top_left->set_hovered((ctrl_top_left->intersects(pt) & mode == none) || mode == top_left);
-    ctrl_top_right->set_hovered((ctrl_top_right->intersects(pt) & mode == none) || mode == top_right);
-    ctrl_bottom_left->set_hovered((ctrl_bottom_left->intersects(pt) & mode == none) || mode == bottom_left);
-    ctrl_bottom_right->set_hovered((ctrl_bottom_right->intersects(pt) & mode == none) || mode == bottom_right);
+    ctrl_top_left->set_hovered((ctrl_top_left->intersects(pt) & (mode == none)) || mode == top_left);
+    ctrl_top_right->set_hovered((ctrl_top_right->intersects(pt) & (mode == none)) || mode == top_right);
+    ctrl_bottom_left->set_hovered((ctrl_bottom_left->intersects(pt) & (mode == none)) || mode == bottom_left);
+    ctrl_bottom_right->set_hovered((ctrl_bottom_right->intersects(pt) & (mode == none)) || mode == bottom_right);
 
     // find which control is currently being pointed at
     GizmoControl *control = nullptr;
@@ -119,7 +119,7 @@ bool Keela::TraceGizmo::on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
     cr->save();
     cr->set_source_rgb(1, 0, 0);
     cr->set_line_width(2);
-    if (ctrl_top_left != nullptr & ctrl_top_right != nullptr & ctrl_bottom_left != nullptr & ctrl_bottom_right !=
+    if (ctrl_top_left != nullptr && ctrl_top_right != nullptr && ctrl_bottom_left != nullptr && ctrl_bottom_right !=
         nullptr) {
         ctrl_top_left->draw(cr);
         ctrl_top_right->draw(cr);

@@ -30,7 +30,7 @@ Keela::CameraManager::CameraManager(guint id, bool split_streams): Bin("camera_"
         std::stringstream ss;
 
         ss << "camera" << id << ".dot";
-        spdlog::error("could not create camera manager. attempting to dump bin to {}", ss.str());
+        spdlog::error("could not create camera manager: {}\n attempting to dump bin to {}", e.what(), ss.str());
         dump_bin_graph();
         throw;
     }

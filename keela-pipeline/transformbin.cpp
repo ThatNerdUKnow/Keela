@@ -100,7 +100,6 @@ void Keela::TransformBin::init() {
 }
 
 void Keela::TransformBin::link() {
-    GstElement *b = *this;
     add_elements(video_scale, caps_filter, rotation, flip_h, flip_v);
     element_link_many(video_scale, caps_filter, rotation, flip_h, flip_v);
     link_queue(video_scale);

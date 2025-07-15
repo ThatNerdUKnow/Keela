@@ -33,7 +33,7 @@ void Keela::RecordBin::link() {
 void Keela::RecordBin::init() {
     g_object_set(enc, "quantizer", 0, nullptr);
     auto variant = gst_enum_variant_by_nick(G_OBJECT(static_cast<GstElement *>(enc)), "pass", "quant");
-    g_object_set(enc, "pass", variant);
+    g_object_set(enc, "pass", variant, nullptr);
 }
 
 Keela::RecordBin::RecordBin(): QueueBin() {

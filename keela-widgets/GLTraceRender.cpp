@@ -181,8 +181,6 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
 void Keela::GLTraceRender::process_video_data(std::stop_token token) {
     spdlog::debug("GLTraceRender::{}", __func__);
     GstElement *appsink = this->trace->get_camera_manager()->trace.sink;
-    // might need to lock gizmo?
-    guint64 current_num_buffers = 0;
     assert(appsink != nullptr);
     GstSample *sample = nullptr;
 
@@ -222,7 +220,7 @@ void Keela::GLTraceRender::process_video_data(std::stop_token token) {
 
         unsigned long long sum = 0;
         unsigned long long count = 0;
-        assert(width * height == mapInfo.size);
+        assert(static_cast<gsize>(width * height) == mapInfo.size);
         auto indices = std::vector<unsigned int>(mapInfo.size);
         std::iota(indices.begin(), indices.end(), 0);
 

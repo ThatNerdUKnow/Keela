@@ -9,7 +9,9 @@
 #include "keela-pipeline/utils.h"
 
 Keela::Caps::Caps() {
-    auto caps = gst_caps_new_simple("video/x-raw", nullptr);
+    //auto caps = gst_caps_new_simple("video/x-raw", nullptr);
+    auto f = gst_structure_new_empty("video/x-raw");
+    auto caps = gst_caps_new_full(f, nullptr);
     m_caps = std::shared_ptr<GstCaps>(caps, delete_caps);
 }
 

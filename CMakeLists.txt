@@ -7,6 +7,8 @@ find_package(PkgConfig)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -Wall)
+
 option(MAKE_REFERENCE "Build reference gstreamer gtk integration" false)
 pkg_search_module(GTKMM REQUIRED IMPORTED_TARGET gtkmm-3.0)
 pkg_search_module(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0)
