@@ -3,7 +3,7 @@
 //
 
 #include "keela-pipeline/gst-helpers.h"
-#include "keela-pipeline/tracebin.h"
+#include "keela-pipeline/TraceBin.h"
 
 #include "keela-pipeline/utils.h"
 
