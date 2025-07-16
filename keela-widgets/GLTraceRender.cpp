@@ -56,9 +56,10 @@ Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_tr
     gl_area.signal_render().connect(sigc::mem_fun(this, &GLTraceRender::on_gl_render));
     show_all();
 
+
     // start processor
-    worker_thread = std::jthread([this](std::stop_token token) {
-        this->process_video_data(std::move(token));
+    worker_thread = std::jthread([this](const std::stop_token &token) {
+        this->process_video_data(token);
     });
 
     Glib::signal_timeout().connect(sigc::mem_fun(this, &GLTraceRender::on_timeout), 1000 / 60);
@@ -163,8 +164,11 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
     std::vector<float> plot_points_vec(plot_points.size());
 
     std::ranges::copy(plot_points, plot_points_vec.begin());
-    plot_max = *std::ranges::max_element(plot_points_vec);
-    plot_min = *std::ranges::min_element(plot_points_vec);
+
+    if (!plot_points_vec.empty()) {
+        plot_max = *std::ranges::max_element(plot_points_vec);
+        plot_min = *std::ranges::min_element(plot_points_vec);
+    }
     // might need to check for NaN?
 
     gl_area.make_current();

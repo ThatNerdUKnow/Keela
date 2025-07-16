@@ -20,6 +20,7 @@ void Keela::TraceWindow::addTrace(std::shared_ptr<Keela::ITraceable> trace) {
     traces.push_back(widget);
     containter.add(*widget);
     show_all_children();
+    spdlog::info("TraceWindow::{}: Trace added", __func__);
 }
 
 void Keela::TraceWindow::removeTrace() {
