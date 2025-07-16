@@ -60,6 +60,8 @@ Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_tr
     worker_thread = std::jthread([this](std::stop_token token) {
         this->process_video_data(std::move(token));
     });
+
+    Glib::signal_timeout().connect(sigc::mem_fun(this, &GLTraceRender::on_timeout), 1000 / 60);
 }
 
 Keela::GLTraceRender::~GLTraceRender() = default;
@@ -178,24 +180,29 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
     return true;
 }
 
+/**
+*    NOTE: if the target computer isn't fast enough, this will result in backpressure on the pipeline
+     backpressure will manifest as slowly increasing memory usage - this is not a memory leak!
+
+     TODO: need some mechanism to relieve backpressure on the pipeline
+     perhaps implement subsampling based off of x resolution of the gl_area
+ * @param token used to detect when to stop processing video data
+ */
 void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {
     spdlog::debug("GLTraceRender::{}", __func__);
+
+
     GstElement *appsink = this->trace->get_camera_manager()->trace.sink;
-    //this->trace->get_camera_manager()->trace.enable_trace(true);
+    this->trace->get_camera_manager()->trace.enable_trace(true);
     assert(appsink != nullptr);
     GstSample *sample = nullptr;
 
     while (!token.stop_requested()) {
         auto gizmo = this->trace->get_trace_gizmo();
-        if (!gizmo->get_enabled()) {
-            // gizmo is not currently active
-            continue;
-        }
+
         double mean = 0;
         g_signal_emit_by_name(appsink, "try-pull-sample", 0, &sample, nullptr);
         if (!sample) {
-            // refresh data at most 30 times a second
-            this->queue_draw(); // if trace isn't refreshing this is a sign that this routine can not keep up
             std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
             continue;
         }
@@ -227,17 +234,26 @@ void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {
         auto indices = std::vector<unsigned int>(mapInfo.size);
         std::iota(indices.begin(), indices.end(), 0);
 
+        // protect against division by zero
+        if (width == 0) {
+            continue;
+        }
+
+        /**
+         * std::ranges::for_each gives us the capability to switch to a parallel execution policy if we really needed to
+         */
         std::ranges::for_each(indices, [&](auto index) {
-            // protect against null pointer dereferences and division by zero
-            if (!gizmo || width == 0) {
-                return;
-            }
             auto x = index % width;
             auto y = index / width;
-            if (gizmo->intersects(x * 2, y * 2)) {
-                count += 1;
-                sum += mapInfo.data[index];
+            // use gizmo for intersection checking if it is not null
+            // otherwise, consider every pixel as being in the ROI
+            if (gizmo->get_enabled()) {
+                if (!gizmo->intersects(x * 2, y * 2)) {
+                    return;
+                }
             }
+            count += 1;
+            sum += mapInfo.data[index];
         });
         if (count == 0) {
             mean = std::numeric_limits<double>::quiet_NaN();
@@ -253,11 +269,15 @@ void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {
                 plot_points.pop_front();
             }
             plot_points.push_back(PlotPoint(static_cast<float>(mean)));
-            this->queue_draw();
         }
 
         // min and max calculation should probably be done by the rendering thread
     }
     spdlog::info("GLTraceRender::{} stopping", __func__);
-    //this->trace->get_camera_manager()->trace.enable_trace(false);
+    this->trace->get_camera_manager()->trace.enable_trace(false);
+}
+
+bool Keela::GLTraceRender::on_timeout() {
+    queue_draw();
+    return true;
 }

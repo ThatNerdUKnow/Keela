@@ -46,14 +46,14 @@ namespace Keela {
         // *basically* a pointer to the camera control window
         std::shared_ptr<Keela::ITraceable> trace;
 
-        unsigned int shader_program;
+        unsigned int shader_program{};
 
         void on_gl_realize();
 
         bool on_gl_render(const Glib::RefPtr<Gdk::GLContext> &context);
 
-        unsigned int VAO;
-        unsigned int VBO;
+        unsigned int VAO = -1;
+        unsigned int VBO = -1;
 
         std::string vertex_shader_source;
         std::string fragment_shader_source;
@@ -70,11 +70,14 @@ namespace Keela {
         float plot_min = 0;
 
         const int PLOT_DURATION_SEC = 10;
+
         /**
          * function to be used in worker_thread in order to process video data
          * @param token
          */
         void process_video_data(const std::stop_token &token);
+
+        bool on_timeout();
     };
 }
 #endif //GLTRACERENDER_H
