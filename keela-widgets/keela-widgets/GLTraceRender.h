@@ -13,10 +13,6 @@
 #include "glad/glad.h"
 
 namespace Keela {
-    struct PlotPoint {
-        GLfloat y;
-    };
-
     /**
      * Abstract base class: A source that can be rendered in the trace window
      */
@@ -60,7 +56,7 @@ namespace Keela {
 
         std::jthread worker_thread;
         std::mutex worker_mutex;
-        std::deque<PlotPoint> plot_points;
+        std::deque<float> plot_points;
 
         /**
          * target length of plot_points buffer. Should equal PLOT_DURATION_SEC * framerate

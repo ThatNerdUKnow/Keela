@@ -159,6 +159,14 @@ void Keela::GLTraceRender::on_gl_realize() {
 
 bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &context) {
     std::scoped_lock _(worker_mutex);
+
+    std::vector<float> plot_points_vec(plot_points.size());
+
+    std::ranges::copy(plot_points, plot_points_vec.begin());
+    plot_max = *std::ranges::max_element(plot_points_vec);
+    plot_min = *std::ranges::min_element(plot_points_vec);
+    // might need to check for NaN?
+
     gl_area.make_current();
     glUseProgram(shader_program);
     glBindVertexArray(VAO);
@@ -174,9 +182,7 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
     auto xoffset = plot_length - plot_points.size();
     glUniform1f(loc, static_cast<float>(xoffset));
 
-    std::vector<PlotPoint> plot_points_vec(plot_points.size());
-    std::copy(plot_points.begin(), plot_points.end(), plot_points_vec.begin());
-    glBufferData(GL_ARRAY_BUFFER, static_cast<long long>(plot_points.size() * sizeof(PlotPoint)),
+    glBufferData(GL_ARRAY_BUFFER, static_cast<long long>(plot_points.size() * sizeof(float)),
                  plot_points_vec.data(),
                  GL_DYNAMIC_DRAW);
     glDrawArrays(GL_LINE_STRIP, 0, static_cast<int>(plot_points.size()));
@@ -274,7 +280,7 @@ void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {
         if (plot_points.size() >= plot_length) {
             plot_points.pop_front();
         }
-        plot_points.push_back(PlotPoint(static_cast<float>(mean)));
+        plot_points.push_back(static_cast<float>(mean));
 
         // min and max calculation should probably be done by the rendering thread
     }
