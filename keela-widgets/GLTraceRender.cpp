@@ -170,6 +170,9 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
     glUniform1f(loc, plot_max);
     loc = glGetUniformLocation(shader_program, "sampleMin");
     glUniform1f(loc, plot_min);
+    loc = glGetUniformLocation(shader_program, "xoffset");
+    auto xoffset = plot_length - plot_points.size();
+    glUniform1f(loc, static_cast<float>(xoffset));
 
     std::vector<PlotPoint> plot_points_vec(plot_points.size());
     std::copy(plot_points.begin(), plot_points.end(), plot_points_vec.begin());

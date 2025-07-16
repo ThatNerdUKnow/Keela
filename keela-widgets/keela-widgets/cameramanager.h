@@ -45,16 +45,25 @@ namespace Keela {
         guint id;
         bool split_streams;
 
-        // caps filter to apply to the entire stream
+        /// caps filter to apply to the entire stream
         Caps base_caps;
 
-        // caps filter determining the stream caps after scaling
+        /// caps filter determining the stream caps after scaling
         Caps scaled_caps;
 
-        // for now, experiment directory will be set to my temp directory until I figure out gtk file dialogs
+        /// for now, experiment directory will be set to my temp directory until I figure out gtk file dialogs
         std::string experiment_directory = "C:\\temp";
 
+        /**
+         * use to split a stream into as many identical streams as we want.
+         *
+         * NOTE: any elements that come after "tee" should probably inherit from Keela::QueueBin
+         */
         SimpleElement tee = SimpleElement("tee");
+
+        /**
+         * use to convert video color space to GRAY8 if camera does not support it
+         */
         SimpleElement auto_video_convert = SimpleElement("videoconvert");
 
         /// at any moment there may be many active record bins
