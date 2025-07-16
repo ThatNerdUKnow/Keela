@@ -255,6 +255,10 @@ void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {
             count += 1;
             sum += mapInfo.data[index];
         });
+
+        /**
+         * protect against division by zero. set sample to NaN to prevent this sample from showing up in the plot
+         */
         if (count == 0) {
             mean = std::numeric_limits<double>::quiet_NaN();
         } else {
@@ -263,13 +267,12 @@ void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {
         spdlog::trace("GLTraceRender::{}: {}", __func__, mean);
         gst_buffer_unmap(buf, &mapInfo);
         gst_sample_unref(sample);
-        sample = nullptr; {
-            std::scoped_lock _(worker_mutex);
-            if (plot_points.size() >= plot_length) {
-                plot_points.pop_front();
-            }
-            plot_points.push_back(PlotPoint(static_cast<float>(mean)));
+        sample = nullptr;
+        std::scoped_lock _(worker_mutex);
+        if (plot_points.size() >= plot_length) {
+            plot_points.pop_front();
         }
+        plot_points.push_back(PlotPoint(static_cast<float>(mean)));
 
         // min and max calculation should probably be done by the rendering thread
     }
