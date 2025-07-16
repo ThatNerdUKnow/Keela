@@ -39,7 +39,7 @@ namespace Keela {
         TransformBin transform = TransformBin("transform");
         std::shared_ptr<PresentationBin> presentation = std::make_shared<PresentationBin>("presentation");
         SnapshotBin snapshot;
-        TraceBin trace;
+        std::shared_ptr<TraceBin> trace = std::make_shared<TraceBin>("trace");
 
     private:
         guint id;

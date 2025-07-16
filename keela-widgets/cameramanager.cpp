@@ -20,10 +20,10 @@ Keela::CameraManager::CameraManager(guint id, bool split_streams): Bin("camera_"
 
         gst_caps_set_simple(base_caps, "format",G_TYPE_STRING, "GRAY8", nullptr);
         g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
-        add_elements(camera, auto_video_convert, caps_filter, transform, tee, trace, *presentation, snapshot);
+        add_elements(camera, auto_video_convert, caps_filter, transform, tee, *trace, *presentation, snapshot);
         element_link_many(camera, auto_video_convert, caps_filter, transform, tee, *presentation);
         element_link_many(tee, snapshot);
-        element_link_many(tee, trace);
+        element_link_many(tee, *trace);
 
         spdlog::info("Created camera manager {}", id);
     } catch (const std::exception &e) {

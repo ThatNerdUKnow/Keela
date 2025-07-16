@@ -191,17 +191,16 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
 void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {
     spdlog::debug("GLTraceRender::{}", __func__);
 
-
-    GstElement *appsink = this->trace->get_camera_manager()->trace.sink;
-    this->trace->get_camera_manager()->trace.enable_trace(true);
-    assert(appsink != nullptr);
+    auto bin = this->trace->get_trace_bin();
+    bin->enable_trace(true);
+    assert(bin->sink != nullptr);
     GstSample *sample = nullptr;
 
     while (!token.stop_requested()) {
         auto gizmo = this->trace->get_trace_gizmo();
 
         double mean = 0;
-        g_signal_emit_by_name(appsink, "try-pull-sample", 0, &sample, nullptr);
+        g_signal_emit_by_name(bin->sink, "try-pull-sample", 0, &sample, nullptr);
         if (!sample) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
             continue;
@@ -277,7 +276,7 @@ void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {
         // min and max calculation should probably be done by the rendering thread
     }
     spdlog::info("GLTraceRender::{} stopping", __func__);
-    this->trace->get_camera_manager()->trace.enable_trace(false);
+    bin->enable_trace(false);
 }
 
 bool Keela::GLTraceRender::on_timeout() {

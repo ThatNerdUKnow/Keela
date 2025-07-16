@@ -24,7 +24,7 @@ namespace Keela {
     public:
         virtual ~ITraceable() = default;
 
-        virtual std::shared_ptr<CameraManager> get_camera_manager() = 0;
+        virtual std::shared_ptr<TraceBin> get_trace_bin() = 0;
 
         virtual std::shared_ptr<TraceGizmo> get_trace_gizmo() = 0;
 

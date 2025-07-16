@@ -130,8 +130,8 @@ void Keela::CameraControlWindow::on_flip_vert_changed() const {
     camera_manager->transform.flip_vertical(value);
 }
 
-std::shared_ptr<Keela::CameraManager> Keela::CameraControlWindow::get_camera_manager() {
-    return camera_manager;
+std::shared_ptr<Keela::TraceBin> Keela::CameraControlWindow::get_trace_bin() {
+    return camera_manager->trace;
 }
 
 std::shared_ptr<Keela::TraceGizmo> Keela::CameraControlWindow::get_trace_gizmo() {

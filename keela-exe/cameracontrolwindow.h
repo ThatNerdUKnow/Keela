@@ -52,7 +52,7 @@ namespace Keela {
         void on_flip_vert_changed() const;
 
     public:
-        std::shared_ptr<CameraManager> get_camera_manager() override;
+        std::shared_ptr<TraceBin> get_trace_bin() override;
 
         std::shared_ptr<TraceGizmo> get_trace_gizmo() override;
 
