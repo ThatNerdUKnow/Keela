@@ -33,9 +33,9 @@ namespace Keela {
 
         ~GLTraceRender() override;
 
+    private:
         void set_framerate(double framerate);
 
-    private:
         Gtk::GLArea gl_area;
         Gtk::Label label;
 

@@ -171,21 +171,14 @@ void MainWindow::reset_cameras() {
 }
 
 void MainWindow::set_framerate() {
-    const auto fr = framerate_spin.m_spin.get_value();
     for (const auto &c: cameras) {
         set_framerate(c->camera_manager.get());
-    }
-    if (trace_window) {
-        trace_window->set_framerate(fr);
     }
 }
 
 void MainWindow::set_framerate(Keela::CameraManager *cm) const {
     const auto fr = framerate_spin.m_spin.get_value();
     cm->set_framerate(fr);
-    if (trace_window) {
-        trace_window->set_framerate(fr);
-    }
 }
 
 void MainWindow::set_resolution() const {

@@ -68,11 +68,15 @@ Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_tr
 Keela::GLTraceRender::~GLTraceRender() = default;
 
 void Keela::GLTraceRender::set_framerate(double framerate) {
-    spdlog::info("GLTraceRender::{}", __func__);
+    // calculate new buffer size
+    auto tmp_plot_length = static_cast<unsigned long long>(PLOT_DURATION_SEC * framerate);
+    if (tmp_plot_length == plot_length)
+        return;
+
+    plot_length = tmp_plot_length;
+    spdlog::info("GLTraceRender::{}: Setting framerate to {}", __func__, framerate);
     // acquire mutex to avoid race conditions
     std::scoped_lock _(worker_mutex);
-    // calculate new buffer size
-    plot_length = static_cast<unsigned long long>(PLOT_DURATION_SEC * framerate);
 
     // determine if current buffer needs any modification
     if (plot_length < plot_points.size()) {
@@ -80,8 +84,6 @@ void Keela::GLTraceRender::set_framerate(double framerate) {
         const int diff = static_cast<int>(plot_points.size() - plot_length);
         std::ranges::rotate(plot_points, plot_points.begin() + diff);
         plot_points.resize(plot_length);
-    } else {
-        // nothing to be done
     }
 }
 
@@ -230,8 +232,10 @@ void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {
         bool ret = false;
         ret = gst_structure_get_int(structure, "width", &width);
         ret &= gst_structure_get_int(structure, "height", &height);
+        gint framerate_numerator, framerate_denominator;
+        ret &= gst_structure_get_fraction(structure, "framerate", &framerate_numerator, &framerate_denominator);
         assert(ret);
-
+        set_framerate(static_cast<double>(framerate_numerator) / framerate_denominator);
         GstMapInfo mapInfo;
         if (!gst_buffer_map(buf, &mapInfo, GST_MAP_READ)) {
             std::stringstream ss;

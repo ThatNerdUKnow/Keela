@@ -23,8 +23,6 @@ namespace Keela {
 
         int num_traces() const;
 
-        void set_framerate(double framerate);
-
     private:
         std::vector<std::shared_ptr<GLTraceRender> > traces;
         Gtk::ScrolledWindow scrolled_window;
