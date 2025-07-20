@@ -37,7 +37,9 @@ namespace Keela {
         void set_framerate(double framerate);
 
         Gtk::GLArea gl_area;
-        Gtk::Label label;
+        Gtk::Label name_label;
+        Gtk::Label min_label;
+        Gtk::Label max_label;
 
         // *basically* a pointer to the camera control window
         std::shared_ptr<Keela::ITraceable> trace;

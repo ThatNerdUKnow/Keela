@@ -14,8 +14,12 @@
 Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_trace): Gtk::Box(
     Gtk::ORIENTATION_VERTICAL) {
     spdlog::info(__func__);
-    label.set_text(cam_to_trace->get_name());
-    Container::add(label);
+    name_label.set_text(cam_to_trace->get_name());
+    auto hbox = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL);
+    Container::add(*hbox);
+    hbox->add(name_label);
+    hbox->pack_end(min_label);
+    hbox->pack_end(max_label);
     Container::add(gl_area);
     gl_area.set_size_request(300, 128);
     trace = cam_to_trace;
@@ -170,8 +174,17 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
     if (!plot_points_vec.empty()) {
         plot_max = *std::ranges::max_element(plot_points_vec);
         plot_min = *std::ranges::min_element(plot_points_vec);
+
+        std::stringstream ss;
+        ss << "max : " << plot_max;
+        max_label.set_label(ss.str());
+        ss.str("");
+        ss.clear();
+        ss << "min : " << plot_min;
+        min_label.set_label(ss.str());
     }
     // might need to check for NaN?
+
 
     gl_area.make_current();
     glUseProgram(shader_program);
