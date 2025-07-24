@@ -19,7 +19,7 @@ MainWindow::MainWindow(): Gtk::Window() {
     MainWindow::add(container);
 
     // Experiment Directory button
-    auto directory_button = Gtk::make_managed<Gtk::Button>("Set Experiment Directory");
+    auto directory_button = Gtk::make_managed<Gtk::Button>("Select Experiment Directory");
     directory_button->signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_directory_clicked));
     container.add(*directory_button);
     // Record button
@@ -29,6 +29,8 @@ MainWindow::MainWindow(): Gtk::Window() {
     red.set_red(1.0);
     red.set_alpha(1.0);
     record_button.override_color(red);
+    record_button.set_sensitive(false);
+    record_button.set_tooltip_text("Experiment Directory must be selected in order to begin recording");
     container.add(record_button);
 
     // Framerate controls
@@ -208,7 +210,6 @@ void MainWindow::on_trace_button_clicked() {
         trace_window->show();
 
         spdlog::debug("num traces: {}\t num cameras: {}", trace_window->num_traces(), trace_window->num_traces());
-        // TODO: retroactively set the framerates of the trace widgets
         for (unsigned int i = trace_window->num_traces(); i < cameras.size(); i++) {
             auto trace = cameras.at(i);
             trace_window->addTrace(trace);
@@ -239,6 +240,8 @@ void MainWindow::on_directory_clicked() {
         for (const auto &c: cameras) {
             set_experiment_directory(c);
         }
+        record_button.set_tooltip_text("Current experiment directory: " + experiment_directory);
+        record_button.set_sensitive(true);
     }
 }
 
