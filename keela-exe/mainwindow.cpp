@@ -18,6 +18,10 @@ MainWindow::MainWindow(): Gtk::Window() {
     container.set_border_width(10);
     MainWindow::add(container);
 
+    // Experiment Directory button
+    auto directory_button = Gtk::make_managed<Gtk::Button>("Set Experiment Directory");
+    directory_button->signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_directory_clicked));
+    container.add(*directory_button);
     // Record button
     record_button.set_label("Start Recording");
     record_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_record_button_clicked));
@@ -95,6 +99,7 @@ void MainWindow::on_camera_spin_changed() {
                 ss << "Failed to add camera " << std::to_string(camera_id) << " to pipeline";
                 throw std::runtime_error(ss.str());
             }
+            set_experiment_directory(c);
             cameras.push_back(c);
             if (trace_window != nullptr) {
                 trace_window->addTrace(c);
@@ -130,6 +135,9 @@ void MainWindow::on_record_button_clicked() {
     show_trace_check.set_sensitive(!is_recording);
     restart_camera_button.set_sensitive(!is_recording);
     if (is_recording) {
+        if (experiment_directory == "") {
+            throw std::runtime_error("Experiment directory not specified");
+        }
         auto message_dialog = Gtk::MessageDialog("Remember to set the experiment output to a new directory");
         message_dialog.run();
         // TODO: show file dialog
@@ -213,4 +221,27 @@ void MainWindow::on_trace_button_clicked() {
 void MainWindow::dump_graph() const {
     spdlog::info("{}: dumping pipeline graph", __func__);
     gst_debug_bin_to_dot_file(GST_BIN(pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "keelapipeline");
+}
+
+void MainWindow::on_directory_clicked() {
+    if (is_recording) {
+        throw std::runtime_error("Experiment directory already set");
+    }
+
+    Gtk::FileChooserDialog dialog = Gtk::FileChooserDialog(*this, "Choose experiment directory",
+                                                           Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
+
+    dialog.add_button("Select", Gtk::RESPONSE_OK);
+    dialog.add_button("Cancel", Gtk::RESPONSE_CANCEL);
+    auto result = dialog.run();
+    if (result == Gtk::RESPONSE_OK) {
+        experiment_directory = dialog.get_filename();
+        for (const auto &c: cameras) {
+            set_experiment_directory(c);
+        }
+    }
+}
+
+void MainWindow::set_experiment_directory(std::shared_ptr<Keela::CameraControlWindow> c) const {
+    c->camera_manager->set_experiment_directory(experiment_directory);
 }
