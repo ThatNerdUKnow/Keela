@@ -59,6 +59,13 @@ private:
 
     void dump_graph() const;
 
+    // TODO: maybe provide some platform dependent default?
+    std::string experiment_directory = "";
+
+    void on_directory_clicked();
+
+    void set_experiment_directory(std::shared_ptr<Keela::CameraControlWindow> c) const;
+
     bool is_recording = false;
 };
 
