@@ -1,0 +1,63 @@
+//
+// Created by brand on 5/26/2025.
+//
+
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
+
+#include <gtkmm-3.0/gtkmm.h>
+
+#include <keela-widgets/labeledspinbutton.h>
+
+#include "cameracontrolwindow.h"
+#include "tracewindow.h"
+
+class MainWindow final : public Gtk::Window {
+public:
+    MainWindow();
+
+    ~MainWindow() override;
+
+private:
+    GstPipeline *pipeline = nullptr;
+    Gtk::Button record_button;
+    Gtk::Button restart_camera_button;
+
+    Keela::LabeledSpinButton framerate_spin = Keela::LabeledSpinButton("Framerate (Hz)");
+    Keela::LabeledSpinButton data_matrix_w_spin = Keela::LabeledSpinButton("Data Width");
+    Keela::LabeledSpinButton data_matrix_h_spin = Keela::LabeledSpinButton("Data Height");
+
+
+    Gtk::CheckButton cv_recording_check;
+    Keela::LabeledSpinButton num_camera_spin = Keela::LabeledSpinButton("Number of Cameras");
+    Gtk::CheckButton show_trace_check;
+
+    Gtk::Button dump_graph_button = Gtk::Button("Dump Pipeline Graph (debug)");
+
+    Gtk::Box container;
+    std::vector<std::shared_ptr<Keela::CameraControlWindow> > cameras;
+    std::shared_ptr<Keela::TraceWindow> trace_window = nullptr;
+
+    void on_camera_spin_changed();
+
+    void on_record_button_clicked();
+
+    void reset_cameras();
+
+    void set_framerate();
+
+    void set_framerate(Keela::CameraManager *cm) const;
+
+    void set_resolution() const;
+
+    void set_resolution(Keela::CameraControlWindow *c) const;
+
+    void on_trace_button_clicked();
+
+    void dump_graph() const;
+
+    bool is_recording = false;
+};
+
+
+#endif //MAINWINDOW_H

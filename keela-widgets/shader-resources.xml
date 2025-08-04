@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<gresources>
+    <gresource prefix="/org/gatech/keela/shaders">
+        <!-- This is a list of files in the ./shaders directory. These files will be embedded into the final executable.
+         If any of the following files are changed, a rebuild will be triggered on the next build
+
+         to add more files to be "watched" and embedded,
+         simply create a file in the ./shaders directory and add its name to this list -->
+        <file>hello-triangle-fragment.glsl</file>
+        <file>hello-triangle-vertex.glsl</file>
+        <file>video-vertex.glsl</file>
+        <file>video-fragment.glsl</file>
+        <file>trace-vertex.glsl</file>
+        <file>trace-fragment.glsl</file>
+    </gresource>
+</gresources>
