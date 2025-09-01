@@ -29,13 +29,14 @@ void Keela::EjectableElement::Eject() {
         return this->safe_to_remove;
     });
     lock.unlock();
+
+    auto name = GST_ELEMENT_NAME(this->Element());
     auto state_ret = gst_element_set_state(GST_ELEMENT(this), GST_STATE_NULL);
-    auto parent = GST_ELEMENT_PARENT(this);
-    if (parent == nullptr) {
-        throw std::runtime_error("Could not eject element from pipeline. parent is null");
+    auto parent = GST_ELEMENT_PARENT(this->Element());
+    if (GST_IS_BIN(parent)) {
+        //throw std::runtime_error("Could not eject element from pipeline. Element has no parent");
     }
-    auto remove_ret = gst_bin_remove(GST_BIN(parent), *this); // ?
-    auto name = GST_ELEMENT_NAME(static_cast<GstElement*>(*this));
+    auto remove_ret = gst_bin_remove(GST_BIN(parent), this->Element()); // ?
     if (state_ret == GST_STATE_CHANGE_FAILURE || !remove_ret) {
         spdlog::error("could not remove {} from pipeline", name);
     } else {
@@ -45,14 +46,14 @@ void Keela::EjectableElement::Eject() {
 
 GstPadProbeReturn Keela::EjectableElement::pad_block_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
     auto bin = static_cast<Keela::EjectableElement *>(user_data);
-    auto name = GST_ELEMENT_NAME(static_cast<GstElement*>(*bin));
+    auto name = GST_ELEMENT_NAME(bin->Element());
     spdlog::info("Pad block received from {}", name);
     gst_pad_remove_probe(pad, GST_PAD_PROBE_INFO_ID(info));
 
     spdlog::debug("setting eos callback");
     auto tail = bin->Tail();
     auto tailpad = gst_element_get_static_pad(tail, "src");
-    assert(file_sink_pad != nullptr);
+    assert(tailpad != nullptr);
 
 
     gst_pad_add_probe(tailpad,
@@ -70,7 +71,6 @@ GstPadProbeReturn Keela::EjectableElement::pad_block_callback(GstPad *pad, GstPa
     gst_pad_send_event(headpad, gst_event_new_eos());
     g_object_unref(headpad);
     g_object_unref(headpad_peer);
-    bin->dump_bin_graph();
     return GST_PAD_PROBE_OK;
 }
 
@@ -79,12 +79,11 @@ GstPadProbeReturn Keela::EjectableElement::event_callback(GstPad *pad, GstPadPro
     if (GST_EVENT_TYPE(GST_PAD_PROBE_INFO_DATA(info)) != GST_EVENT_EOS) {
         return GST_PAD_PROBE_OK;
     }
-    auto name = GST_ELEMENT_NAME(static_cast<GstElement*>(*bin));
+    auto name = GST_ELEMENT_NAME(bin->Element());
     spdlog::info("EOS received from {}", name);
 
     gst_pad_remove_probe(pad, GST_PAD_PROBE_INFO_ID(info));
 
-    bin->dump_bin_graph();
     // acquire lock and set signal variable
     {
         auto lock = std::scoped_lock(bin->remove_mutex);

@@ -85,6 +85,7 @@ void Keela::CameraManager::stop_recording() {
     // after installing the EOS callback, send an EOS event to the sink pad of the beginning of the bin
     // inside the EOS callback, set the state of the bin to NULL and remove the bin from the pipeline
     for (auto bin: record_bins) {
+        /*
         auto copy = new std::shared_ptr(bin);
         // TODO: can this be the sink pad instead?
         const auto pad = gst_element_get_static_pad(bin->queue, "sink");
@@ -100,10 +101,12 @@ void Keela::CameraManager::stop_recording() {
                           copy,
                           nullptr);
         g_object_unref(pad);
-        g_object_unref(peer);
+        g_object_unref(peer);*/
+        bin->PrepareEject();
     }
 
     for (auto bin: record_bins) {
+        /*
         auto lock = std::unique_lock(bin->remove_mutex);
         bin->remove_condition.wait(lock, [bin]() {
             return bin->safe_to_remove;
@@ -116,7 +119,8 @@ void Keela::CameraManager::stop_recording() {
             spdlog::error("{} could not remove recordbin from pipeline", name);
         } else {
             spdlog::info("{} successfully removed recordbin from pipeline", name);
-        }
+        }*/
+        bin->Eject();
     }
     record_bins.clear();
     spdlog::info("Removed all recordbins from pipeline");

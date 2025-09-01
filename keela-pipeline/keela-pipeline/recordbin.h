@@ -9,7 +9,7 @@
 #include "simpleelement.h"
 
 namespace Keela {
-    class RecordBin final : public QueueBin {
+    class RecordBin final : public QueueBin, public EjectableElement {
     public:
         explicit RecordBin(const std::string &name);
 
@@ -35,6 +35,18 @@ namespace Keela {
         void link() override;
 
         void init() override;
+
+        GstElement *Head() override {
+            return queue;
+        };
+
+        GstElement *Tail() override {
+            return mux;
+        }
+
+        GstElement *Element() override {
+            return *this;
+        };;
 
         std::string name;
     };
