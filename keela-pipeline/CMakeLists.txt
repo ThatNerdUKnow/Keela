@@ -26,6 +26,8 @@ add_library(keela-pipeline presentationbin.cpp keela-pipeline/presentationbin.h
         keela-pipeline/snapshotbin.h
         TraceBin.cpp
         keela-pipeline/TraceBin.h
+        EjectableElement.cpp
+        keela-pipeline/EjectableElement.h
 )
 target_link_libraries(keela-pipeline PUBLIC PkgConfig::GSTREAMER PkgConfig::SPDLOG)
 

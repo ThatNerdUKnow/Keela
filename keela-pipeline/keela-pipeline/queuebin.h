@@ -6,6 +6,7 @@
 #define QUEUEBIN_H
 #include <keela-pipeline/bin.h>
 
+#include "EjectableElement.h"
 #include "simpleelement.h"
 
 namespace Keela {
