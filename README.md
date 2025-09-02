@@ -38,3 +38,29 @@ Based off of the game engine Hazel by The Cherno
   - gst-plugins-ugly
   - build-essential
   - spdlog
+
+### Building
+```
+mkdir build && cd build
+cmake ..
+make keela -j$(nproc)
+```
+
+Build with custom `keela-videotestsrc` plugin enabled:
+```
+cmake .. -DENABLE_KEELA_VIDEOTESTSRC=ON
+make keela -j$(nproc)
+```
+
+To switch back to the default configuration (without the custom plugin):
+```
+cmake .. -DENABLE_KEELA_VIDEOTESTSRC=OFF
+make keela -j$(nproc)
+```
+
+or:
+```
+make clean-config
+cmake ..
+make keela -j$(nproc)
+```
