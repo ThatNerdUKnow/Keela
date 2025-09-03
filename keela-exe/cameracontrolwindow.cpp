@@ -4,15 +4,14 @@
 
 #include "cameracontrolwindow.h"
 
-#include <spdlog/spdlog.h>
-
 #include <keela-widgets/framebox.h>
+#include <spdlog/spdlog.h>
 
 Keela::CameraControlWindow::CameraControlWindow(const guint id) {
     this->id = id;
     spdlog::info("Creating {} for camera {}", __func__, id);
 
-    camera_manager = std::make_unique<Keela::CameraManager>(id, false);
+    camera_manager = std::make_unique<Keela::CameraManager>(id, true);  // Enable split streams by default
     set_title("Image control for Camera " + std::to_string(id));
     set_resizable(false);
     set_deletable(false);
@@ -52,19 +51,56 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
     flip_vert_check.signal_toggled().connect(sigc::mem_fun(*this, &CameraControlWindow::on_flip_vert_changed));
     v_container.add(flip_vert_check);
 
+    // @TODO: re-joining frames doesn't actually work
+    // Add frame splitting control 
+    split_frames_check.signal_toggled().connect(sigc::mem_fun(*this, &CameraControlWindow::on_split_frames_changed));
+    split_frames_check.set_active(true);  // Default to enabled to match CameraManager initialization
+    v_container.add(split_frames_check);
+
     // TODO: dynamically cast camera_manager->presentation to a WidgetElement to get a handle to a widget to add to the window
     fetch_image_button.signal_clicked().connect(
         sigc::mem_fun(camera_manager->snapshot, &Keela::SnapshotBin::take_snapshot));
     v_container.add(fetch_image_button);
 
     gl_area = std::make_unique<GLCameraRender>(camera_manager->presentation);
+    gl_area2 = std::make_unique<GLCameraRender>(camera_manager->presentation2);
     gl_area->set_size_request(640, 480);
+    gl_area2->set_size_request(640, 480);
     set_vexpand(false);
-    auto overlay = Gtk::make_managed<Gtk::Overlay>();
+
+    // Create a horizontal box to hold both video displays
+    auto video_hbox = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL);
+    video_hbox->set_spacing(10);
+
+    // Create overlays for each video area to support trace gizmos
+    auto overlay1 = Gtk::make_managed<Gtk::Overlay>();
+    auto overlay2 = Gtk::make_managed<Gtk::Overlay>();
+
     trace_gizmo = std::make_shared<TraceGizmo>();
-    overlay->add(*gl_area);
-    overlay->add_overlay(*trace_gizmo);
-    h_container.pack_start(*overlay, false, false, 10);
+    overlay1->add(*gl_area);
+    overlay1->add_overlay(*trace_gizmo);
+
+    overlay2->add(*gl_area2);
+
+    // @TODO: we aren't actually creating even/odd traces yet
+
+    // Add labels to identify the streams
+    auto even_label = Gtk::make_managed<Gtk::Label>("Even Frames");
+    auto odd_label = Gtk::make_managed<Gtk::Label>("Odd Frames");
+
+    auto even_vbox = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
+    auto odd_vbox = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
+
+    even_vbox->pack_start(*even_label, false, false, 5);
+    even_vbox->pack_start(*overlay1, false, false, 5);
+
+    odd_vbox->pack_start(*odd_label, false, false, 5);
+    odd_vbox->pack_start(*overlay2, false, false, 5);
+
+    video_hbox->pack_start(*even_vbox, false, false, 10);
+    video_hbox->pack_start(*odd_vbox, false, false, 10);
+
+    h_container.pack_start(*video_hbox, false, false, 10);
 
     auto gl_bin = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
     h_container.pack_start(*gl_bin, false, false, 10);
@@ -89,8 +125,10 @@ void Keela::CameraControlWindow::set_resolution(const int width, const int heigh
     const auto rotation = rotation_combo.m_combo.get_active_id();
     if (rotation == ROTATION_90 || rotation == ROTATION_270) {
         gl_area->set_size_request(height, width);
+        gl_area2->set_size_request(height, width);
     } else {
         gl_area->set_size_request(width, height);
+        gl_area2->set_size_request(width, height);
     }
     m_width = width;
     m_height = height;
@@ -130,8 +168,15 @@ void Keela::CameraControlWindow::on_flip_vert_changed() const {
     camera_manager->transform.flip_vertical(value);
 }
 
+void Keela::CameraControlWindow::on_split_frames_changed() const {
+    const auto value = split_frames_check.get_active();
+    camera_manager->set_frame_splitting_enabled(value);
+}
+
 std::shared_ptr<Keela::TraceBin> Keela::CameraControlWindow::get_trace_bin() {
-    return camera_manager->trace;
+    // For now, return the even frame trace bin
+    // TODO: Extend interface to support both even and odd trace bins
+    return camera_manager->get_trace_even();
 }
 
 std::shared_ptr<Keela::TraceGizmo> Keela::CameraControlWindow::get_trace_gizmo() {
