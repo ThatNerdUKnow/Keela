@@ -30,13 +30,13 @@ void Keela::EjectableElement::Eject() {
     });
     lock.unlock();
 
-    auto name = GST_ELEMENT_NAME(this->Element());
-    auto state_ret = gst_element_set_state(GST_ELEMENT(this), GST_STATE_NULL);
-    auto parent = GST_ELEMENT_PARENT(this->Element());
+    auto name = GST_ELEMENT_NAME(static_cast<GstElement*>(*this));
+    auto state_ret = gst_element_set_state(GST_ELEMENT(static_cast<GstElement*>(*this)), GST_STATE_NULL);
+    auto parent = GST_ELEMENT_PARENT(static_cast<GstElement*>(*this));
     if (GST_IS_BIN(parent)) {
-        //throw std::runtime_error("Could not eject element from pipeline. Element has no parent");
+        throw std::runtime_error("Could not eject element from pipeline. Element has no parent");
     }
-    auto remove_ret = gst_bin_remove(GST_BIN(parent), this->Element()); // ?
+    auto remove_ret = gst_bin_remove(GST_BIN(parent), *this);
     if (state_ret == GST_STATE_CHANGE_FAILURE || !remove_ret) {
         spdlog::error("could not remove {} from pipeline", name);
     } else {
@@ -46,7 +46,7 @@ void Keela::EjectableElement::Eject() {
 
 GstPadProbeReturn Keela::EjectableElement::pad_block_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
     auto bin = static_cast<Keela::EjectableElement *>(user_data);
-    auto name = GST_ELEMENT_NAME(bin->Element());
+    auto name = GST_ELEMENT_NAME(static_cast<GstElement*>(*bin));
     spdlog::info("Pad block received from {}", name);
     gst_pad_remove_probe(pad, GST_PAD_PROBE_INFO_ID(info));
 
@@ -79,7 +79,7 @@ GstPadProbeReturn Keela::EjectableElement::event_callback(GstPad *pad, GstPadPro
     if (GST_EVENT_TYPE(GST_PAD_PROBE_INFO_DATA(info)) != GST_EVENT_EOS) {
         return GST_PAD_PROBE_OK;
     }
-    auto name = GST_ELEMENT_NAME(bin->Element());
+    auto name = GST_ELEMENT_NAME(static_cast<GstElement*>(*bin));
     spdlog::info("EOS received from {}", name);
 
     gst_pad_remove_probe(pad, GST_PAD_PROBE_INFO_ID(info));

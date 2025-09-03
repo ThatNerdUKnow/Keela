@@ -44,9 +44,10 @@ namespace Keela {
             return mux;
         }
 
+        /*
         GstElement *Element() override {
             return *this;
-        };;
+        };;*/
 
         std::string name;
     };

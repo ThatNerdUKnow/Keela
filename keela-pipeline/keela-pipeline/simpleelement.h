@@ -10,7 +10,7 @@
 #include "elementbase.h"
 
 namespace Keela {
-    class SimpleElement : public Keela::Element {
+    class SimpleElement : public virtual Keela::Element {
     public:
         explicit SimpleElement(const std::string &element);
 

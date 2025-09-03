@@ -12,7 +12,7 @@ namespace Keela {
     /**
      * A pipeline element that may be removed from a pipeline during live playback
      */
-    class EjectableElement {
+    class EjectableElement : virtual private Keela::Element {
     public:
         /**
          * Prepare the element for ejection from the pipeline, but do not wait for the element to finish processing remaining data.
@@ -43,7 +43,7 @@ namespace Keela {
         /**
          * Hacky way to avoid ambiguity of conversion of this to GstElement* since we're using multiple inheritance
          */
-        virtual GstElement *Element() = 0;
+        //virtual GstElement *Element() = 0;
 
         /// callback unlinks element, sends EOS on its src, then installs an EOS event callback to clean up the remaining data
         static GstPadProbeReturn pad_block_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
