@@ -17,13 +17,17 @@ void Keela::EjectableElement::PrepareEject() {
      *      - wait for the EOS event
      *      - set synchronization variables to signal that the element is safe to remove from the pipeline
      */
+
+    if (is_ejecting) {
+        throw std::runtime_error("EjectableElement::PrepareEject called more than once");
+    }
+    is_ejecting = true;
     auto head = Head();
     const auto pad = gst_element_get_static_pad(*head, "sink");
     assert(pad != nullptr);
 
     auto peer = gst_pad_get_peer(pad);
     assert(peer != nullptr);
-    //auto peer_parent = gst_pad_get_parent_element(peer);
     spdlog::debug("peer is {}",GST_ELEMENT_NAME(peer));
     gst_pad_add_probe(peer,
                       GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM,
@@ -34,7 +38,16 @@ void Keela::EjectableElement::PrepareEject() {
     g_object_unref(peer);
 }
 
-void Keela::EjectableElement::Eject() {
+
+void Keela::EjectableElement::Eject(bool prepare) {
+    if (!is_ejecting) {
+        if (!prepare) {
+            throw std::runtime_error("Eject was called without first calling PrepareEject");
+        }
+        PrepareEject();
+    }
+
+
     auto lock = std::unique_lock(remove_mutex);
     remove_condition.wait(lock, [this]() {
         return this->safe_to_remove;
@@ -103,7 +116,11 @@ GstPadProbeReturn Keela::EjectableElement::event_callback(GstPad *pad, GstPadPro
     // acquire lock and set signal variable
     {
         auto lock = std::scoped_lock(bin->remove_mutex);
-        bin->safe_to_remove = true;
+        // only set safe_to_remove if this is the last leaf element
+        bin->leaves_eos_count++;
+        if (bin->leaves_eos_count == bin->Leaves().size()) {
+            bin->safe_to_remove = true;
+        }
     }
     bin->remove_condition.notify_all();
 

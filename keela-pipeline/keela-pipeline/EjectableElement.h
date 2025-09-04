@@ -11,6 +11,8 @@
 namespace Keela {
     /**
      * A pipeline element that may be removed from a pipeline during live playback
+     *
+     * This class is only suitable for elements which lie at the end of the pipeline and have no downstream elements.
      */
     class EjectableElement : virtual private Keela::Element {
     public:
@@ -22,8 +24,11 @@ namespace Keela {
 
         /**
          * Eject the element from the pipeline and wait for it to finish processing remaining data.
+         *
+         *
+        * @param prepare true if the element should prepare itself for ejection, false if not
          */
-        void Eject();
+        void Eject(bool prepare);
 
     private:
         /**
@@ -47,6 +52,9 @@ namespace Keela {
         /// callback cleans up any remaining data from the bin and removes it from the pipeline
         static GstPadProbeReturn event_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
 
+        /// used to count how many EOS events recieved from the leaf elements
+        unsigned int leaves_eos_count = 0;
+        bool is_ejecting = false;
         bool safe_to_remove = false;
         std::mutex remove_mutex;
         std::condition_variable remove_condition;

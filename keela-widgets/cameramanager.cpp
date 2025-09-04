@@ -89,7 +89,7 @@ void Keela::CameraManager::stop_recording() {
     }
 
     for (auto bin: record_bins) {
-        bin->Eject();
+        bin->Eject(false);
     }
     record_bins.clear();
     spdlog::info("Removed all recordbins from pipeline");
