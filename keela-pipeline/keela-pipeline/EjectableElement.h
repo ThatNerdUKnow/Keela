@@ -18,6 +18,8 @@ namespace Keela {
     public:
         /**
          * Prepare the element for ejection from the pipeline, but do not wait for the element to finish processing remaining data.
+         *
+         * Callers must at some point call `EjectableElement::Eject(false);` to finish the ejection process
          */
         void PrepareEject();
 

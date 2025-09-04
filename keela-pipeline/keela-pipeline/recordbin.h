@@ -46,10 +46,6 @@ namespace Keela {
             return ret;
         }
 
-        /*
-        GstElement *Element() override {
-            return *this;
-        };;*/
 
         std::string name;
     };
