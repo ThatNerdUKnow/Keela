@@ -66,14 +66,12 @@ namespace Keela {
          */
         SimpleElement auto_video_convert = SimpleElement("videoconvert");
 
-        /// at any moment there may be many active record bins
+        /* at any moment there may be many active record bins
+         *
+         * TODO: do these still need to be shared_ptr?
+         *
+         */
         std::set<std::shared_ptr<RecordBin> > record_bins;
-
-        /// callback unlinks recordbin, sends EOS on its src, then installs an EOS event callback to clean up the remaining data
-        static GstPadProbeReturn pad_block_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
-
-        /// callback cleans up any remaining data from the recordbin and removes it from the pipeline
-        static GstPadProbeReturn event_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     };
 }
 #endif //CAMERAMANAGER_H

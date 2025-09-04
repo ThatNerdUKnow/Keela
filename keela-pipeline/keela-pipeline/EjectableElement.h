@@ -31,19 +31,15 @@ namespace Keela {
          *
          * @return
          */
-        virtual GstElement *Head() = 0;
+        virtual Keela::Element *Head() = 0;
 
 
         /**
-         * get a pointer to the last element in the bin. Subclass must be able to guarantee that they own the element pointer
-         * @return
+         * get a list of the "leaf" elements of the bin. Subclasses must be able to guarantee that they own all element pointers
+         *
+         * @return a list of all "leaf" elements in the bin
          */
-        virtual GstElement *Tail() = 0;
-
-        /**
-         * Hacky way to avoid ambiguity of conversion of this to GstElement* since we're using multiple inheritance
-         */
-        //virtual GstElement *Element() = 0;
+        virtual std::vector<Keela::Element *> Leaves() = 0;
 
         /// callback unlinks element, sends EOS on its src, then installs an EOS event callback to clean up the remaining data
         static GstPadProbeReturn pad_block_callback(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);

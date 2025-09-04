@@ -36,12 +36,14 @@ namespace Keela {
 
         void init() override;
 
-        GstElement *Head() override {
-            return queue;
+        Keela::Element *Head() override {
+            return &queue;
         };
 
-        GstElement *Tail() override {
-            return mux;
+        std::vector<Keela::Element *> Leaves() override {
+            std::vector<Keela::Element *> ret;
+            ret.push_back(&mux);
+            return ret;
         }
 
         /*
