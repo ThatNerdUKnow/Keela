@@ -52,6 +52,7 @@ make gstkeelavideotestsrc3
 cmake .. -DENABLE_KEELA_VIDEOTESTSRC=ON
 make keela -j$(nproc)
 ```
+Note: Ideally the build step could build the plugin automatically, but I haven't figured that out yet.
 
 To switch back to the default configuration (without the custom plugin):
 ```
