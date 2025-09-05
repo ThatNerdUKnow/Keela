@@ -40,9 +40,6 @@ void Keela::TraceBin::set_trace_framerate(guint framerate) {
 }
 
 void Keela::TraceBin::init() {
-    // Set default framerate to 30fps for trace subsampling
-    set_trace_framerate(30);
-
     add_elements(video_rate, caps_filter, sink);
     enable_trace(false);
 }
