@@ -48,6 +48,7 @@ make keela -j$(nproc)
 
 Build with custom `keela-videotestsrc` plugin enabled:
 ```
+make gstkeelavideotestsrc3
 cmake .. -DENABLE_KEELA_VIDEOTESTSRC=ON
 make keela -j$(nproc)
 ```
