@@ -13,7 +13,7 @@
 #include "elementbase.h"
 
 namespace Keela {
-    class Bin : public Keela::Element {
+    class Bin : public virtual Keela::Element {
     public:
         explicit Bin(const std::string &name);
 
