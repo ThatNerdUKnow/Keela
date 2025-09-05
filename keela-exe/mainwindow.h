@@ -31,6 +31,7 @@ private:
     Gtk::CheckButton cv_recording_check;
     Keela::LabeledSpinButton num_camera_spin = Keela::LabeledSpinButton("Number of Cameras");
     Gtk::CheckButton show_trace_check;
+    Keela::LabeledSpinButton trace_fps_spin = Keela::LabeledSpinButton("Trace Framerate (Hz)");
 
     Gtk::Button dump_graph_button = Gtk::Button("Dump Pipeline Graph (debug)");
 
@@ -53,6 +54,8 @@ private:
     void set_resolution(Keela::CameraControlWindow *c) const;
 
     void on_trace_button_clicked();
+
+    void on_trace_fps_changed();
 
     void dump_graph() const;
 

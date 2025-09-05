@@ -50,7 +50,11 @@ MainWindow::MainWindow(): Gtk::Window() {
     container.add(num_camera_spin);
 
     show_trace_check.set_label("Show Traces");
+    trace_fps_spin.m_spin.set_adjustment(Gtk::Adjustment::create(125, 1, 1000, 1));
+    trace_fps_spin.set_sensitive(false);
+    trace_fps_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &MainWindow::on_trace_fps_changed));
     container.add(show_trace_check);
+    container.add(trace_fps_spin);
 
     restart_camera_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::reset_cameras));
     restart_camera_button.set_label("Restart Camera(s)");
@@ -88,6 +92,13 @@ void MainWindow::on_camera_spin_changed() {
             auto c = std::make_shared<Keela::CameraControlWindow>(camera_id);
             set_framerate(c->camera_manager.get());
             set_resolution(c.get());
+
+            auto trace_bin = c->get_trace_bin();
+            if (trace_bin) {
+                const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
+                trace_bin->set_trace_framerate(fps);
+            }
+            
             g_object_ref(static_cast<GstElement*>(*c->camera_manager));
             auto inner_ret = gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
             if (!inner_ret) {
@@ -205,8 +216,23 @@ void MainWindow::on_trace_button_clicked() {
             auto trace = cameras.at(i);
             trace_window->addTrace(trace);
         }
+        trace_fps_spin.set_sensitive(true);
     } else {
         trace_window = nullptr;
+        trace_fps_spin.set_sensitive(false);
+    }
+}
+
+void MainWindow::on_trace_fps_changed() {
+    const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
+    spdlog::info("Setting trace framerate to {} fps for all cameras", fps);
+    
+    // Update trace framerate for all cameras
+    for (const auto& camera : cameras) {
+        auto trace_bin = camera->get_trace_bin();
+        if (trace_bin) {
+            trace_bin->set_trace_framerate(fps);
+        }
     }
 }
 
