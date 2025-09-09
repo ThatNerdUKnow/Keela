@@ -3,8 +3,10 @@
 //
 
 #include "mainwindow.h"
+
 #include <keela-widgets/labeledspinbutton.h>
 #include <spdlog/spdlog.h>
+
 #include "cameracontrolwindow.h"
 #include "keela-widgets/framebox.h"
 
@@ -19,9 +21,9 @@ MainWindow::MainWindow(): Gtk::Window() {
     MainWindow::add(container);
 
     // Experiment Directory button
-    auto directory_button = Gtk::make_managed<Gtk::Button>("Select Experiment Directory");
-    directory_button->signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_directory_clicked));
-    container.add(*directory_button);
+    directory_button.set_label("Select Experiment Directory");
+    directory_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_directory_clicked));
+    container.add(directory_button);
     // Record button
     record_button.set_label("Start Recording");
     record_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_record_button_clicked));
@@ -146,12 +148,14 @@ void MainWindow::on_record_button_clicked() {
         for (const auto &camera: cameras) {
             camera->camera_manager->start_recording();
         }
+        directory_button.set_sensitive(false);
     } else {
         auto message_dialog = Gtk::MessageDialog("Remember to take calibration photos");
         message_dialog.run();
         for (const auto &camera: cameras) {
             camera->camera_manager->stop_recording();
         }
+        directory_button.set_sensitive(true);
     }
 }
 
