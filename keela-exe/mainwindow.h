@@ -21,6 +21,7 @@ public:
 private:
     GstPipeline *pipeline = nullptr;
     Gtk::Button record_button;
+    Gtk::Button directory_button;
     Gtk::Button restart_camera_button;
 
     Keela::LabeledSpinButton framerate_spin = Keela::LabeledSpinButton("Framerate (Hz)");
