@@ -33,9 +33,9 @@ namespace Keela {
         void start_recording();
 
         void stop_recording();
-        
+
         // Control frame splitting
-        void set_frame_splitting_enabled(bool enabled);
+        void set_frame_splitting(bool enabled);
         bool is_frame_splitting_enabled() const { return split_streams; }
 
         // Get trace bins for both even and odd paths
@@ -64,9 +64,8 @@ namespace Keela {
         std::shared_ptr<TraceBin> &trace = trace_even;
 
     private:
-        void setup_frame_splitting();
-        void setup_frame_splitting_probes();
-        
+        void set_up_frame_splitting();
+        void install_frame_splitting_probes();
         // Frame filtering callbacks
         static GstPadProbeReturn frame_numbering_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
         static GstPadProbeReturn even_frame_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
@@ -74,7 +73,7 @@ namespace Keela {
 
         guint id;
         bool split_streams;
-        
+
         // Frame counting for even/odd filtering
         std::atomic<guint64> frame_count{0};
 

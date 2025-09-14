@@ -1,4 +1,12 @@
-set(PLUGIN_INSTALL_DIR ${CMAKE_BINARY_DIR}/plugins)
+# Create the library first
+add_library(gstkeelavideotestsrc SHARED
+    gstkeelavideotestsrc.c
+    gstkeelacustomplugin.c
+)
+
+# Link libraries and include directories
+target_link_libraries(gstkeelavideotestsrc ${GST_LIBRARIES} m)
+target_include_directories(gstkeelavideotestsrc PRIVATE ${GST_INCLUDE_DIRS})
 
 # Ensure filename matches GStreamer autoloader pattern: libgst*.so
 set_target_properties(gstkeelavideotestsrc PROPERTIES
@@ -16,18 +24,14 @@ target_compile_definitions(gstkeelavideotestsrc PRIVATE
     GST_PACKAGE_ORIGIN="https://github.com/Evan-Hartley/Keela"
 )
 
+# Set plugin installation directory
+set(PLUGIN_INSTALL_DIR ${CMAKE_BINARY_DIR}/plugins)
 install(TARGETS gstkeelavideotestsrc
     LIBRARY DESTINATION ${PLUGIN_INSTALL_DIR}
 )
 
+# Copy plugin to installation directory after build
 add_custom_command(TARGET gstkeelavideotestsrc POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory ${PLUGIN_INSTALL_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gstkeelavideotestsrc> ${PLUGIN_INSTALL_DIR}/
 )
-
-add_library(gstkeelavideotestsrc SHARED
-    gstkeelavideotestsrc.c
-    gstkeelacustomplugin.c
-)
-target_link_libraries(gstkeelavideotestsrc ${GST_LIBRARIES} m )
-target_include_directories(gstkeelavideotestsrc PRIVATE ${GST_INCLUDE_DIRS})

@@ -10,8 +10,9 @@
 Keela::CameraControlWindow::CameraControlWindow(const guint id) {
     this->id = id;
     spdlog::info("Creating {} for camera {}", __func__, id);
+    bool split_frames = false;
+    camera_manager = std::make_unique<Keela::CameraManager>(id, split_frames);
 
-    camera_manager = std::make_unique<Keela::CameraManager>(id, true);  // Enable split streams by default
     set_title("Image control for Camera " + std::to_string(id));
     set_resizable(false);
     set_deletable(false);
@@ -51,10 +52,9 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
     flip_vert_check.signal_toggled().connect(sigc::mem_fun(*this, &CameraControlWindow::on_flip_vert_changed));
     v_container.add(flip_vert_check);
 
-    // @TODO: re-joining frames doesn't actually work
-    // Add frame splitting control 
+    // Add frame splitting control
     split_frames_check.signal_toggled().connect(sigc::mem_fun(*this, &CameraControlWindow::on_split_frames_changed));
-    split_frames_check.set_active(true);  // Default to enabled to match CameraManager initialization
+    split_frames_check.set_active(camera_manager->is_frame_splitting_enabled());
     v_container.add(split_frames_check);
 
     // TODO: dynamically cast camera_manager->presentation to a WidgetElement to get a handle to a widget to add to the window
@@ -62,48 +62,27 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
         sigc::mem_fun(camera_manager->snapshot, &Keela::SnapshotBin::take_snapshot));
     v_container.add(fetch_image_button);
 
-    gl_area = std::make_unique<GLCameraRender>(camera_manager->presentation);
-    gl_area2 = std::make_unique<GLCameraRender>(camera_manager->presentation2);
-    gl_area->set_size_request(640, 480);
-    gl_area2->set_size_request(640, 480);
     set_vexpand(false);
 
-    // Create a horizontal box to hold both video displays
-    auto video_hbox = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL);
-    video_hbox->set_spacing(10);
+    // Set up video presentations, even_frame_widget renders all frames unless split is enabled
+    even_frame_widget = std::make_unique<VideoPresentation>(
+        "Camera " + std::to_string(id),
+        camera_manager->presentation_even,
+        false,  // enable_trace_gizmo
+        640,    // width
+        480     // height
+    );
+    video_hbox.pack_start(*even_frame_widget, false, false, 10);
 
-    // Create overlays for each video area to support trace gizmos
-    auto overlay1 = Gtk::make_managed<Gtk::Overlay>();
-    auto overlay2 = Gtk::make_managed<Gtk::Overlay>();
+    if (camera_manager->is_frame_splitting_enabled()) {
+        add_split_frame_ui();
+    }
 
-    trace_gizmo = std::make_shared<TraceGizmo>();
-    overlay1->add(*gl_area);
-    overlay1->add_overlay(*trace_gizmo);
-
-    overlay2->add(*gl_area2);
-
-    // @TODO: we aren't actually creating even/odd traces yet
-
-    // Add labels to identify the streams
-    auto even_label = Gtk::make_managed<Gtk::Label>("Even Frames");
-    auto odd_label = Gtk::make_managed<Gtk::Label>("Odd Frames");
-
-    auto even_vbox = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
-    auto odd_vbox = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
-
-    even_vbox->pack_start(*even_label, false, false, 5);
-    even_vbox->pack_start(*overlay1, false, false, 5);
-
-    odd_vbox->pack_start(*odd_label, false, false, 5);
-    odd_vbox->pack_start(*overlay2, false, false, 5);
-
-    video_hbox->pack_start(*even_vbox, false, false, 10);
-    video_hbox->pack_start(*odd_vbox, false, false, 10);
-
-    h_container.pack_start(*video_hbox, false, false, 10);
+    h_container.pack_start(video_hbox, false, false, 10);
 
     auto gl_bin = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
     h_container.pack_start(*gl_bin, false, false, 10);
+
     show_all_children();
     show();
 }
@@ -124,11 +103,15 @@ void Keela::CameraControlWindow::set_resolution(const int width, const int heigh
     // TODO: can we set a minimum size or allow the user to scale the gl area themselves?
     const auto rotation = rotation_combo.m_combo.get_active_id();
     if (rotation == ROTATION_90 || rotation == ROTATION_270) {
-        gl_area->set_size_request(height, width);
-        gl_area2->set_size_request(height, width);
+        even_frame_widget->set_video_size(height, width);
+        if (odd_frame_widget) {
+            odd_frame_widget->set_video_size(height, width);
+        }
     } else {
-        gl_area->set_size_request(width, height);
-        gl_area2->set_size_request(width, height);
+        even_frame_widget->set_video_size(width, height);
+        if (odd_frame_widget) {
+            odd_frame_widget->set_video_size(width, height);
+        }
     }
     m_width = width;
     m_height = height;
@@ -168,9 +151,16 @@ void Keela::CameraControlWindow::on_flip_vert_changed() const {
     camera_manager->transform.flip_vertical(value);
 }
 
-void Keela::CameraControlWindow::on_split_frames_changed() const {
+void Keela::CameraControlWindow::on_split_frames_changed() {
     const auto value = split_frames_check.get_active();
-    camera_manager->set_frame_splitting_enabled(value);
+    camera_manager->set_frame_splitting(value);
+    if (value) {
+        spdlog::info("Adding split frame UI");
+        add_split_frame_ui();
+    } else {
+        spdlog::info("Removing split frame UI");
+        remove_split_frame_ui();
+    }
 }
 
 std::shared_ptr<Keela::TraceBin> Keela::CameraControlWindow::get_trace_bin() {
@@ -187,4 +177,41 @@ std::string Keela::CameraControlWindow::get_name() {
     std::stringstream ss;
     ss << "Camera " << std::to_string(id);
     return ss.str();
+}
+
+void Keela::CameraControlWindow::add_split_frame_ui() {
+    if (odd_frame_widget) return;  // Already added
+
+    const auto rotation = rotation_combo.m_combo.get_active_id();
+    if (rotation == ROTATION_90 || rotation == ROTATION_270) {
+        odd_frame_widget = std::make_unique<VideoPresentation>(
+            "Odd Frames", 
+            camera_manager->presentation_odd, 
+            false, // enable_trace_gizmo
+            480,   // width
+            640    // height
+        );
+    } else {
+        odd_frame_widget = std::make_unique<VideoPresentation>(
+            "Odd Frames", 
+            camera_manager->presentation_odd, 
+            false, // enable_trace_gizmo
+            640,   // width
+            480    // height
+        );
+    }
+
+    // @todo: DRY this up by storing video_width/video_height state variables
+    // we can also use it in the set_resolution method
+    // odd_frame_widget = std::make_unique<VideoPresentation>("Odd Frames", camera_manager->presentation_odd, false, video_width, video_height);
+    video_hbox.pack_start(*odd_frame_widget, false, false, 10);
+
+    show_all_children();
+}
+
+void Keela::CameraControlWindow::remove_split_frame_ui() {
+    if (odd_frame_widget) {
+        video_hbox.remove(*odd_frame_widget);
+        odd_frame_widget.reset();
+    }
 }

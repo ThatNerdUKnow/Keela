@@ -12,6 +12,7 @@
 #include "keela-widgets/GLCameraRender.h"
 #include "keela-widgets/GLTraceRender.h"
 #include "keela-widgets/tracegizmo.h"
+#include "keela-widgets/videopresentation.h"
 
 namespace Keela {
     class CameraControlWindow final : public Gtk::Window, public Keela::ITraceable {
@@ -27,6 +28,11 @@ namespace Keela {
     private:
         Gtk::Box h_container = Gtk::Box();
         Gtk::Box v_container = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
+        Gtk::Box video_hbox = Gtk::Box(Gtk::ORIENTATION_HORIZONTAL);
+        
+        std::unique_ptr<VideoPresentation> even_frame_widget;
+        std::unique_ptr<VideoPresentation> odd_frame_widget;
+
         Gtk::CheckButton range_check = Gtk::CheckButton("Range");
         Keela::LabeledSpinButton range_min_spin = Keela::LabeledSpinButton("Minimum");
         Keela::LabeledSpinButton range_max_spin = Keela::LabeledSpinButton("Maximum");
@@ -39,8 +45,6 @@ namespace Keela {
         Gtk::CheckButton flip_vert_check = Gtk::CheckButton("Flip Along Vertical Center");
         Gtk::CheckButton split_frames_check = Gtk::CheckButton("Split Even/Odd Frames");
         Gtk::Button fetch_image_button = Gtk::Button("Fetch Image");
-        std::unique_ptr<Keela::GLCameraRender> gl_area;
-        std::unique_ptr<Keela::GLCameraRender> gl_area2;
 
         std::shared_ptr<Keela::TraceGizmo> trace_gizmo;
         guint id;
@@ -53,7 +57,11 @@ namespace Keela {
 
         void on_flip_vert_changed() const;
 
-        void on_split_frames_changed() const;
+        void on_split_frames_changed();
+
+        void add_split_frame_ui();
+
+        void remove_split_frame_ui();
 
     public:
         std::shared_ptr<TraceBin> get_trace_bin() override;

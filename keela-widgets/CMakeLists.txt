@@ -34,7 +34,9 @@ add_library(keela-widgets labeledspinbutton.cpp keela-widgets/labeledspinbutton.
         plugin_utils.cpp
         keela-widgets/plugin_utils.h
         plugin_init.cpp
-        plugin_init.h)
+        plugin_init.h
+        keela-widgets/videopresentation.h
+        videopresentation.cpp)
 add_dependencies(keela-widgets shader_resources)
 target_link_libraries(keela-widgets PUBLIC keela-pipeline PkgConfig::GTKMM PkgConfig::GIO PkgConfig::SPDLOG vendor-glad)
 target_include_directories(keela-widgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
