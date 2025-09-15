@@ -114,6 +114,14 @@ namespace Keela {
          *
          */
         std::set<std::shared_ptr<RecordBin> > record_bins;
+
+        /*
+         * prepends the filename with the current time to avoid overwriting files
+         * ex: directory/20250915_181211_cam_1.mkv
+         *     directory/20250915_181211_cam_1_even.mkv (if frame splitting is enabled)
+         * supports cross-platform path joining
+         */
+        static std::string get_filename(std::string directory, guint cam_id, std::string suffix = "");
     };
 }  // namespace Keela
 #endif  // CAMERAMANAGER_H

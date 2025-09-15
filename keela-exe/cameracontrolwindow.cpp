@@ -206,6 +206,16 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
     // odd_frame_widget = std::make_unique<VideoPresentation>("Odd Frames", camera_manager->presentation_odd, false, video_width, video_height);
     video_hbox.pack_start(*odd_frame_widget, false, false, 10);
 
+    // Ensure the new widget matches the current resolution
+    if (m_width > 0 && m_height > 0) {
+        const auto rotation = rotation_combo.m_combo.get_active_id();
+        if (rotation == ROTATION_90 || rotation == ROTATION_270) {
+            odd_frame_widget->set_video_size(m_height, m_width);
+        } else {
+            odd_frame_widget->set_video_size(m_width, m_height);
+        }
+    }
+
     show_all_children();
 }
 

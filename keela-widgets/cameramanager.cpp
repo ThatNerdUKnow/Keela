@@ -7,6 +7,8 @@
 #include <keela-pipeline/utils.h>
 #include <spdlog/spdlog.h>
 
+#include <ctime>
+#include <filesystem>
 #include <sstream>
 #include <stdexcept>
 
@@ -99,12 +101,11 @@ void Keela::CameraManager::start_recording() {
     std::shared_ptr<RecordBin> record_bin_odd = std::make_shared<RecordBin>("recordbin_odd");
 
     // Set up file paths for even and odd streams
-    std::stringstream ss_even, ss_odd;
-    ss_even << this->experiment_directory << "/cam_" << std::to_string(this->id) << "_even.mkv";
-    ss_odd << this->experiment_directory << "/cam_" << std::to_string(this->id) << "_odd.mkv";
+    std::string filename_even = get_filename(experiment_directory, this->id, "even");
+    std::string filename_odd = get_filename(experiment_directory, this->id, "odd");
 
-    record_bin_even->set_directory(ss_even.str());
-    record_bin_odd->set_directory(ss_odd.str());
+    record_bin_even->set_directory(filename_even);
+    record_bin_odd->set_directory(filename_odd);
 
     // Add both record bins to the pipeline
     add_elements(static_cast<GstElement *>(*record_bin_even));
@@ -129,11 +130,11 @@ void Keela::CameraManager::stop_recording() {
     // inside the blocking callback, add the EOS probe to the last source pad of the bin (it is unclear if this can also be a sink pad)
     // after installing the EOS callback, send an EOS event to the sink pad of the beginning of the bin
     // inside the EOS callback, set the state of the bin to NULL and remove the bin from the pipeline
-    for (auto bin: record_bins) {
+    for (auto bin : record_bins) {
         bin->PrepareEject();
     }
 
-    for (auto bin: record_bins) {
+    for (auto bin : record_bins) {
         bin->Eject(false);
     }
     record_bins.clear();
@@ -199,7 +200,7 @@ void Keela::CameraManager::set_frame_splitting(bool enabled) {
 void Keela::CameraManager::install_frame_splitting_probes() {
     spdlog::info("Installing frame splitting probes");
 
-    // Install a frame numbering probe before the main tee so we can conditionally drop frames later 
+    // Install a frame numbering probe before the main tee so we can conditionally drop frames later
     GstPad *transform_src = gst_element_get_static_pad(transform, "src");
     if (transform_src) {
         gst_pad_add_probe(transform_src, GST_PAD_PROBE_TYPE_BUFFER,
@@ -225,4 +226,15 @@ void Keela::CameraManager::install_frame_splitting_probes() {
         g_object_unref(odd_sink_pad);
         spdlog::info("Installed odd frame filter probe");
     }
+}
+
+std::string Keela::CameraManager::get_filename(std::string directory, guint cam_id, std::string suffix) {
+    time_t timestamp = std::time(nullptr);
+    struct tm datetime = *localtime(&timestamp);
+    std::stringstream ss;
+    ss << std::put_time(&datetime, "%Y%m%d_%H%M%S_");
+
+    auto path = std::filesystem::path(directory) / (ss.str() + "cam_" + std::to_string(cam_id) + suffix + ".mkv");
+
+    return path.string();
 }
