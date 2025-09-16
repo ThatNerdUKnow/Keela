@@ -234,6 +234,10 @@ std::string Keela::CameraManager::get_filename(std::string directory, guint cam_
     std::stringstream ss;
     ss << std::put_time(&datetime, "%Y%m%d_%H%M%S_");
 
+    if (suffix != "") {
+        suffix = "_" + suffix;
+    }
+
     auto path = std::filesystem::path(directory) / (ss.str() + "cam_" + std::to_string(cam_id) + suffix + ".mkv");
 
     return path.string();
