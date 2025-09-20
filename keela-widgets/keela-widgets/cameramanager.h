@@ -56,10 +56,6 @@ namespace Keela {
         SnapshotBin snapshot_odd;
         std::shared_ptr<TraceBin> trace_odd = std::make_shared<TraceBin>("trace_odd");
 
-        // For backward compatibility, provide access to the even path elements
-        std::shared_ptr<PresentationBin> &presentation = presentation_even;
-        std::shared_ptr<PresentationBin> &presentation2 = presentation_odd;
-
         SnapshotBin &snapshot = snapshot_even;
         std::shared_ptr<TraceBin> &trace = trace_even;
 

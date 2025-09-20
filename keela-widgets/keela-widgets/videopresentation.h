@@ -13,7 +13,6 @@ namespace Keela {
     public:
         VideoPresentation(const std::string& label_text,
                           std::shared_ptr<Keela::PresentationBin> presentation_bin,
-                          bool enable_trace_gizmo = false,
                           int width = 640, int height = 480);
         ~VideoPresentation() override;
 
@@ -22,7 +21,6 @@ namespace Keela {
 
     private:
         std::unique_ptr<GLCameraRender> gl_area;
-        std::shared_ptr<TraceGizmo> trace_gizmo_even;
         Gtk::Label label;
         Gtk::Overlay overlay;
     };

@@ -209,11 +209,8 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
 }
 
 /**
-*    NOTE: if the target computer isn't fast enough, this will result in backpressure on the pipeline
+*    NOTE: At higher trace FPS, if the target computer isn't fast enough, this will result in backpressure on the pipeline
      backpressure will manifest as slowly increasing memory usage - this is not a memory leak!
-
-     TODO: need some mechanism to relieve backpressure on the pipeline
-     perhaps implement subsampling based off of x resolution of the gl_area
  * @param token used to detect when to stop processing video data
  */
 void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {

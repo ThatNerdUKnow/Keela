@@ -64,11 +64,16 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
 
     set_vexpand(false);
 
+    // Create overlay for trace gizmo
+    auto overlay = Gtk::make_managed<Gtk::Overlay>();
+    trace_gizmo_even = std::make_shared<TraceGizmo>();
+    overlay->add_overlay(*trace_gizmo_even);
+    h_container.pack_start(*overlay, false, false, 10);
+
     // Set up video presentations, frame_widget_even renders all frames unless split is enabled
     frame_widget_even = std::make_unique<VideoPresentation>(
         "Camera " + std::to_string(id),
         camera_manager->presentation_even,
-        false,  // enable_trace_gizmo
         640,    // width
         480     // height
     );
@@ -187,7 +192,6 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
         frame_widget_odd = std::make_unique<VideoPresentation>(
             "Odd Frames", 
             camera_manager->presentation_odd, 
-            false, // enable_trace_gizmo
             480,   // width
             640    // height
         );
@@ -195,7 +199,6 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
         frame_widget_odd = std::make_unique<VideoPresentation>(
             "Odd Frames", 
             camera_manager->presentation_odd, 
-            false, // enable_trace_gizmo
             640,   // width
             480    // height
         );
