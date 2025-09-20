@@ -153,8 +153,7 @@ void MainWindow::on_record_button_clicked() {
         if (experiment_directory == "") {
             throw std::runtime_error("Experiment directory not specified");
         }
-        auto message_dialog = Gtk::MessageDialog("Remember to set the experiment output to a new directory");
-        message_dialog.run();
+
         // TODO: show file dialog
         for (const auto &camera: cameras) {
             camera->camera_manager->start_recording();

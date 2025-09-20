@@ -4,11 +4,13 @@
 
 #include "keela-widgets/cameramanager.h"
 
-#include <sstream>
-#include <stdexcept>
+#include <keela-pipeline/utils.h>
 #include <spdlog/spdlog.h>
 
-#include <keela-pipeline/utils.h>
+#include <ctime>
+#include <filesystem>
+#include <sstream>
+#include <stdexcept>
 
 #include "keela-pipeline/recordbin.h"
 #include "keela-widgets/plugin_utils.h"
@@ -47,7 +49,7 @@ void Keela::CameraManager::set_framerate(double framerate) {
     // TODO: caps need to be writable
     base_caps = Caps(static_cast<GstCaps *>(base_caps));
     base_caps.set_framerate(numerator, 10);
-    //gst_caps_set_simple(base_caps, "framerate", GST_TYPE_FRACTION, numerator, 10, nullptr);
+    // gst_caps_set_simple(base_caps, "framerate", GST_TYPE_FRACTION, numerator, 10, nullptr);
 
     // through experimentation, I believe that changes to the original caps reference do not affect the capsfilter
     g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
@@ -70,9 +72,10 @@ void Keela::CameraManager::set_experiment_directory(const std::string &path) {
 
 void Keela::CameraManager::start_recording() {
     std::shared_ptr<RecordBin> record_bin = std::make_shared<RecordBin>("recordbin");
-    std::stringstream ss;
-    ss << this->experiment_directory << "\\cam_" << std::to_string(this->id) << ".mkv";
-    record_bin->set_directory(ss.str());
+
+    std::string filename = get_filename(experiment_directory, this->id);
+    record_bin->set_directory(filename);
+
     add_elements(static_cast<GstElement *>(*record_bin));
     assert(gst_element_sync_state_with_parent(*record_bin));
     element_link_many(tee, static_cast<GstElement *>(*record_bin));
@@ -95,4 +98,15 @@ void Keela::CameraManager::stop_recording() {
     record_bins.clear();
     spdlog::info("Removed all recordbins from pipeline");
     dump_bin_graph();
+}
+
+std::string Keela::CameraManager::get_filename(std::string directory, guint cam_id) {
+    time_t timestamp = std::time(nullptr);
+    struct tm datetime = *localtime(&timestamp);
+    std::stringstream ss;
+    ss << std::put_time(&datetime, "%Y%m%d_%H%M%S_");
+
+    auto path = std::filesystem::path(directory) / (ss.str() + "cam_" + std::to_string(cam_id) + ".mkv");
+
+    return path.string();
 }
