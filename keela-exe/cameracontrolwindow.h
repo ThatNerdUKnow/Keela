@@ -30,8 +30,8 @@ namespace Keela {
         Gtk::Box v_container = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
         Gtk::Box video_hbox = Gtk::Box(Gtk::ORIENTATION_HORIZONTAL);
         
-        std::unique_ptr<VideoPresentation> even_frame_widget;
-        std::unique_ptr<VideoPresentation> odd_frame_widget;
+        std::unique_ptr<VideoPresentation> frame_widget_even;
+        std::unique_ptr<VideoPresentation> frame_widget_odd;
 
         Gtk::CheckButton range_check = Gtk::CheckButton("Range");
         Keela::LabeledSpinButton range_min_spin = Keela::LabeledSpinButton("Minimum");
@@ -46,7 +46,7 @@ namespace Keela {
         Gtk::CheckButton split_frames_check = Gtk::CheckButton("Split Even/Odd Frames");
         Gtk::Button fetch_image_button = Gtk::Button("Fetch Image");
 
-        std::shared_ptr<Keela::TraceGizmo> trace_gizmo;
+        std::shared_ptr<Keela::TraceGizmo> trace_gizmo_even;
         guint id;
 
         void on_range_check_toggled();

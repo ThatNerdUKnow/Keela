@@ -13,8 +13,8 @@ Keela::VideoPresentation::VideoPresentation(const std::string& label_text,
     overlay.add(*gl_area);
 
     if (enable_trace_gizmo) {
-        trace_gizmo = std::make_shared<TraceGizmo>();
-        overlay.add_overlay(*trace_gizmo);
+        trace_gizmo_even = std::make_shared<TraceGizmo>();
+        overlay.add_overlay(*trace_gizmo_even);
     }
 
     pack_start(label, false, false, 5);
@@ -30,5 +30,5 @@ void Keela::VideoPresentation::set_video_size(int width, int height) {
 }
 
 std::shared_ptr<Keela::TraceGizmo> Keela::VideoPresentation::get_trace_gizmo() const {
-    return trace_gizmo;
+    return trace_gizmo_even;
 }

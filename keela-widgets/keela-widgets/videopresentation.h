@@ -22,7 +22,7 @@ namespace Keela {
 
     private:
         std::unique_ptr<GLCameraRender> gl_area;
-        std::shared_ptr<TraceGizmo> trace_gizmo;
+        std::shared_ptr<TraceGizmo> trace_gizmo_even;
         Gtk::Label label;
         Gtk::Overlay overlay;
     };

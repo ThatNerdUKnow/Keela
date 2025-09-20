@@ -64,15 +64,15 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
 
     set_vexpand(false);
 
-    // Set up video presentations, even_frame_widget renders all frames unless split is enabled
-    even_frame_widget = std::make_unique<VideoPresentation>(
+    // Set up video presentations, frame_widget_even renders all frames unless split is enabled
+    frame_widget_even = std::make_unique<VideoPresentation>(
         "Camera " + std::to_string(id),
         camera_manager->presentation_even,
         false,  // enable_trace_gizmo
         640,    // width
         480     // height
     );
-    video_hbox.pack_start(*even_frame_widget, false, false, 10);
+    video_hbox.pack_start(*frame_widget_even, false, false, 10);
 
     if (camera_manager->is_frame_splitting_enabled()) {
         add_split_frame_ui();
@@ -103,14 +103,14 @@ void Keela::CameraControlWindow::set_resolution(const int width, const int heigh
     // TODO: can we set a minimum size or allow the user to scale the gl area themselves?
     const auto rotation = rotation_combo.m_combo.get_active_id();
     if (rotation == ROTATION_90 || rotation == ROTATION_270) {
-        even_frame_widget->set_video_size(height, width);
-        if (odd_frame_widget) {
-            odd_frame_widget->set_video_size(height, width);
+        frame_widget_even->set_video_size(height, width);
+        if (frame_widget_odd) {
+            frame_widget_odd->set_video_size(height, width);
         }
     } else {
-        even_frame_widget->set_video_size(width, height);
-        if (odd_frame_widget) {
-            odd_frame_widget->set_video_size(width, height);
+        frame_widget_even->set_video_size(width, height);
+        if (frame_widget_odd) {
+            frame_widget_odd->set_video_size(width, height);
         }
     }
     m_width = width;
@@ -170,7 +170,7 @@ std::shared_ptr<Keela::TraceBin> Keela::CameraControlWindow::get_trace_bin() {
 }
 
 std::shared_ptr<Keela::TraceGizmo> Keela::CameraControlWindow::get_trace_gizmo() {
-    return trace_gizmo;
+    return trace_gizmo_even;
 }
 
 std::string Keela::CameraControlWindow::get_name() {
@@ -180,11 +180,11 @@ std::string Keela::CameraControlWindow::get_name() {
 }
 
 void Keela::CameraControlWindow::add_split_frame_ui() {
-    if (odd_frame_widget) return;  // Already added
+    if (frame_widget_odd) return;  // Already added
 
     const auto rotation = rotation_combo.m_combo.get_active_id();
     if (rotation == ROTATION_90 || rotation == ROTATION_270) {
-        odd_frame_widget = std::make_unique<VideoPresentation>(
+        frame_widget_odd = std::make_unique<VideoPresentation>(
             "Odd Frames", 
             camera_manager->presentation_odd, 
             false, // enable_trace_gizmo
@@ -192,7 +192,7 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
             640    // height
         );
     } else {
-        odd_frame_widget = std::make_unique<VideoPresentation>(
+        frame_widget_odd = std::make_unique<VideoPresentation>(
             "Odd Frames", 
             camera_manager->presentation_odd, 
             false, // enable_trace_gizmo
@@ -203,16 +203,16 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
 
     // @todo: DRY this up by storing video_width/video_height state variables
     // we can also use it in the set_resolution method
-    // odd_frame_widget = std::make_unique<VideoPresentation>("Odd Frames", camera_manager->presentation_odd, false, video_width, video_height);
-    video_hbox.pack_start(*odd_frame_widget, false, false, 10);
+    // frame_widget_odd = std::make_unique<VideoPresentation>("Odd Frames", camera_manager->presentation_odd, false, video_width, video_height);
+    video_hbox.pack_start(*frame_widget_odd, false, false, 10);
 
     // Ensure the new widget matches the current resolution
     if (m_width > 0 && m_height > 0) {
         const auto rotation = rotation_combo.m_combo.get_active_id();
         if (rotation == ROTATION_90 || rotation == ROTATION_270) {
-            odd_frame_widget->set_video_size(m_height, m_width);
+            frame_widget_odd->set_video_size(m_height, m_width);
         } else {
-            odd_frame_widget->set_video_size(m_width, m_height);
+            frame_widget_odd->set_video_size(m_width, m_height);
         }
     }
 
@@ -220,8 +220,8 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
 }
 
 void Keela::CameraControlWindow::remove_split_frame_ui() {
-    if (odd_frame_widget) {
-        video_hbox.remove(*odd_frame_widget);
-        odd_frame_widget.reset();
+    if (frame_widget_odd) {
+        video_hbox.remove(*frame_widget_odd);
+        frame_widget_odd.reset();
     }
 }
