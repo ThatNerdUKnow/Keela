@@ -101,12 +101,17 @@ void MainWindow::on_camera_spin_changed() {
             set_framerate(c->camera_manager.get());
             set_resolution(c.get());
 
-            auto trace_bin = c->get_trace_bin();
-            if (trace_bin) {
-                const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
-                trace_bin->set_trace_framerate(fps);
+            // @TODO: DRY up trace framerate logic
+            // Update trace framerate for all traces in this camera
+            auto traces = c->get_traces();
+            for (const auto &trace : traces) {
+                auto trace_bin = trace->get_trace_bin();
+                if (trace_bin) {
+                    const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
+                    trace_bin->set_trace_framerate(fps);
+                }
             }
-            
+
             g_object_ref(static_cast<GstElement*>(*c->camera_manager));
             auto inner_ret = gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
             if (!inner_ret) {
@@ -117,7 +122,7 @@ void MainWindow::on_camera_spin_changed() {
             set_experiment_directory(c);
             cameras.push_back(c);
             if (trace_window != nullptr) {
-                trace_window->addTrace(c);
+                trace_window->addTraces(traces);
             }
         }
     } else if (next < curr) {
@@ -225,8 +230,9 @@ void MainWindow::on_trace_button_clicked() {
 
         spdlog::debug("num traces: {}\t num cameras: {}", trace_window->num_traces(), trace_window->num_traces());
         for (unsigned int i = trace_window->num_traces(); i < cameras.size(); i++) {
-            auto trace = cameras.at(i);
-            trace_window->addTrace(trace);
+            auto camera = cameras.at(i);
+            auto traces = camera->get_traces();
+            trace_window->addTraces(traces);
         }
         trace_fps_spin.set_sensitive(true);
     } else {
@@ -238,12 +244,15 @@ void MainWindow::on_trace_button_clicked() {
 void MainWindow::on_trace_fps_changed() {
     const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
     spdlog::info("Setting trace framerate to {} fps for all cameras", fps);
-    
+
     // Update trace framerate for all cameras
-    for (const auto& camera : cameras) {
-        auto trace_bin = camera->get_trace_bin();
-        if (trace_bin) {
-            trace_bin->set_trace_framerate(fps);
+    for (const auto &camera : cameras) {
+        auto traces = camera->get_traces();
+        for (const auto &trace : traces) {
+            auto trace_bin = trace->get_trace_bin();
+            if (trace_bin) {
+                trace_bin->set_trace_framerate(fps);
+            }
         }
     }
 }

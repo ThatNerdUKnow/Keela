@@ -9,13 +9,14 @@
 #include <keela-widgets/labeledspinbutton.h>
 
 #include "../keela-widgets/keela-widgets/cameramanager.h"
+#include "../keela-widgets/keela-widgets/cameratrace.h"
 #include "keela-widgets/GLCameraRender.h"
 #include "keela-widgets/GLTraceRender.h"
 #include "keela-widgets/tracegizmo.h"
 #include "keela-widgets/videopresentation.h"
 
 namespace Keela {
-    class CameraControlWindow final : public Gtk::Window, public Keela::ITraceable {
+    class CameraControlWindow final : public Gtk::Window {
     public:
         explicit CameraControlWindow(guint id);
 
@@ -47,6 +48,7 @@ namespace Keela {
         Gtk::Button fetch_image_button = Gtk::Button("Fetch Image");
 
         std::shared_ptr<Keela::TraceGizmo> trace_gizmo_even;
+        std::shared_ptr<Keela::TraceGizmo> trace_gizmo_odd;
         guint id;
 
         void on_range_check_toggled();
@@ -63,14 +65,13 @@ namespace Keela {
 
         void remove_split_frame_ui();
 
+        void update_traces();
+
     public:
-        std::shared_ptr<TraceBin> get_trace_bin() override;
-
-        std::shared_ptr<TraceGizmo> get_trace_gizmo() override;
-
-        std::string get_name() override;
+        std::vector<std::shared_ptr<ITraceable>> get_traces();
 
     private:
+        std::vector<std::shared_ptr<CameraTrace>> m_traces;
         // set width and height initially to a sentinel value
         int m_width = -1, m_height = -1;
     };

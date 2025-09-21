@@ -17,7 +17,7 @@ namespace Keela {
 
         ~TraceWindow() override;
 
-        void addTrace(std::shared_ptr<Keela::ITraceable> trace);
+        void addTraces(const std::vector<std::shared_ptr<Keela::ITraceable>>& traces);
 
         void removeTrace();
 
@@ -26,7 +26,7 @@ namespace Keela {
     private:
         std::vector<std::shared_ptr<GLTraceRender> > traces;
         Gtk::ScrolledWindow scrolled_window;
-        Gtk::Box containter = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
+        Gtk::Box container = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
     };
 }
 

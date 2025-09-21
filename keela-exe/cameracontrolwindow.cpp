@@ -89,6 +89,9 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
     auto gl_bin = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
     h_container.pack_start(*gl_bin, false, false, 10);
 
+    // Initialize traces
+    update_traces();
+
     show_all_children();
     show();
 }
@@ -167,22 +170,44 @@ void Keela::CameraControlWindow::on_split_frames_changed() {
         spdlog::info("Removing split frame UI");
         remove_split_frame_ui();
     }
+    // Update traces whenever split frame state changes
+    update_traces();
 }
 
-std::shared_ptr<Keela::TraceBin> Keela::CameraControlWindow::get_trace_bin() {
-    // For now, return the even frame trace bin
-    // TODO: Extend interface to support both even and odd trace bins
-    return camera_manager->get_trace_even();
+std::vector<std::shared_ptr<Keela::ITraceable>> Keela::CameraControlWindow::get_traces() {
+    std::vector<std::shared_ptr<ITraceable>> traces;
+    traces.reserve(m_traces.size());
+    for (const auto& trace : m_traces) {
+        traces.push_back(trace);
+    }
+    return traces;
 }
 
-std::shared_ptr<Keela::TraceGizmo> Keela::CameraControlWindow::get_trace_gizmo() {
-    return trace_gizmo_even;
-}
-
-std::string Keela::CameraControlWindow::get_name() {
-    std::stringstream ss;
-    ss << "Camera " << std::to_string(id);
-    return ss.str();
+void Keela::CameraControlWindow::update_traces() {
+    m_traces.clear();
+    
+    // Always add the even trace
+    std::string even_name = "Camera " + std::to_string(id);
+    if (camera_manager->is_frame_splitting_enabled()) {
+        even_name += " (Even)";
+    }
+    
+    auto even_trace = std::make_shared<CameraTrace>(
+        camera_manager->get_trace_even(),
+        trace_gizmo_even,
+        even_name
+    );
+    m_traces.push_back(even_trace);
+    
+    // Add odd trace if frame splitting is enabled
+    if (camera_manager->is_frame_splitting_enabled() && trace_gizmo_odd) {
+        auto odd_trace = std::make_shared<CameraTrace>(
+            camera_manager->get_trace_odd(),
+            trace_gizmo_odd,
+            "Camera " + std::to_string(id) + " (Odd)"
+        );
+        m_traces.push_back(odd_trace);
+    }
 }
 
 void Keela::CameraControlWindow::add_split_frame_ui() {

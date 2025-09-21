@@ -9,18 +9,30 @@ Keela::TraceWindow::TraceWindow() {
     set_default_size(640, 480);
     set_title("Traces");
     Window::add(scrolled_window);
-    scrolled_window.add(containter);
+    scrolled_window.add(container);
 }
 
 Keela::TraceWindow::~TraceWindow() {
 }
 
-void Keela::TraceWindow::addTrace(std::shared_ptr<Keela::ITraceable> trace) {
-    auto widget = std::make_shared<GLTraceRender>(trace);
-    traces.push_back(widget);
-    containter.add(*widget);
+void Keela::TraceWindow::addTraces(const std::vector<std::shared_ptr<Keela::ITraceable>>& traces_to_add) {
+    if (traces_to_add.empty()) {
+        return;
+    }
+    
+    // Create a horizontal box to hold traces from this camera
+    auto row_box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL);
+    row_box->set_spacing(10);
+    
+    for (const auto& trace : traces_to_add) {
+        auto widget = std::make_shared<GLTraceRender>(trace);
+        traces.push_back(widget);
+        row_box->pack_start(*widget, false, false, 0);
+    }
+    
+    container.pack_start(*row_box, false, false, 10);
     show_all_children();
-    spdlog::info("TraceWindow::{}: Trace added", __func__);
+    spdlog::info("TraceWindow::{}: Added {} traces in a row", __func__, traces_to_add.size());
 }
 
 void Keela::TraceWindow::removeTrace() {
