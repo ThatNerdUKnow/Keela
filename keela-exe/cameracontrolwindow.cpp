@@ -74,6 +74,7 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
     frame_widget_even = std::make_unique<VideoPresentation>(
         "Camera " + std::to_string(id),
         camera_manager->presentation_even,
+        *overlay,
         640,    // width
         480     // height
     );
@@ -187,18 +188,26 @@ std::string Keela::CameraControlWindow::get_name() {
 void Keela::CameraControlWindow::add_split_frame_ui() {
     if (frame_widget_odd) return;  // Already added
 
+    // Create overlay for trace gizmo
+    auto overlay = Gtk::make_managed<Gtk::Overlay>();
+    trace_gizmo_odd = std::make_shared<TraceGizmo>();
+    overlay->add_overlay(*trace_gizmo_odd);
+    h_container.pack_start(*overlay, false, false, 10);
+
     const auto rotation = rotation_combo.m_combo.get_active_id();
     if (rotation == ROTATION_90 || rotation == ROTATION_270) {
         frame_widget_odd = std::make_unique<VideoPresentation>(
             "Odd Frames", 
             camera_manager->presentation_odd, 
+            *overlay,
             480,   // width
             640    // height
         );
     } else {
         frame_widget_odd = std::make_unique<VideoPresentation>(
             "Odd Frames", 
-            camera_manager->presentation_odd, 
+            camera_manager->presentation_odd,
+            *overlay,
             640,   // width
             480    // height
         );

@@ -1,8 +1,9 @@
 #include "keela-widgets/videopresentation.h"
 
 Keela::VideoPresentation::VideoPresentation(const std::string& label_text,
-                                            std::shared_ptr<Keela::PresentationBin> presentation_bin, int width,
-                                            int height)
+                                            std::shared_ptr<Keela::PresentationBin> presentation_bin,
+                                            Gtk::Overlay& overlay,
+                                            int width, int height)
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL),
       gl_area(std::make_unique<GLCameraRender>(presentation_bin)),
       label(label_text) {
@@ -24,4 +25,3 @@ Keela::VideoPresentation::~VideoPresentation() = default;
 void Keela::VideoPresentation::set_video_size(int width, int height) {
     gl_area->set_size_request(width, height);
 }
-

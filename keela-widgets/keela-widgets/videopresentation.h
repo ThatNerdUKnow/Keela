@@ -13,6 +13,7 @@ namespace Keela {
     public:
         VideoPresentation(const std::string& label_text,
                           std::shared_ptr<Keela::PresentationBin> presentation_bin,
+                          Gtk::Overlay& overlay,
                           int width = 640, int height = 480);
         ~VideoPresentation() override;
 
@@ -22,7 +23,6 @@ namespace Keela {
     private:
         std::unique_ptr<GLCameraRender> gl_area;
         Gtk::Label label;
-        Gtk::Overlay overlay;
     };
 }  // namespace Keela
 
