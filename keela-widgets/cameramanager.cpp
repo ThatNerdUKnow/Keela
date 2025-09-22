@@ -150,8 +150,6 @@ GstPadProbeReturn Keela::CameraManager::frame_numbering_probe_cb(GstPad *pad, Gs
     guint64 frame_number = camera_manager->frame_count.fetch_add(1);
     GST_BUFFER_OFFSET(buffer) = frame_number;
 
-    GST_LOG("Frame numbering: assigned number %lu", frame_number);
-
     return GST_PAD_PROBE_OK;  // Always pass the frame through
 }
 
@@ -161,10 +159,8 @@ GstPadProbeReturn Keela::CameraManager::even_frame_probe_cb(GstPad *pad, GstPadP
     guint64 frame_number = GST_BUFFER_OFFSET(buffer);
 
     if (frame_number % 2 == 0) {
-        GST_LOG("Even filter: passing frame %lu", frame_number);
         return GST_PAD_PROBE_OK;  // Pass the frame
     } else {
-        GST_LOG("Even filter: dropping frame %lu", frame_number);
         return GST_PAD_PROBE_DROP;  // Drop the frame
     }
 }
@@ -174,10 +170,8 @@ GstPadProbeReturn Keela::CameraManager::odd_frame_probe_cb(GstPad *pad, GstPadPr
     guint64 frame_number = GST_BUFFER_OFFSET(buffer);
 
     if (frame_number % 2 == 1) {
-        GST_LOG("Odd filter: passing frame %lu", frame_number);
         return GST_PAD_PROBE_OK;  // Pass the frame
     } else {
-        GST_LOG("Odd filter: dropping frame %lu", frame_number);
         return GST_PAD_PROBE_DROP;  // Drop the frame
     }
 }
