@@ -27,7 +27,7 @@ void Keela::TraceWindow::addTraces(const std::vector<std::shared_ptr<Keela::ITra
     for (const auto& trace : traces_to_add) {
         auto widget = std::make_shared<GLTraceRender>(trace);
         traces.push_back(widget);
-        row_box->pack_start(*widget, false, false, 0);
+        row_box->pack_start(*widget, true, true, 0);
     }
     
     container.pack_start(*row_box, false, false, 10);
