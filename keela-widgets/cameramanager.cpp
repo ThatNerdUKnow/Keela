@@ -23,10 +23,35 @@ Keela::CameraManager::CameraManager(guint id, bool split_streams) : Bin("camera_
 
         gst_caps_set_simple(base_caps, "format", G_TYPE_STRING, "GRAY8", nullptr);
         g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
-        add_elements(camera, auto_video_convert, caps_filter, transform, tee, *trace, *presentation, snapshot);
-        element_link_many(camera, auto_video_convert, caps_filter, transform, tee, *presentation);
-        element_link_many(tee, snapshot);
-        element_link_many(tee, *trace);
+
+        // Add all elements to the bin
+        add_elements(camera, auto_video_convert, caps_filter, transform,
+                     tee_main, tee_even, tee_odd,
+                     *trace_even, *presentation_even, snapshot_even,
+                     *trace_odd, *presentation_odd, snapshot_odd);
+
+        // Link main pipeline: camera -> videoconvert -> capsfilter -> transform -> main_tee
+        element_link_many(camera, auto_video_convert, caps_filter, transform, tee_main);
+
+        // Link main tee to both sub-tees
+        element_link_many(tee_main, tee_even);
+        element_link_many(tee_main, tee_odd);
+
+        // Link even frame outputs
+        element_link_many(tee_even, *presentation_even);
+        element_link_many(tee_even, snapshot_even);
+        element_link_many(tee_even, *trace_even);
+
+        // Link odd frame outputs
+        element_link_many(tee_odd, *presentation_odd);
+        element_link_many(tee_odd, snapshot_odd);
+        element_link_many(tee_odd, *trace_odd);
+
+        // Set up frame splitting if enabled
+        this->split_streams = split_streams;
+        if (split_streams) {
+            install_frame_splitting_probes();
+        }
 
         spdlog::info("Created camera manager {}", id);
     } catch (const std::exception &e) {
@@ -71,15 +96,32 @@ void Keela::CameraManager::set_experiment_directory(const std::string &path) {
 }
 
 void Keela::CameraManager::start_recording() {
-    std::shared_ptr<RecordBin> record_bin = std::make_shared<RecordBin>("recordbin");
+    // Create record bins for both even and odd streams
+    std::shared_ptr<RecordBin> record_bin_even = std::make_shared<RecordBin>("recordbin_even");
+    std::shared_ptr<RecordBin> record_bin_odd = std::make_shared<RecordBin>("recordbin_odd");
 
-    std::string filename = get_filename(experiment_directory, this->id);
-    record_bin->set_directory(filename);
+    // Set up file paths for even and odd streams
+    std::string filename_even = get_filename(experiment_directory, this->id, "even");
+    std::string filename_odd = get_filename(experiment_directory, this->id, "odd");
 
-    add_elements(static_cast<GstElement *>(*record_bin));
-    assert(gst_element_sync_state_with_parent(*record_bin));
-    element_link_many(tee, static_cast<GstElement *>(*record_bin));
-    record_bins.insert(record_bin);
+    record_bin_even->set_directory(filename_even);
+    record_bin_odd->set_directory(filename_odd);
+
+    // Add both record bins to the pipeline
+    add_elements(static_cast<GstElement *>(*record_bin_even));
+    add_elements(static_cast<GstElement *>(*record_bin_odd));
+
+    // Sync state with parent
+    assert(gst_element_sync_state_with_parent(*record_bin_even));
+    assert(gst_element_sync_state_with_parent(*record_bin_odd));
+
+    // Link to both tees
+    element_link_many(tee_even, static_cast<GstElement *>(*record_bin_even));
+    element_link_many(tee_odd, static_cast<GstElement *>(*record_bin_odd));
+
+    // Store both record bins
+    record_bins.insert(record_bin_even);
+    record_bins.insert(record_bin_odd);
 }
 
 void Keela::CameraManager::stop_recording() {
@@ -88,11 +130,11 @@ void Keela::CameraManager::stop_recording() {
     // inside the blocking callback, add the EOS probe to the last source pad of the bin (it is unclear if this can also be a sink pad)
     // after installing the EOS callback, send an EOS event to the sink pad of the beginning of the bin
     // inside the EOS callback, set the state of the bin to NULL and remove the bin from the pipeline
-    for (auto bin: record_bins) {
+    for (auto bin : record_bins) {
         bin->PrepareEject();
     }
 
-    for (auto bin: record_bins) {
+    for (auto bin : record_bins) {
         bin->Eject(false);
     }
     record_bins.clear();
@@ -100,13 +142,97 @@ void Keela::CameraManager::stop_recording() {
     dump_bin_graph();
 }
 
-std::string Keela::CameraManager::get_filename(std::string directory, guint cam_id) {
+GstPadProbeReturn Keela::CameraManager::frame_numbering_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
+    auto *camera_manager = static_cast<CameraManager *>(user_data);
+    GstBuffer *buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+
+    // Assign a sequence number to this buffer using offset
+    guint64 frame_number = camera_manager->frame_count.fetch_add(1);
+    GST_BUFFER_OFFSET(buffer) = frame_number;
+
+    return GST_PAD_PROBE_OK;  // Always pass the frame through
+}
+
+// @TODO: DRY this up
+GstPadProbeReturn Keela::CameraManager::even_frame_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
+    GstBuffer *buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    guint64 frame_number = GST_BUFFER_OFFSET(buffer);
+
+    if (frame_number % 2 == 0) {
+        return GST_PAD_PROBE_OK;  // Pass the frame
+    } else {
+        return GST_PAD_PROBE_DROP;  // Drop the frame
+    }
+}
+
+GstPadProbeReturn Keela::CameraManager::odd_frame_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
+    GstBuffer *buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    guint64 frame_number = GST_BUFFER_OFFSET(buffer);
+
+    if (frame_number % 2 == 1) {
+        return GST_PAD_PROBE_OK;  // Pass the frame
+    } else {
+        return GST_PAD_PROBE_DROP;  // Drop the frame
+    }
+}
+
+void Keela::CameraManager::set_frame_splitting(bool enabled) {
+    split_streams = enabled;
+    spdlog::info("Frame splitting {}", enabled ? "enabled" : "disabled");
+    // Reset frame counter when toggling
+    frame_count.store(0);
+
+    if (enabled) {
+        // Install the probes now that the pipeline is set up
+        install_frame_splitting_probes();
+    } else {
+        // TODO: Remove existing probes when disabled
+        // For now, the probes will just pass all frames through
+    }
+}
+
+void Keela::CameraManager::install_frame_splitting_probes() {
+    spdlog::info("Installing frame splitting probes");
+
+    // Install a frame numbering probe before the main tee so we can conditionally drop frames later
+    GstPad *transform_src = gst_element_get_static_pad(transform, "src");
+    if (transform_src) {
+        gst_pad_add_probe(transform_src, GST_PAD_PROBE_TYPE_BUFFER,
+                          frame_numbering_probe_cb, this, nullptr);
+        g_object_unref(transform_src);
+        spdlog::info("Installed frame numbering probe");
+    }
+
+    // Install filtering probes on the sink pads of the even and odd tees
+    GstPad *even_sink_pad = gst_element_get_static_pad(tee_even, "sink");
+    GstPad *odd_sink_pad = gst_element_get_static_pad(tee_odd, "sink");
+
+    if (even_sink_pad) {
+        gst_pad_add_probe(even_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
+                          even_frame_probe_cb, this, nullptr);
+        g_object_unref(even_sink_pad);
+        spdlog::info("Installed even frame filter probe");
+    }
+
+    if (odd_sink_pad) {
+        gst_pad_add_probe(odd_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
+                          odd_frame_probe_cb, this, nullptr);
+        g_object_unref(odd_sink_pad);
+        spdlog::info("Installed odd frame filter probe");
+    }
+}
+
+std::string Keela::CameraManager::get_filename(std::string directory, guint cam_id, std::string suffix) {
     time_t timestamp = std::time(nullptr);
     struct tm datetime = *localtime(&timestamp);
     std::stringstream ss;
     ss << std::put_time(&datetime, "%Y%m%d_%H%M%S_");
 
-    auto path = std::filesystem::path(directory) / (ss.str() + "cam_" + std::to_string(cam_id) + ".mkv");
+    if (suffix != "") {
+        suffix = "_" + suffix;
+    }
+
+    auto path = std::filesystem::path(directory) / (ss.str() + "cam_" + std::to_string(cam_id) + suffix + ".mkv");
 
     return path.string();
 }

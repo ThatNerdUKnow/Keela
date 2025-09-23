@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -Wall)
 
-option(MAKE_REFERENCE "Build reference implementation samples" false)
+option(MAKE_REFERENCE "Build reference gstreamer gtk integration" false)
 option(ENABLE_KEELA_VIDEOTESTSRC "Enable custom Keela videotestsrc plugin for development/testing" false)
 
 pkg_search_module(GTKMM REQUIRED IMPORTED_TARGET gtkmm-3.0)
@@ -19,9 +19,8 @@ pkg_search_module(GIO REQUIRED IMPORTED_TARGET gio-2.0)
 
 # compile the keela-videotestsrc plugin if enabled
 if (ENABLE_KEELA_VIDEOTESTSRC)
-    # keela-videotestsrc needs some extra symbols
-    pkg_search_module(GSTREAMER_VIDEO REQUIRED IMPORTED_TARGET gstreamer-video-1.0)
-    pkg_search_module(GSTREAMER_BASE REQUIRED IMPORTED_TARGET gstreamer-base-1.0)
+    pkg_search_module(GST_BASE REQUIRED IMPORTED_TARGET gstreamer-base-1.0)
+    pkg_search_module(GST_VIDEO REQUIRED IMPORTED_TARGET gstreamer-video-1.0)
     add_compile_definitions(KEELA_VIDEOTESTSRC_ENABLED)
     add_subdirectory(keela-videotestsrc)
 endif ()
