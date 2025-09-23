@@ -11,7 +11,6 @@
 #endif
 
 namespace Keela {
-
     std::filesystem::path get_executable_path() {
 #ifdef _WIN32
         char path[MAX_PATH];
@@ -22,7 +21,7 @@ namespace Keela {
 #else
         return std::filesystem::canonical("/proc/self/exe");
 #endif
-        return std::filesystem::path();  // fallback
+        return std::filesystem::path(); // fallback
     }
 
     void initialize_plugins() {
@@ -48,11 +47,10 @@ namespace Keela {
                 spdlog::error("Failed to set GST_PLUGIN_PATH");
             }
         } else {
-            spdlog::debug("Plugin directory not found: {} - custom plugins not available", plugin_path.string());
+            spdlog::warn("Plugin directory not found: {} - custom plugins not available", plugin_path.string());
         }
 #else
         spdlog::debug("Custom plugins disabled at build time");
 #endif
     }
-
-}  // namespace Keela
+} // namespace Keela
