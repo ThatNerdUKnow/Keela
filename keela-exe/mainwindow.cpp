@@ -113,7 +113,7 @@ void MainWindow::on_camera_spin_changed() {
                 const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
                 trace_bin->set_trace_framerate(fps);
             }
-
+            
             g_object_ref(static_cast<GstElement*>(*c->camera_manager));
             auto inner_ret = gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
             if (!inner_ret) {
@@ -160,12 +160,13 @@ void MainWindow::on_record_button_clicked() {
         if (experiment_directory == "") {
             throw std::runtime_error("Experiment directory not specified");
         }
-
-        // TODO: show file dialog
+        directory_button.set_sensitive(false);
+        set_state(GST_STATE_NULL);
         for (const auto &camera: cameras) {
             camera->camera_manager->start_recording();
         }
-        directory_button.set_sensitive(false);
+        // this resets the pipeline clock
+        set_state(GST_STATE_PLAYING);
     } else {
         auto message_dialog = Gtk::MessageDialog("Remember to take calibration photos");
         message_dialog.run();
@@ -177,31 +178,26 @@ void MainWindow::on_record_button_clicked() {
 }
 
 void MainWindow::reset_cameras() {
-    auto ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
+    set_state(GST_STATE_NULL);
+    // apply settings while the pipeline isn't actively playing
+    set_framerate();
+    set_resolution();
+    set_state(GST_STATE_PLAYING, false);
+}
+
+void MainWindow::set_state(GstState state, bool wait) {
+    auto ret = gst_element_set_state(GST_ELEMENT(pipeline), state);
     switch (ret) {
         case GST_STATE_CHANGE_FAILURE:
-            throw std::runtime_error("Failed to set state of pipeline to NULL");
+            throw std::runtime_error("Failed to set state of pipeline to playing");
         case GST_STATE_CHANGE_ASYNC:
             ret = gst_element_get_state(GST_ELEMENT(pipeline), nullptr, nullptr, GST_CLOCK_TIME_NONE);
-            if (ret == GST_STATE_CHANGE_FAILURE) {
+            if (ret == GST_STATE_CHANGE_FAILURE && wait) {
                 throw std::runtime_error("Async state change failed");
             }
             break;
         default:
-            break;
-    }
-
-    // TODO: apply changes to camera settings here
-    set_framerate();
-    set_resolution();
-    auto fmt = pix_fmt_combo.m_combo.get_active_id();
-    for (auto &camera: cameras) {
-        camera->camera_manager->set_pix_fmt(fmt);
-    }
-
-    ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
-    if (ret == GST_STATE_CHANGE_FAILURE) {
-        throw std::runtime_error("Failed to set state of pipeline to playing");
+            spdlog::info("State change successful");
     }
 }
 
@@ -249,7 +245,7 @@ void MainWindow::on_trace_button_clicked() {
 void MainWindow::on_trace_fps_changed() {
     const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
     spdlog::info("Setting trace framerate to {} fps for all cameras", fps);
-
+    
     // Update trace framerate for all cameras
     for (const auto &camera: cameras) {
         auto trace_bin = camera->get_trace_bin();

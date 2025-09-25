@@ -47,6 +47,8 @@ private:
 
     void reset_cameras();
 
+    void set_state(GstState state, bool wait = true);
+
     void set_framerate();
 
     void set_framerate(Keela::CameraManager *cm) const;
