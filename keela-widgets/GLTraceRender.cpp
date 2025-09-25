@@ -10,6 +10,7 @@
 #include <ranges>
 #include <execution>
 #include "glad/glad.h"
+#include "keela-pipeline/consts.h"
 
 Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_trace): Gtk::Box(
     Gtk::ORIENTATION_VERTICAL) {
@@ -224,74 +225,34 @@ void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {
     while (!token.stop_requested()) {
         auto gizmo = this->trace->get_trace_gizmo();
 
-        double mean = 0;
+        //double mean = 0;
         g_signal_emit_by_name(bin->sink, "try-pull-sample", 0, &sample, nullptr);
         if (!sample) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
             continue;
         }
-
-        auto buf = gst_sample_get_buffer(sample);
-        assert(buf != nullptr);
-
+        double mean = 0;
         auto caps = gst_sample_get_caps(sample);
         assert(caps != nullptr);
         auto structure = gst_caps_get_structure(caps, 0);
         assert(structure != nullptr);
-        gint width, height;
-        bool ret = false;
-        ret = gst_structure_get_int(structure, "width", &width);
-        ret &= gst_structure_get_int(structure, "height", &height);
         gint framerate_numerator, framerate_denominator;
-        ret &= gst_structure_get_fraction(structure, "framerate", &framerate_numerator, &framerate_denominator);
+        auto ret = gst_structure_get_fraction(structure, "framerate", &framerate_numerator, &framerate_denominator);
         assert(ret);
         set_framerate(static_cast<double>(framerate_numerator) / framerate_denominator);
-        GstMapInfo mapInfo;
-        if (!gst_buffer_map(buf, &mapInfo, GST_MAP_READ)) {
-            std::stringstream ss;
-            ss << __func__ << "Buffer mapping failed";
-            throw std::runtime_error(ss.str());
-        }
-
-
-        unsigned long long sum = 0;
-        unsigned long long count = 0;
-        assert(static_cast<gsize>(width * height) == mapInfo.size);
-        auto indices = std::vector<unsigned int>(mapInfo.size);
-        std::iota(indices.begin(), indices.end(), 0);
-
-        // protect against division by zero
-        if (width == 0) {
-            continue;
-        }
-
-        /**
-         * std::ranges::for_each gives us the capability to switch to a parallel execution policy if we really needed to
-         */
-        std::ranges::for_each(indices, [&](auto index) {
-            auto x = index % width;
-            auto y = index / width;
-            // use gizmo for intersection checking if it is not null
-            // otherwise, consider every pixel as being in the ROI
-            if (gizmo->get_enabled()) {
-                if (!gizmo->intersects(x * 2, y * 2)) {
-                    return;
-                }
-            }
-            count += 1;
-            sum += mapInfo.data[index];
-        });
-
-        /**
-         * protect against division by zero. set sample to NaN to prevent this sample from showing up in the plot
-         */
-        if (count == 0) {
-            mean = std::numeric_limits<double>::quiet_NaN();
+        auto fmt = std::string(gst_structure_get_string(structure, "format"));
+        if (fmt == GRAY8) {
+            mean = calculate_roi_average<guint8>(sample, structure, std::endian::native);
+        } else if (fmt == GRAY16_LE) {
+            mean = calculate_roi_average<gushort>(sample, structure, std::endian::little);
+        } else if (fmt == GRAY16_BE) {
+            mean = calculate_roi_average<gushort>(sample, structure, std::endian::big);
         } else {
-            mean = static_cast<double>(sum) / static_cast<double>(count);
+            throw std::runtime_error("GLTraceRender: unsupported format");
         }
+
+
         spdlog::trace("GLTraceRender::{}: {}", __func__, mean);
-        gst_buffer_unmap(buf, &mapInfo);
         gst_sample_unref(sample);
         sample = nullptr;
         std::scoped_lock _(worker_mutex);
@@ -305,6 +266,70 @@ void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {
     spdlog::info("GLTraceRender::{} stopping", __func__);
     bin->enable_trace(false);
 }
+
+template<typename T>
+double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructure *structure, std::endian endianness) {
+    auto gizmo = this->trace->get_trace_gizmo();
+    auto buf = gst_sample_get_buffer(sample);
+    assert(buf != nullptr);
+
+
+    gint width, height;
+    bool ret = false;
+    ret = gst_structure_get_int(structure, "width", &width);
+    ret &= gst_structure_get_int(structure, "height", &height);
+    assert(ret);
+
+    // protect against division by zero
+    if (width == 0) {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+
+    GstMapInfo mapInfo;
+    if (!gst_buffer_map(buf, &mapInfo, GST_MAP_READ)) {
+        std::stringstream ss;
+        ss << __func__ << "Buffer mapping failed";
+        throw std::runtime_error(ss.str());
+    }
+
+    unsigned long long sum = 0;
+    unsigned long long count = 0;
+    assert(static_cast<gsize>(width * height * sizeof(T)) == mapInfo.size);
+    auto indices = std::vector<unsigned int>(mapInfo.size / sizeof(T));
+    std::iota(indices.begin(), indices.end(), 0);
+
+    /**
+     * std::ranges::for_each gives us the capability to switch to a parallel execution policy if we really needed to
+     */
+    std::ranges::for_each(indices, [&](auto index) {
+        // use gizmo for intersection checking if it is not null
+        // otherwise, consider every pixel as being in the ROI
+        if (gizmo->get_enabled()) {
+            auto x = index % width;
+            auto y = index / width;
+            if (!gizmo->intersects(x * 2, y * 2)) {
+                return;
+            }
+        }
+        count += 1;
+        T tmp = mapInfo.data[index * sizeof(T)];
+        if (endianness != std::endian::native) {
+            tmp = _byteswap_ushort(tmp);
+        }
+        sum += tmp;
+    });
+    gst_buffer_unmap(buf, &mapInfo);
+
+    /**
+     * protect against division by zero. set sample to NaN to prevent this sample from showing up in the plot
+     */
+    if (count == 0) {
+        return std::numeric_limits<double>::quiet_NaN();
+    } else {
+        return static_cast<double>(sum) / static_cast<double>(count);
+    }
+}
+
 
 bool Keela::GLTraceRender::on_timeout() {
     queue_draw();
