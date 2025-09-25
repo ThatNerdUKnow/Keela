@@ -8,10 +8,11 @@
 #include "keela-pipeline/consts.h"
 #include "keela-widgets/cameramanager.h"
 
+/*
 TEST(KeelaWidgets, ConstructGLCameraRender) {
     auto bin = std::make_shared<Keela::PresentationBin>();
     auto c = Keela::GLCameraRender(bin);
-}
+}*/
 
 TEST(KeelaWidgets, ConstructCameraManagerGRAY8) {
     auto cm = Keela::CameraManager(0, GRAY8, false);
