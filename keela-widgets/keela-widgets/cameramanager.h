@@ -106,11 +106,6 @@ namespace Keela {
          */
         SimpleElement tee_odd = SimpleElement("tee");
 
-        /**
-         * use to convert video color space to GRAY8 if camera does not support it
-         */
-        SimpleElement auto_video_convert = SimpleElement("videoconvert");
-
         /* at any moment there may be many active record bins
          *
          * TODO: do these still need to be shared_ptr?

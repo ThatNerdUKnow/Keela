@@ -23,13 +23,13 @@ Keela::CameraManager::CameraManager(guint id, std::string pix_fmt, bool split_st
         this->id = id;
 
         // Add all elements to the bin
-        add_elements(camera, auto_video_convert, caps_filter, transform,
+        add_elements(camera, caps_filter, transform,
                      tee_main, tee_even, tee_odd,
                      *trace_even, *presentation_even, snapshot_even,
                      *trace_odd, *presentation_odd, snapshot_odd);
 
         // Link main pipeline: camera -> videoconvert -> capsfilter -> transform -> main_tee
-        element_link_many(camera, auto_video_convert, caps_filter, transform, tee_main);
+        element_link_many(camera, caps_filter, transform, tee_main);
 
         // Link main tee to both sub-tees
         element_link_many(tee_main, tee_even);
