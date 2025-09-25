@@ -24,6 +24,7 @@ private:
     Gtk::Button directory_button;
     Gtk::Button restart_camera_button;
 
+    Keela::LabeledComboBoxText pix_fmt_combo = Keela::LabeledComboBoxText("Pixel Format");
     Keela::LabeledSpinButton framerate_spin = Keela::LabeledSpinButton("Framerate (Hz)");
     Keela::LabeledSpinButton data_matrix_w_spin = Keela::LabeledSpinButton("Data Width");
     Keela::LabeledSpinButton data_matrix_h_spin = Keela::LabeledSpinButton("Data Height");
@@ -68,6 +69,8 @@ private:
     void set_experiment_directory(std::shared_ptr<Keela::CameraControlWindow> c) const;
 
     bool is_recording = false;
+
+    void set_pix_fmt();
 };
 
 

@@ -17,7 +17,7 @@
 namespace Keela {
     class CameraControlWindow final : public Gtk::Window, public Keela::ITraceable {
     public:
-        explicit CameraControlWindow(guint id);
+        explicit CameraControlWindow(guint id, std::string pix_fmt);
 
         ~CameraControlWindow() override;
 
@@ -29,7 +29,7 @@ namespace Keela {
         Gtk::Box h_container = Gtk::Box();
         Gtk::Box v_container = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
         Gtk::Box video_hbox = Gtk::Box(Gtk::ORIENTATION_HORIZONTAL);
-        
+
         std::unique_ptr<VideoPresentation> frame_widget_even;
         std::unique_ptr<VideoPresentation> frame_widget_odd;
 
@@ -76,7 +76,7 @@ namespace Keela {
         // set width and height initially to a sentinel value
         int m_width = -1, m_height = -1;
     };
-}  // namespace Keela
+} // namespace Keela
 
 #define ROTATION_NONE "No_Rotation"
 #define ROTATION_90 "Rotation_90"
