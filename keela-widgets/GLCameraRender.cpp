@@ -10,6 +10,8 @@
 #include <utility>
 #include <glibmm/main.h>
 
+#include "keela-pipeline/consts.h"
+
 Keela::GLCameraRender::GLCameraRender(std::shared_ptr<PresentationBin> bin) {
     GError *error = nullptr;
     spdlog::debug("{}: Loading vertex shader resource", __func__);
@@ -68,12 +70,26 @@ void Keela::GLCameraRender::new_tex_sample(GstSample *sample) {
     bool ret = false;
     ret = gst_structure_get_int(structure, "width", &width);
     ret &= gst_structure_get_int(structure, "height", &height);
+    auto fmt = std::string(gst_structure_get_string(structure, "format"));
     assert(ret);
-    spdlog::trace("New tex sample width: {} height: {}", width, height);
+    spdlog::trace("New tex sample width: {} height: {} format: {}", width, height, fmt);
     GstMapInfo mapInfo;
     if (gst_buffer_map(buf, &mapInfo, GST_MAP_READ)) {
+        auto tex_fmt = fmt == GRAY8 ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
+
+        // if pixel format is greater than 8 bits, check if we need to swap bytes
+        if (fmt == GRAY16_BE && std::endian::native != std::endian::big) {
+            glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_TRUE);
+        } else if (fmt == GRAY16_LE && std::endian::native != std::endian::little) {
+            glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_TRUE);
+        }
+        // otherwise, we can just use host order
+        else {
+            glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_FALSE);
+        }
+
         glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0,GL_RED, width, height, 0,GL_RED,GL_UNSIGNED_BYTE, mapInfo.data);
+        glTexImage2D(GL_TEXTURE_2D, 0,GL_RED, width, height, 0,GL_RED, tex_fmt, mapInfo.data);
 
         gst_buffer_unmap(buf, &mapInfo);
     } else {
