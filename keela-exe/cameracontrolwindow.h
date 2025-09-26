@@ -49,6 +49,7 @@ namespace Keela {
 
         std::shared_ptr<Keela::TraceGizmo> trace_gizmo_even;
         std::shared_ptr<Keela::TraceGizmo> trace_gizmo_odd;
+
         guint id;
 
         void on_range_check_toggled();

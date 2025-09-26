@@ -65,19 +65,16 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
     set_vexpand(false);
 
     // Create overlay for trace gizmo
-    auto overlay = Gtk::make_managed<Gtk::Overlay>();
     trace_gizmo_even = std::make_shared<TraceGizmo>();
-    overlay->add_overlay(*trace_gizmo_even);
-    h_container.pack_start(*overlay, false, false, 10);
 
     // Set up video presentations, frame_widget_even renders all frames unless split is enabled
     frame_widget_even = std::make_unique<VideoPresentation>(
         "Camera " + std::to_string(id),
         camera_manager->presentation_even,
-        *overlay,
         640,    // width
         480     // height
     );
+    frame_widget_even->add_overlay_widget(*trace_gizmo_even);
     video_hbox.pack_start(*frame_widget_even, false, false, 10);
 
     if (camera_manager->is_frame_splitting_enabled()) {
@@ -213,18 +210,14 @@ void Keela::CameraControlWindow::update_traces() {
 void Keela::CameraControlWindow::add_split_frame_ui() {
     if (frame_widget_odd) return;  // Already added
 
-    // Create overlay for trace gizmo
-    auto overlay = Gtk::make_managed<Gtk::Overlay>();
+    // Create trace gizmo for odd frames
     trace_gizmo_odd = std::make_shared<TraceGizmo>();
-    overlay->add_overlay(*trace_gizmo_odd);
-    h_container.pack_start(*overlay, false, false, 10);
 
     const auto rotation = rotation_combo.m_combo.get_active_id();
     if (rotation == ROTATION_90 || rotation == ROTATION_270) {
         frame_widget_odd = std::make_unique<VideoPresentation>(
             "Odd Frames", 
             camera_manager->presentation_odd, 
-            *overlay,
             480,   // width
             640    // height
         );
@@ -232,15 +225,12 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
         frame_widget_odd = std::make_unique<VideoPresentation>(
             "Odd Frames", 
             camera_manager->presentation_odd,
-            *overlay,
             640,   // width
             480    // height
         );
     }
 
-    // @todo: DRY this up by storing video_width/video_height state variables
-    // we can also use it in the set_resolution method
-    // frame_widget_odd = std::make_unique<VideoPresentation>("Odd Frames", camera_manager->presentation_odd, false, video_width, video_height);
+    frame_widget_odd->add_overlay_widget(*trace_gizmo_odd);
     video_hbox.pack_start(*frame_widget_odd, false, false, 10);
 
     // Ensure the new widget matches the current resolution
