@@ -108,16 +108,18 @@ void Keela::CameraManager::start_recording() {
     record_bin_odd->set_directory(filename_odd);
 
     // Add both record bins to the pipeline
-    add_elements(static_cast<GstElement *>(*record_bin_even));
-    add_elements(static_cast<GstElement *>(*record_bin_odd));
+    add_elements(static_cast<Bin &>(*record_bin_even));
+    add_elements(static_cast<Bin &>(*record_bin_odd));
 
     // Sync state with parent
-    assert(gst_element_sync_state_with_parent(*record_bin_even));
-    assert(gst_element_sync_state_with_parent(*record_bin_odd));
+    gboolean sync_even_result = gst_element_sync_state_with_parent(static_cast<Bin &>(*record_bin_even));
+    gboolean sync_odd_result = gst_element_sync_state_with_parent(static_cast<Bin &>(*record_bin_odd));
+    assert(sync_even_result);
+    assert(sync_odd_result);
 
     // Link to both tees
-    element_link_many(tee_even, static_cast<GstElement *>(*record_bin_even));
-    element_link_many(tee_odd, static_cast<GstElement *>(*record_bin_odd));
+    element_link_many(tee_even, static_cast<Bin &>(*record_bin_even));
+    element_link_many(tee_odd, static_cast<Bin &>(*record_bin_odd));
 
     // Store both record bins
     record_bins.insert(record_bin_even);
