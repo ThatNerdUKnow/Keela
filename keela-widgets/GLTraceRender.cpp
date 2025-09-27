@@ -11,6 +11,7 @@
 #include <execution>
 #include "glad/glad.h"
 #include "keela-pipeline/consts.h"
+#include <bit>
 
 Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_trace): Gtk::Box(
     Gtk::ORIENTATION_VERTICAL) {
@@ -238,7 +239,9 @@ void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {
         assert(structure != nullptr);
         gint framerate_numerator, framerate_denominator;
         auto ret = gst_structure_get_fraction(structure, "framerate", &framerate_numerator, &framerate_denominator);
-        assert(ret);
+        if (ret == 0) {
+            throw std::runtime_error("Failed to get framerate from structure");
+        }
         set_framerate(static_cast<double>(framerate_numerator) / framerate_denominator);
         auto fmt = std::string(gst_structure_get_string(structure, "format"));
         if (fmt == GRAY8) {
@@ -314,7 +317,7 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
         count += 1;
         T tmp = mapInfo.data[index * sizeof(T)];
         if (endianness != std::endian::native) {
-            tmp = _byteswap_ushort(tmp);
+            tmp = std::byteswap(tmp);
         }
         sum += tmp;
     });
