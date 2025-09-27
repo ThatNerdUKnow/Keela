@@ -9,7 +9,7 @@ Keela::TraceWindow::TraceWindow() {
     set_default_size(640, 480);
     set_title("Traces");
     Window::add(scrolled_window);
-    scrolled_window.add(containter);
+    scrolled_window.add(container);
 }
 
 Keela::TraceWindow::~TraceWindow() {
@@ -18,7 +18,7 @@ Keela::TraceWindow::~TraceWindow() {
 void Keela::TraceWindow::addTrace(std::shared_ptr<Keela::ITraceable> trace) {
     auto widget = std::make_shared<GLTraceRender>(trace);
     traces.push_back(widget);
-    containter.add(*widget);
+    container.add(*widget);
     show_all_children();
     spdlog::info("TraceWindow::{}: Trace added", __func__);
 }

@@ -281,7 +281,9 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
     bool ret = false;
     ret = gst_structure_get_int(structure, "width", &width);
     ret &= gst_structure_get_int(structure, "height", &height);
-    assert(ret);
+    if (!ret) {
+        throw std::runtime_error("Could not get dimensions of sample");
+    }
 
     // protect against division by zero
     if (width == 0) {
@@ -294,9 +296,6 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
         ss << __func__ << "Buffer mapping failed";
         throw std::runtime_error(ss.str());
     }
-
-    //unsigned long long sum = 0;
-    //unsigned long long count = 0;
     assert(static_cast<gsize>(width * height * sizeof(T)) == mapInfo.size);
     auto indices = std::vector<unsigned int>(mapInfo.size / sizeof(T));
     std::iota(indices.begin(), indices.end(), 0);
@@ -309,9 +308,11 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
                                       indices.begin(),
                                       indices.end(),
                                       std::make_pair(0, 0),
+                                      // reduce
                                       [](const std::pair<size_t, size_t> &a, const std::pair<size_t, size_t> &b) {
                                           return std::make_pair(a.first + b.first, a.second + b.second);
                                       },
+                                      // map
                                       [&](unsigned int index) {
                                           T tmp = mapInfo.data[index * sizeof(T)];
                                           if (endianness != std::endian::native) {
@@ -331,14 +332,11 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
     auto count = sum_count.second;
     gst_buffer_unmap(buf, &mapInfo);
 
-    /**
-     * protect against division by zero. set sample to NaN to prevent this sample from showing up in the plot
-     */
+    //protect against division by zero. set sample to NaN to prevent this sample from showing up in the plot
     if (count == 0) {
         return std::numeric_limits<double>::quiet_NaN();
-    } else {
-        return static_cast<double>(sum) / static_cast<double>(count);
     }
+    return static_cast<double>(sum) / static_cast<double>(count);
 }
 
 
