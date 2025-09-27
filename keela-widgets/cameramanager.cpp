@@ -15,23 +15,21 @@
 #include "keela-pipeline/recordbin.h"
 #include "keela-widgets/plugin_utils.h"
 
-Keela::CameraManager::CameraManager(guint id, bool split_streams) : Bin("camera_" + std::to_string(id)),
-                                                                    camera(Keela::get_video_test_source_name()) {
+Keela::CameraManager::CameraManager(guint id, std::string pix_fmt, bool split_streams) : Bin("camera_" + std::to_string(
+            id)),
+    camera(Keela::get_video_test_source_name()) {
     try {
         spdlog::info("Creating camera manager {}", id);
         this->id = id;
 
-        gst_caps_set_simple(base_caps, "format", G_TYPE_STRING, "GRAY8", nullptr);
-        g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
-
         // Add all elements to the bin
-        add_elements(camera, auto_video_convert, caps_filter, transform,
+        add_elements(camera, caps_filter, transform,
                      tee_main, tee_even, tee_odd,
                      *trace_even, *presentation_even, snapshot_even,
                      *trace_odd, *presentation_odd, snapshot_odd);
 
         // Link main pipeline: camera -> videoconvert -> capsfilter -> transform -> main_tee
-        element_link_many(camera, auto_video_convert, caps_filter, transform, tee_main);
+        element_link_many(camera, caps_filter, transform, tee_main);
 
         // Link main tee to both sub-tees
         element_link_many(tee_main, tee_even);
@@ -53,6 +51,8 @@ Keela::CameraManager::CameraManager(guint id, bool split_streams) : Bin("camera_
             install_frame_splitting_probes();
         }
 
+
+        set_pix_fmt(pix_fmt);
         spdlog::info("Created camera manager {}", id);
     } catch (const std::exception &e) {
         std::stringstream ss;
@@ -68,13 +68,21 @@ Keela::CameraManager::~CameraManager() {
     spdlog::debug(__func__);
 }
 
+void Keela::CameraManager::set_pix_fmt(const std::string &format) {
+    spdlog::info("{}: Setting pixel format to {}", __func__, format);
+    // create copy of our caps
+    base_caps = Caps(static_cast<GstCaps *>(base_caps));
+    // apply pixel format
+    gst_caps_set_simple(base_caps, "format", G_TYPE_STRING, format.c_str(), nullptr);
+    g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
+}
+
 void Keela::CameraManager::set_framerate(double framerate) {
     spdlog::info("Setting framerate to {}", framerate);
     int numerator = static_cast<int>(framerate * 10);
     // TODO: caps need to be writable
     base_caps = Caps(static_cast<GstCaps *>(base_caps));
     base_caps.set_framerate(numerator, 10);
-    // gst_caps_set_simple(base_caps, "framerate", GST_TYPE_FRACTION, numerator, 10, nullptr);
 
     // through experimentation, I believe that changes to the original caps reference do not affect the capsfilter
     g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
@@ -132,11 +140,11 @@ void Keela::CameraManager::stop_recording() {
     // inside the blocking callback, add the EOS probe to the last source pad of the bin (it is unclear if this can also be a sink pad)
     // after installing the EOS callback, send an EOS event to the sink pad of the beginning of the bin
     // inside the EOS callback, set the state of the bin to NULL and remove the bin from the pipeline
-    for (auto bin : record_bins) {
+    for (auto bin: record_bins) {
         bin->PrepareEject();
     }
 
-    for (auto bin : record_bins) {
+    for (auto bin: record_bins) {
         bin->Eject(false);
     }
     record_bins.clear();
@@ -144,7 +152,8 @@ void Keela::CameraManager::stop_recording() {
     dump_bin_graph();
 }
 
-GstPadProbeReturn Keela::CameraManager::frame_numbering_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
+GstPadProbeReturn
+Keela::CameraManager::frame_numbering_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
     auto *camera_manager = static_cast<CameraManager *>(user_data);
     GstBuffer *buffer = GST_PAD_PROBE_INFO_BUFFER(info);
 
@@ -152,7 +161,7 @@ GstPadProbeReturn Keela::CameraManager::frame_numbering_probe_cb(GstPad *pad, Gs
     guint64 frame_number = camera_manager->frame_count.fetch_add(1);
     GST_BUFFER_OFFSET(buffer) = frame_number;
 
-    return GST_PAD_PROBE_OK;  // Always pass the frame through
+    return GST_PAD_PROBE_OK; // Always pass the frame through
 }
 
 // @TODO: DRY this up
@@ -161,9 +170,9 @@ GstPadProbeReturn Keela::CameraManager::even_frame_probe_cb(GstPad *pad, GstPadP
     guint64 frame_number = GST_BUFFER_OFFSET(buffer);
 
     if (frame_number % 2 == 0) {
-        return GST_PAD_PROBE_OK;  // Pass the frame
+        return GST_PAD_PROBE_OK; // Pass the frame
     } else {
-        return GST_PAD_PROBE_DROP;  // Drop the frame
+        return GST_PAD_PROBE_DROP; // Drop the frame
     }
 }
 
@@ -172,9 +181,9 @@ GstPadProbeReturn Keela::CameraManager::odd_frame_probe_cb(GstPad *pad, GstPadPr
     guint64 frame_number = GST_BUFFER_OFFSET(buffer);
 
     if (frame_number % 2 == 1) {
-        return GST_PAD_PROBE_OK;  // Pass the frame
+        return GST_PAD_PROBE_OK; // Pass the frame
     } else {
-        return GST_PAD_PROBE_DROP;  // Drop the frame
+        return GST_PAD_PROBE_DROP; // Drop the frame
     }
 }
 

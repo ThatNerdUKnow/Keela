@@ -7,11 +7,11 @@
 #include <keela-widgets/framebox.h>
 #include <spdlog/spdlog.h>
 
-Keela::CameraControlWindow::CameraControlWindow(const guint id) {
+Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_fmt) {
     this->id = id;
     spdlog::info("Creating {} for camera {}", __func__, id);
     bool split_frames = false;
-    camera_manager = std::make_unique<Keela::CameraManager>(id, split_frames);
+    camera_manager = std::make_unique<Keela::CameraManager>(id, pix_fmt, split_frames);
 
     set_title("Image control for Camera " + std::to_string(id));
     set_resizable(false);
@@ -71,8 +71,8 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
     frame_widget_even = std::make_unique<VideoPresentation>(
         "Camera " + std::to_string(id),
         camera_manager->presentation_even,
-        640,    // width
-        480     // height
+        640, // width
+        480 // height
     );
     frame_widget_even->add_overlay_widget(*trace_gizmo_even);
     video_hbox.pack_start(*frame_widget_even, false, false, 10);
@@ -223,7 +223,7 @@ void Keela::CameraControlWindow::apply_trace_framerate(guint fps) {
 }
 
 void Keela::CameraControlWindow::add_split_frame_ui() {
-    if (frame_widget_odd) return;  // Already added
+    if (frame_widget_odd) return; // Already added
 
     // Create trace gizmo for odd frames
     trace_gizmo_odd = std::make_shared<TraceGizmo>();
@@ -231,17 +231,17 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
     const auto rotation = rotation_combo.m_combo.get_active_id();
     if (rotation == ROTATION_90 || rotation == ROTATION_270) {
         frame_widget_odd = std::make_unique<VideoPresentation>(
-            "Odd Frames", 
-            camera_manager->presentation_odd, 
-            480,   // width
-            640    // height
+            "Odd Frames",
+            camera_manager->presentation_odd,
+            480, // width
+            640 // height
         );
     } else {
         frame_widget_odd = std::make_unique<VideoPresentation>(
-            "Odd Frames", 
+            "Odd Frames",
             camera_manager->presentation_odd,
-            640,   // width
-            480    // height
+            640, // width
+            480 // height
         );
     }
 
