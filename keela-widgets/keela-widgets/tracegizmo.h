@@ -56,7 +56,7 @@ inline bool Keela::TraceGizmo::intersects(const int x, const int y) const {
      * The region (disk) bounded by the ellipse is given by the equation:
         ((x−h)^2/r_x^2) + ((y−k)^2/r_y^2) ≤1
 
-    So given a test point (x,y)
+     So given a test point (x,y)
      plug it in (1)
      If the inequality is satisfied, then it is inside the ellipse;
      otherwise it is outside the ellipse.
@@ -73,8 +73,6 @@ inline bool Keela::TraceGizmo::intersects(const int x, const int y) const {
     }
     auto h = bounds->get_x() + r_x;
     auto k = bounds->get_y() + r_y;
-    //auto x = x.get_x();
-    //auto y = x.get_y();
 
     return (std::pow((x - h), 2.0) / std::pow(r_x, 2.0)) + (std::pow((y - k), 2.0) / std::pow(r_y, 2.0)) <= 1.0;
 }
