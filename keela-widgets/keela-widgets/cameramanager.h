@@ -20,9 +20,11 @@
 namespace Keela {
     class CameraManager final : public Keela::Bin {
     public:
-        explicit CameraManager(guint id, bool split_streams);
+        explicit CameraManager(guint id, std::string pix_fmt, bool split_streams);
 
         ~CameraManager() override;
+
+        void set_pix_fmt(const std::string &format);
 
         void set_framerate(double framerate);
 
@@ -36,6 +38,7 @@ namespace Keela {
 
         // Control frame splitting
         void set_frame_splitting(bool enabled);
+
         bool is_frame_splitting_enabled() const { return split_streams; }
 
         // Get trace bins for both even and odd paths
@@ -61,10 +64,14 @@ namespace Keela {
 
     private:
         void set_up_frame_splitting();
+
         void install_frame_splitting_probes();
+
         // Frame filtering callbacks
         static GstPadProbeReturn frame_numbering_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
+
         static GstPadProbeReturn even_frame_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
+
         static GstPadProbeReturn odd_frame_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
 
         guint id;
@@ -99,11 +106,6 @@ namespace Keela {
          */
         SimpleElement tee_odd = SimpleElement("tee");
 
-        /**
-         * use to convert video color space to GRAY8 if camera does not support it
-         */
-        SimpleElement auto_video_convert = SimpleElement("videoconvert");
-
         /* at any moment there may be many active record bins
          *
          * TODO: do these still need to be shared_ptr?
@@ -119,5 +121,5 @@ namespace Keela {
          */
         static std::string get_filename(std::string directory, guint cam_id, std::string suffix = "");
     };
-}  // namespace Keela
+} // namespace Keela
 #endif  // CAMERAMANAGER_H

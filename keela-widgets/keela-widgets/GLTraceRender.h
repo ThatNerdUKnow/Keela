@@ -75,7 +75,8 @@ namespace Keela {
          */
         void process_video_data(const std::stop_token &token);
 
-        bool on_timeout();
+        template<typename T>
+        double calculate_roi_average(GstSample *sample, GstStructure *structure, std::endian endianness);
     };
 }
 #endif //GLTRACERENDER_H

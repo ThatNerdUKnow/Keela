@@ -4,7 +4,8 @@ find_package(PkgConfig)
 
 # GoogleTest requires at least C++17
 # We need C++20 for jthreads
-set(CMAKE_CXX_STANDARD 20)
+# need c++23 for std::byteswap
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -Wall)
