@@ -295,32 +295,40 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
         throw std::runtime_error(ss.str());
     }
 
-    unsigned long long sum = 0;
-    unsigned long long count = 0;
+    //unsigned long long sum = 0;
+    //unsigned long long count = 0;
     assert(static_cast<gsize>(width * height * sizeof(T)) == mapInfo.size);
     auto indices = std::vector<unsigned int>(mapInfo.size / sizeof(T));
     std::iota(indices.begin(), indices.end(), 0);
 
-    /**
-     * std::ranges::for_each gives us the capability to switch to a parallel execution policy if we really needed to
-     */
-    std::ranges::for_each(indices, [&](auto index) {
-        // use gizmo for intersection checking if it is not null
-        // otherwise, consider every pixel as being in the ROI
-        if (gizmo->get_enabled()) {
-            auto x = index % width;
-            auto y = index / width;
-            if (!gizmo->intersects(x * 2, y * 2)) {
-                return;
-            }
-        }
-        count += 1;
-        T tmp = mapInfo.data[index * sizeof(T)];
-        if (endianness != std::endian::native) {
-            tmp = std::byteswap(tmp);
-        }
-        sum += tmp;
-    });
+    // initial value where the first element in the tuple is sum of the pixels in the ROI
+    // and the second element in the tuple is the count of pixels in the ROI
+    std::pair<size_t, size_t> sum_count = std::make_pair(0, 0);
+
+    sum_count = std::transform_reduce(std::execution::par_unseq,
+                                      indices.begin(),
+                                      indices.end(),
+                                      std::make_pair(0, 0),
+                                      [](const std::pair<size_t, size_t> &a, const std::pair<size_t, size_t> &b) {
+                                          return std::make_pair(a.first + b.first, a.second + b.second);
+                                      },
+                                      [&](unsigned int index) {
+                                          T tmp = mapInfo.data[index * sizeof(T)];
+                                          if (endianness != std::endian::native) {
+                                              tmp = std::byteswap(tmp);
+                                          }
+                                          if (gizmo->get_enabled()) {
+                                              const auto x = index % width;
+                                              const auto y = index / width;
+                                              if (gizmo->intersects(x * 2, y * 2)) {
+                                                  return static_cast<std::pair<size_t, size_t>>(std::make_pair(tmp, 1));
+                                              }
+                                              return static_cast<std::pair<size_t, size_t>>(std::make_pair(0, 0));
+                                          }
+                                          return static_cast<std::pair<size_t, size_t>>(std::make_pair(tmp, 1));
+                                      });
+    auto sum = sum_count.first;
+    auto count = sum_count.second;
     gst_buffer_unmap(buf, &mapInfo);
 
     /**
