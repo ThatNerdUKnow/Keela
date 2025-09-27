@@ -4,15 +4,15 @@
 
 #include "cameracontrolwindow.h"
 
-#include <spdlog/spdlog.h>
-
 #include <keela-widgets/framebox.h>
+#include <spdlog/spdlog.h>
 
 Keela::CameraControlWindow::CameraControlWindow(const guint id) {
     this->id = id;
     spdlog::info("Creating {} for camera {}", __func__, id);
+    bool split_frames = false;
+    camera_manager = std::make_unique<Keela::CameraManager>(id, split_frames);
 
-    camera_manager = std::make_unique<Keela::CameraManager>(id, false);
     set_title("Image control for Camera " + std::to_string(id));
     set_resizable(false);
     set_deletable(false);
@@ -52,22 +52,40 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id) {
     flip_vert_check.signal_toggled().connect(sigc::mem_fun(*this, &CameraControlWindow::on_flip_vert_changed));
     v_container.add(flip_vert_check);
 
+    // Add frame splitting control
+    split_frames_check.signal_toggled().connect(sigc::mem_fun(*this, &CameraControlWindow::on_split_frames_changed));
+    split_frames_check.set_active(camera_manager->is_frame_splitting_enabled());
+    v_container.add(split_frames_check);
+
     // TODO: dynamically cast camera_manager->presentation to a WidgetElement to get a handle to a widget to add to the window
     fetch_image_button.signal_clicked().connect(
         sigc::mem_fun(camera_manager->snapshot, &Keela::SnapshotBin::take_snapshot));
     v_container.add(fetch_image_button);
 
-    gl_area = std::make_unique<GLCameraRender>(camera_manager->presentation);
-    gl_area->set_size_request(640, 480);
     set_vexpand(false);
-    auto overlay = Gtk::make_managed<Gtk::Overlay>();
-    trace_gizmo = std::make_shared<TraceGizmo>();
-    overlay->add(*gl_area);
-    overlay->add_overlay(*trace_gizmo);
-    h_container.pack_start(*overlay, false, false, 10);
+
+    // Create overlay for trace gizmo
+    trace_gizmo_even = std::make_shared<TraceGizmo>();
+
+    // Set up video presentations, frame_widget_even renders all frames unless split is enabled
+    frame_widget_even = std::make_unique<VideoPresentation>(
+        "Camera " + std::to_string(id),
+        camera_manager->presentation_even,
+        640,    // width
+        480     // height
+    );
+    frame_widget_even->add_overlay_widget(*trace_gizmo_even);
+    video_hbox.pack_start(*frame_widget_even, false, false, 10);
+
+    if (camera_manager->is_frame_splitting_enabled()) {
+        add_split_frame_ui();
+    }
+
+    h_container.pack_start(video_hbox, false, false, 10);
 
     auto gl_bin = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
     h_container.pack_start(*gl_bin, false, false, 10);
+
     show_all_children();
     show();
 }
@@ -88,9 +106,15 @@ void Keela::CameraControlWindow::set_resolution(const int width, const int heigh
     // TODO: can we set a minimum size or allow the user to scale the gl area themselves?
     const auto rotation = rotation_combo.m_combo.get_active_id();
     if (rotation == ROTATION_90 || rotation == ROTATION_270) {
-        gl_area->set_size_request(height, width);
+        frame_widget_even->set_video_size(height, width);
+        if (frame_widget_odd) {
+            frame_widget_odd->set_video_size(height, width);
+        }
     } else {
-        gl_area->set_size_request(width, height);
+        frame_widget_even->set_video_size(width, height);
+        if (frame_widget_odd) {
+            frame_widget_odd->set_video_size(width, height);
+        }
     }
     m_width = width;
     m_height = height;
@@ -130,16 +154,76 @@ void Keela::CameraControlWindow::on_flip_vert_changed() const {
     camera_manager->transform.flip_vertical(value);
 }
 
+void Keela::CameraControlWindow::on_split_frames_changed() {
+    const auto value = split_frames_check.get_active();
+    camera_manager->set_frame_splitting(value);
+    if (value) {
+        spdlog::info("Adding split frame UI");
+        add_split_frame_ui();
+    } else {
+        spdlog::info("Removing split frame UI");
+        remove_split_frame_ui();
+    }
+}
+
 std::shared_ptr<Keela::TraceBin> Keela::CameraControlWindow::get_trace_bin() {
-    return camera_manager->trace;
+    // For now, return the even frame trace bin
+    // TODO: Extend interface to support both even and odd trace bins
+    return camera_manager->get_trace_even();
 }
 
 std::shared_ptr<Keela::TraceGizmo> Keela::CameraControlWindow::get_trace_gizmo() {
-    return trace_gizmo;
+    return trace_gizmo_even;
 }
 
 std::string Keela::CameraControlWindow::get_name() {
     std::stringstream ss;
     ss << "Camera " << std::to_string(id);
     return ss.str();
+}
+
+void Keela::CameraControlWindow::add_split_frame_ui() {
+    if (frame_widget_odd) return;  // Already added
+
+    // Create trace gizmo for odd frames
+    trace_gizmo_odd = std::make_shared<TraceGizmo>();
+
+    const auto rotation = rotation_combo.m_combo.get_active_id();
+    if (rotation == ROTATION_90 || rotation == ROTATION_270) {
+        frame_widget_odd = std::make_unique<VideoPresentation>(
+            "Odd Frames", 
+            camera_manager->presentation_odd, 
+            480,   // width
+            640    // height
+        );
+    } else {
+        frame_widget_odd = std::make_unique<VideoPresentation>(
+            "Odd Frames", 
+            camera_manager->presentation_odd,
+            640,   // width
+            480    // height
+        );
+    }
+
+    frame_widget_odd->add_overlay_widget(*trace_gizmo_odd);
+    video_hbox.pack_start(*frame_widget_odd, false, false, 10);
+
+    // Ensure the new widget matches the current resolution
+    if (m_width > 0 && m_height > 0) {
+        const auto rotation = rotation_combo.m_combo.get_active_id();
+        if (rotation == ROTATION_90 || rotation == ROTATION_270) {
+            frame_widget_odd->set_video_size(m_height, m_width);
+        } else {
+            frame_widget_odd->set_video_size(m_width, m_height);
+        }
+    }
+
+    show_all_children();
+}
+
+void Keela::CameraControlWindow::remove_split_frame_ui() {
+    if (frame_widget_odd) {
+        video_hbox.remove(*frame_widget_odd);
+        frame_widget_odd.reset();
+    }
 }

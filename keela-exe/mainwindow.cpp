@@ -3,8 +3,10 @@
 //
 
 #include "mainwindow.h"
+
 #include <keela-widgets/labeledspinbutton.h>
 #include <spdlog/spdlog.h>
+
 #include "cameracontrolwindow.h"
 #include "keela-widgets/framebox.h"
 
@@ -18,6 +20,10 @@ MainWindow::MainWindow(): Gtk::Window() {
     container.set_border_width(10);
     MainWindow::add(container);
 
+    // Experiment Directory button
+    directory_button.set_label("Select Experiment Directory");
+    directory_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_directory_clicked));
+    container.add(directory_button);
     // Record button
     record_button.set_label("Start Recording");
     record_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_record_button_clicked));
@@ -25,6 +31,8 @@ MainWindow::MainWindow(): Gtk::Window() {
     red.set_red(1.0);
     red.set_alpha(1.0);
     record_button.override_color(red);
+    record_button.set_sensitive(false);
+    record_button.set_tooltip_text("Experiment Directory must be selected in order to begin recording");
     container.add(record_button);
 
     // Framerate controls
@@ -50,7 +58,11 @@ MainWindow::MainWindow(): Gtk::Window() {
     container.add(num_camera_spin);
 
     show_trace_check.set_label("Show Traces");
+    trace_fps_spin.m_spin.set_adjustment(Gtk::Adjustment::create(125, 1, 1000, 1));
+    trace_fps_spin.set_sensitive(false);
+    trace_fps_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &MainWindow::on_trace_fps_changed));
     container.add(show_trace_check);
+    container.add(trace_fps_spin);
 
     restart_camera_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::reset_cameras));
     restart_camera_button.set_label("Restart Camera(s)");
@@ -88,6 +100,13 @@ void MainWindow::on_camera_spin_changed() {
             auto c = std::make_shared<Keela::CameraControlWindow>(camera_id);
             set_framerate(c->camera_manager.get());
             set_resolution(c.get());
+
+            auto trace_bin = c->get_trace_bin();
+            if (trace_bin) {
+                const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
+                trace_bin->set_trace_framerate(fps);
+            }
+
             g_object_ref(static_cast<GstElement*>(*c->camera_manager));
             auto inner_ret = gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
             if (!inner_ret) {
@@ -95,6 +114,7 @@ void MainWindow::on_camera_spin_changed() {
                 ss << "Failed to add camera " << std::to_string(camera_id) << " to pipeline";
                 throw std::runtime_error(ss.str());
             }
+            set_experiment_directory(c);
             cameras.push_back(c);
             if (trace_window != nullptr) {
                 trace_window->addTrace(c);
@@ -130,43 +150,47 @@ void MainWindow::on_record_button_clicked() {
     show_trace_check.set_sensitive(!is_recording);
     restart_camera_button.set_sensitive(!is_recording);
     if (is_recording) {
-        auto message_dialog = Gtk::MessageDialog("Remember to set the experiment output to a new directory");
-        message_dialog.run();
-        // TODO: show file dialog
+        if (experiment_directory == "") {
+            throw std::runtime_error("Experiment directory not specified");
+        }
+        directory_button.set_sensitive(false);
+        set_state(GST_STATE_NULL);
         for (const auto &camera: cameras) {
             camera->camera_manager->start_recording();
         }
+        // this resets the pipeline clock
+        set_state(GST_STATE_PLAYING);
     } else {
         auto message_dialog = Gtk::MessageDialog("Remember to take calibration photos");
         message_dialog.run();
         for (const auto &camera: cameras) {
             camera->camera_manager->stop_recording();
         }
+        directory_button.set_sensitive(true);
     }
 }
 
 void MainWindow::reset_cameras() {
-    auto ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
+    set_state(GST_STATE_NULL);
+    // apply settings while the pipeline isn't actively playing
+    set_framerate();
+    set_resolution();
+    set_state(GST_STATE_PLAYING, false);
+}
+
+void MainWindow::set_state(GstState state, bool wait) {
+    auto ret = gst_element_set_state(GST_ELEMENT(pipeline), state);
     switch (ret) {
         case GST_STATE_CHANGE_FAILURE:
-            throw std::runtime_error("Failed to set state of pipeline to NULL");
+            throw std::runtime_error("Failed to set state of pipeline to playing");
         case GST_STATE_CHANGE_ASYNC:
             ret = gst_element_get_state(GST_ELEMENT(pipeline), nullptr, nullptr, GST_CLOCK_TIME_NONE);
-            if (ret == GST_STATE_CHANGE_FAILURE) {
+            if (ret == GST_STATE_CHANGE_FAILURE && wait) {
                 throw std::runtime_error("Async state change failed");
             }
             break;
         default:
-            break;
-    }
-
-    // TODO: apply changes to camera settings here
-    set_framerate();
-    set_resolution();
-
-    ret = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
-    if (ret == GST_STATE_CHANGE_FAILURE) {
-        throw std::runtime_error("Failed to set state of pipeline to playing");
+            spdlog::info("State change successful");
     }
 }
 
@@ -200,17 +224,56 @@ void MainWindow::on_trace_button_clicked() {
         trace_window->show();
 
         spdlog::debug("num traces: {}\t num cameras: {}", trace_window->num_traces(), trace_window->num_traces());
-        // TODO: retroactively set the framerates of the trace widgets
         for (unsigned int i = trace_window->num_traces(); i < cameras.size(); i++) {
             auto trace = cameras.at(i);
             trace_window->addTrace(trace);
         }
+        trace_fps_spin.set_sensitive(true);
     } else {
         trace_window = nullptr;
+        trace_fps_spin.set_sensitive(false);
+    }
+}
+
+void MainWindow::on_trace_fps_changed() {
+    const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
+    spdlog::info("Setting trace framerate to {} fps for all cameras", fps);
+
+    // Update trace framerate for all cameras
+    for (const auto &camera: cameras) {
+        auto trace_bin = camera->get_trace_bin();
+        if (trace_bin) {
+            trace_bin->set_trace_framerate(fps);
+        }
     }
 }
 
 void MainWindow::dump_graph() const {
     spdlog::info("{}: dumping pipeline graph", __func__);
     gst_debug_bin_to_dot_file(GST_BIN(pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "keelapipeline");
+}
+
+void MainWindow::on_directory_clicked() {
+    if (is_recording) {
+        throw std::runtime_error("Experiment directory already set");
+    }
+
+    Gtk::FileChooserDialog dialog = Gtk::FileChooserDialog(*this, "Choose experiment directory",
+                                                           Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
+
+    dialog.add_button("Select", Gtk::RESPONSE_OK);
+    dialog.add_button("Cancel", Gtk::RESPONSE_CANCEL);
+    auto result = dialog.run();
+    if (result == Gtk::RESPONSE_OK) {
+        experiment_directory = dialog.get_filename();
+        for (const auto &c: cameras) {
+            set_experiment_directory(c);
+        }
+        record_button.set_tooltip_text("Current experiment directory: " + experiment_directory);
+        record_button.set_sensitive(true);
+    }
+}
+
+void MainWindow::set_experiment_directory(std::shared_ptr<Keela::CameraControlWindow> c) const {
+    c->camera_manager->set_experiment_directory(experiment_directory);
 }

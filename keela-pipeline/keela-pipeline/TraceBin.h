@@ -4,6 +4,7 @@
 
 #ifndef TRACEBIN_H
 #define TRACEBIN_H
+#include "caps.h"
 #include "queuebin.h"
 
 namespace Keela {
@@ -20,13 +21,23 @@ namespace Keela {
          */
         void enable_trace(bool do_enable);
 
+        /*
+        * Set the target framerate for trace subsampling
+        */
+        void set_trace_framerate(guint framerate);
+
     private:
         void init() override;
 
         void link() override;
 
     public:
+        SimpleElement video_rate = SimpleElement("videorate");
+        SimpleElement caps_filter = SimpleElement("capsfilter");
         SimpleElement sink = SimpleElement("appsink");
+
+    private:
+        Caps trace_caps = Caps();
     };
 }
-#endif //TRACEBIN_H
+#endif  // TRACEBIN_H

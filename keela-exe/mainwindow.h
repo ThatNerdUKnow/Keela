@@ -21,6 +21,7 @@ public:
 private:
     GstPipeline *pipeline = nullptr;
     Gtk::Button record_button;
+    Gtk::Button directory_button;
     Gtk::Button restart_camera_button;
 
     Keela::LabeledSpinButton framerate_spin = Keela::LabeledSpinButton("Framerate (Hz)");
@@ -31,6 +32,7 @@ private:
     Gtk::CheckButton cv_recording_check;
     Keela::LabeledSpinButton num_camera_spin = Keela::LabeledSpinButton("Number of Cameras");
     Gtk::CheckButton show_trace_check;
+    Keela::LabeledSpinButton trace_fps_spin = Keela::LabeledSpinButton("Trace Framerate (Hz)");
 
     Gtk::Button dump_graph_button = Gtk::Button("Dump Pipeline Graph (debug)");
 
@@ -44,6 +46,8 @@ private:
 
     void reset_cameras();
 
+    void set_state(GstState state, bool wait = true);
+
     void set_framerate();
 
     void set_framerate(Keela::CameraManager *cm) const;
@@ -54,7 +58,16 @@ private:
 
     void on_trace_button_clicked();
 
+    void on_trace_fps_changed();
+
     void dump_graph() const;
+
+    // TODO: maybe provide some platform dependent default?
+    std::string experiment_directory = "";
+
+    void on_directory_clicked();
+
+    void set_experiment_directory(std::shared_ptr<Keela::CameraControlWindow> c) const;
 
     bool is_recording = false;
 };
