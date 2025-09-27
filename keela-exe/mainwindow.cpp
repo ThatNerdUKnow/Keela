@@ -101,16 +101,17 @@ void MainWindow::on_camera_spin_changed() {
             set_framerate(c->camera_manager.get());
             set_resolution(c.get());
 
-            // @TODO: DRY up trace framerate logic
-            // Update trace framerate for all traces in this camera
-            auto traces = c->get_traces();
-            for (const auto &trace : traces) {
-                auto trace_bin = trace->get_trace_bin();
-                if (trace_bin) {
-                    const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
-                    trace_bin->set_trace_framerate(fps);
-                }
-            }
+            // @todo: we will move the split frame management up a level to MainWindow and remove this cb
+            // Set up callback to apply trace framerate when traces are updated
+            c->on_traces_updated_callback = [this, c, camera_id]() {
+                const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
+                c->apply_trace_framerate(fps);
+                spdlog::info("Applied trace framerate {} to camera {} after trace update", fps, camera_id);
+            };
+
+            // Apply current trace framerate to new camera
+            const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
+            c->apply_trace_framerate(fps);
 
             g_object_ref(static_cast<GstElement*>(*c->camera_manager));
             auto inner_ret = gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
@@ -122,6 +123,7 @@ void MainWindow::on_camera_spin_changed() {
             set_experiment_directory(c);
             cameras.push_back(c);
             if (trace_window != nullptr) {
+                auto traces = c->get_traces();
                 trace_window->addTraces(traces);
             }
         }
@@ -247,13 +249,7 @@ void MainWindow::on_trace_fps_changed() {
 
     // Update trace framerate for all cameras
     for (const auto &camera : cameras) {
-        auto traces = camera->get_traces();
-        for (const auto &trace : traces) {
-            auto trace_bin = trace->get_trace_bin();
-            if (trace_bin) {
-                trace_bin->set_trace_framerate(fps);
-            }
-        }
+        camera->apply_trace_framerate(fps);
     }
 }
 
