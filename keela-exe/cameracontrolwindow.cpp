@@ -205,6 +205,21 @@ void Keela::CameraControlWindow::update_traces() {
         );
         m_traces.push_back(odd_trace);
     }
+    
+    // Notify parent that traces have been updated
+    if (on_traces_updated_callback) {
+        on_traces_updated_callback();
+    }
+}
+
+void Keela::CameraControlWindow::apply_trace_framerate(guint fps) {
+    spdlog::info("Applying trace framerate {} to all traces for camera {}", fps, id);
+    for (const auto &trace : m_traces) {
+        auto trace_bin = trace->get_trace_bin();
+        if (trace_bin) {
+            trace_bin->set_trace_framerate(fps);
+        }
+    }
 }
 
 void Keela::CameraControlWindow::add_split_frame_ui() {

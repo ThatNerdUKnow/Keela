@@ -70,6 +70,10 @@ namespace Keela {
 
     public:
         std::vector<std::shared_ptr<ITraceable>> get_traces();
+        void apply_trace_framerate(guint fps);
+        
+        // Callback for when traces are updated (e.g., frame splitting enabled/disabled)
+        std::function<void()> on_traces_updated_callback;
 
     private:
         std::vector<std::shared_ptr<CameraTrace>> m_traces;
