@@ -77,8 +77,6 @@ namespace Keela {
 
         template<typename T>
         double calculate_roi_average(GstSample *sample, GstStructure *structure, std::endian endianness);
-
-        bool on_timeout();
     };
 }
 #endif //GLTRACERENDER_H

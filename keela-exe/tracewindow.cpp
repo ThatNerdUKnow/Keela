@@ -10,6 +10,7 @@ Keela::TraceWindow::TraceWindow() {
     set_title("Traces");
     Window::add(scrolled_window);
     scrolled_window.add(container);
+    Glib::signal_timeout().connect(sigc::mem_fun(this, &TraceWindow::on_timeout), 1000 / 60);
 }
 
 Keela::TraceWindow::~TraceWindow() {
@@ -31,4 +32,11 @@ void Keela::TraceWindow::removeTrace() {
 
 int Keela::TraceWindow::num_traces() const {
     return traces.size();
+}
+
+bool Keela::TraceWindow::on_timeout() {
+    for (const auto &trace: traces) {
+        trace->queue_draw();
+    }
+    return true;
 }

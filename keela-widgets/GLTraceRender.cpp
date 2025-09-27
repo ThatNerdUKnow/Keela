@@ -67,8 +67,6 @@ Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_tr
     worker_thread = std::jthread([this](const std::stop_token &token) {
         this->process_video_data(token);
     });
-
-    Glib::signal_timeout().connect(sigc::mem_fun(this, &GLTraceRender::on_timeout), 1000 / 60);
 }
 
 Keela::GLTraceRender::~GLTraceRender() = default;
@@ -337,10 +335,4 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
         return std::numeric_limits<double>::quiet_NaN();
     }
     return static_cast<double>(sum) / static_cast<double>(count);
-}
-
-
-bool Keela::GLTraceRender::on_timeout() {
-    queue_draw();
-    return true;
 }
