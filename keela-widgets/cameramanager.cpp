@@ -283,13 +283,11 @@ void Keela::CameraManager::add_odd_camera_stream() {
     if (!ret) {
         throw std::runtime_error("Failed to add camera_stream_odd to bin");
     }
-
     // Sync state with parent if the pipeline is already running
     gboolean sync_result = gst_element_sync_state_with_parent(camera_stream_elem_odd);
     if (!sync_result) {
         spdlog::warn("Failed to sync camera_stream_odd state with parent");
     }
-
     // Link main tee to camera_stream_odd manually using gst_element_link
     gboolean link_result = gst_element_link(tee_main, camera_stream_elem_odd);
     if (!link_result) {
