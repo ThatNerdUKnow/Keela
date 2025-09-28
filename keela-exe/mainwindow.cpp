@@ -8,6 +8,7 @@
 #include <spdlog/spdlog.h>
 
 #include "cameracontrolwindow.h"
+#include "keela-pipeline/consts.h"
 #include "keela-widgets/framebox.h"
 
 MainWindow::MainWindow(): Gtk::Window() {
@@ -35,6 +36,11 @@ MainWindow::MainWindow(): Gtk::Window() {
     record_button.set_tooltip_text("Experiment Directory must be selected in order to begin recording");
     container.add(record_button);
 
+    pix_fmt_combo.m_combo.append(GRAY8, "8 Bit");
+    pix_fmt_combo.m_combo.append(GRAY16_LE, "16 Bit (Little Endian)");
+    pix_fmt_combo.m_combo.append(GRAY16_BE, "16 Bit (Big Endian)");
+    pix_fmt_combo.m_combo.set_active_id(GRAY8);
+    container.add(pix_fmt_combo);
     // Framerate controls
     framerate_spin.m_spin.set_adjustment(Gtk::Adjustment::create(500, 1, 1000, 0.1));
     framerate_spin.m_spin.set_digits(1);
@@ -95,9 +101,10 @@ void MainWindow::on_camera_spin_changed() {
         spdlog::error("Failed to set state of pipeline");
     }
     if (next > curr) {
+        auto fmt = pix_fmt_combo.m_combo.get_active_id();
         for (guint i = curr; i < next; i++) {
             auto camera_id = i + 1;
-            auto c = std::make_shared<Keela::CameraControlWindow>(camera_id);
+            auto c = std::make_shared<Keela::CameraControlWindow>(camera_id, fmt);
             set_framerate(c->camera_manager.get());
             set_resolution(c.get());
 
@@ -106,7 +113,7 @@ void MainWindow::on_camera_spin_changed() {
                 const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
                 trace_bin->set_trace_framerate(fps);
             }
-
+            
             g_object_ref(static_cast<GstElement*>(*c->camera_manager));
             auto inner_ret = gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
             if (!inner_ret) {
@@ -238,7 +245,7 @@ void MainWindow::on_trace_button_clicked() {
 void MainWindow::on_trace_fps_changed() {
     const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
     spdlog::info("Setting trace framerate to {} fps for all cameras", fps);
-
+    
     // Update trace framerate for all cameras
     for (const auto &camera: cameras) {
         auto trace_bin = camera->get_trace_bin();
