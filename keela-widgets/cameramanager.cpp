@@ -22,11 +22,22 @@ Keela::CameraManager::CameraManager(guint id, std::string pix_fmt, bool split_st
         spdlog::info("Creating camera manager {}", id);
         this->id = id;
 
-        // Add all elements to the bin
+        // Add all elements to the bin (except camera_stream_even which has deleted copy constructor)
         add_elements(camera, caps_filter, transform,
                      tee_main, tee_even, tee_odd,
                      *trace_even, *presentation_even, snapshot_even,
                      *trace_odd, *presentation_odd, snapshot_odd);
+
+        // Add camera_stream_even manually due to deleted copy constructor from multiple inheritance
+        // Cast to Bin base class first to resolve ambiguous conversion
+        Keela::Bin *camera_stream_bin = camera_stream_even.get();
+        GstElement *camera_stream_elem = static_cast<GstElement *>(*camera_stream_bin);
+        gst_object_ref(camera_stream_elem);
+        GstBin *this_bin = static_cast<GstBin *>(*this);
+        gboolean ret = gst_bin_add(this_bin, camera_stream_elem);
+        if (!ret) {
+            throw std::runtime_error("Failed to add camera_stream_even to bin");
+        }
 
         // Link main pipeline: camera -> videoconvert -> capsfilter -> transform -> main_tee
         element_link_many(camera, caps_filter, transform, tee_main);
@@ -34,6 +45,12 @@ Keela::CameraManager::CameraManager(guint id, std::string pix_fmt, bool split_st
         // Link main tee to both sub-tees
         element_link_many(tee_main, tee_even);
         element_link_many(tee_main, tee_odd);
+
+        // Link main tee to camera_stream_even manually using gst_element_link
+        gboolean link_result = gst_element_link(tee_main, camera_stream_elem);
+        if (!link_result) {
+            throw std::runtime_error("Failed to link tee_main to camera_stream_even");
+        }
 
         // Link even frame outputs
         element_link_many(tee_even, *presentation_even);
@@ -50,7 +67,6 @@ Keela::CameraManager::CameraManager(guint id, std::string pix_fmt, bool split_st
         if (split_streams) {
             install_frame_splitting_probes();
         }
-
 
         set_pix_fmt(pix_fmt);
         spdlog::info("Created camera manager {}", id);

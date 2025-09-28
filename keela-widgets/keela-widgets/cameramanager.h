@@ -4,6 +4,7 @@
 
 #ifndef CAMERAMANAGER_H
 #define CAMERAMANAGER_H
+#include <keela-pipeline/CameraStreamBin.h>
 #include <keela-pipeline/bin.h>
 #include <keela-pipeline/caps.h>
 #include <keela-pipeline/presentationbin.h>
@@ -40,6 +41,9 @@ namespace Keela {
         void set_frame_splitting(bool enabled);
 
         bool is_frame_splitting_enabled() const { return split_streams; }
+
+        // Camera Streams manage presentation, recording, and tracing of their respective frame streams
+        std::shared_ptr<CameraStreamBin> camera_stream_even = std::make_shared<CameraStreamBin>("camera_stream_even");
 
         // Get trace bins for both even and odd paths
         std::shared_ptr<TraceBin> get_trace_even() { return trace_even; }

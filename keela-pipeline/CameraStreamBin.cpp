@@ -8,15 +8,9 @@
 
 #include "keela-pipeline/utils.h"
 
-Keela::CameraStreamBin::CameraStreamBin(const std::string &name) : QueueBin(name) {
-    spdlog::info("{}", __func__);
-    CameraStreamBin::init();
-
-    CameraStreamBin::link();
-}
-
-Keela::CameraStreamBin::CameraStreamBin() : QueueBin() {
-    spdlog::info("{}", __func__);
+Keela::CameraStreamBin::CameraStreamBin(const std::string &name) : QueueBin(name), name(name) {
+    spdlog::info("Creating CameraStreamBin: {}", name);
+    presentation = std::make_shared<PresentationBin>("presentation_" + this->name);
     CameraStreamBin::init();
     CameraStreamBin::link();
 }
@@ -26,14 +20,19 @@ Keela::CameraStreamBin::~CameraStreamBin() {
 }
 
 void Keela::CameraStreamBin::init() {
-    // g_object_set(sink, "max-buffers", 1, nullptr);
-    // g_object_set(sink, "drop", true, nullptr);
+    // Just configure elements, don't link yet
+    spdlog::info("Initializing CameraStreamBin {} elements", name);
 }
 
 void Keela::CameraStreamBin::link() {
-    // set_presentation_framerate(60);
-    // add_elements(video_rate, caps_filter, sink);
-    // element_link_many(video_rate, caps_filter, sink);
-    // link_queue(video_rate);
-    // add_ghost_pad(video_rate, "sink");
+    spdlog::info("Linking CameraStreamBin {} internal structure", name);
+
+    // Add internal tee and presentation to this bin (will add record, trace later)
+    add_elements(internal_tee, *presentation);
+
+    // Link internal_tee -> presentation  
+    element_link_many(internal_tee, *presentation);
+    link_queue(internal_tee);
+
+    spdlog::info("CameraStreamBin linked: queue -> tee -> presentation");
 }
