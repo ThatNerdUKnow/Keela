@@ -7,11 +7,10 @@
 #include <keela-widgets/framebox.h>
 #include <spdlog/spdlog.h>
 
-Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_fmt) {
+Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_fmt, bool should_split_frames) {
     this->id = id;
     spdlog::info("Creating {} for camera {}", __func__, id);
-    bool split_frames = false;
-    camera_manager = std::make_unique<Keela::CameraManager>(id, pix_fmt, split_frames);
+    camera_manager = std::make_unique<Keela::CameraManager>(id, pix_fmt, should_split_frames);
 
     set_title("Image control for Camera " + std::to_string(id));
     set_resizable(false);
@@ -51,11 +50,6 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
     v_container.add(flip_horiz_check);
     flip_vert_check.signal_toggled().connect(sigc::mem_fun(*this, &CameraControlWindow::on_flip_vert_changed));
     v_container.add(flip_vert_check);
-
-    // Add frame splitting control
-    split_frames_check.signal_toggled().connect(sigc::mem_fun(*this, &CameraControlWindow::on_split_frames_changed));
-    split_frames_check.set_active(camera_manager->is_frame_splitting_enabled());
-    v_container.add(split_frames_check);
 
     // TODO: dynamically cast camera_manager->presentation to a WidgetElement to get a handle to a widget to add to the window
     fetch_image_button.signal_clicked().connect(
@@ -157,10 +151,9 @@ void Keela::CameraControlWindow::on_flip_vert_changed() const {
     camera_manager->transform.flip_vertical(value);
 }
 
-void Keela::CameraControlWindow::on_split_frames_changed() {
-    const auto value = split_frames_check.get_active();
-    camera_manager->set_frame_splitting(value);
-    if (value) {
+void Keela::CameraControlWindow::on_split_frames_changed(bool should_split_frames) {
+    camera_manager->set_frame_splitting(should_split_frames);
+    if (should_split_frames) {
         spdlog::info("Adding split frame UI");
         add_split_frame_ui();
     } else {

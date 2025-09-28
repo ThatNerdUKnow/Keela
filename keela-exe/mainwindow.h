@@ -32,6 +32,7 @@ private:
 
     Gtk::CheckButton cv_recording_check;
     Keela::LabeledSpinButton num_camera_spin = Keela::LabeledSpinButton("Number of Cameras");
+    Gtk::CheckButton split_frames_check = Gtk::CheckButton("Split Even/Odd Frames");
     Gtk::CheckButton show_trace_check;
     Keela::LabeledSpinButton trace_fps_spin = Keela::LabeledSpinButton("Trace Framerate (Hz)");
 
@@ -71,6 +72,10 @@ private:
     void set_experiment_directory(std::shared_ptr<Keela::CameraControlWindow> c) const;
 
     bool is_recording = false;
+
+    bool should_split_frames = false;
+
+    void on_split_frames_changed();
 
     void set_pix_fmt();
 };

@@ -18,7 +18,7 @@
 namespace Keela {
     class CameraControlWindow final : public Gtk::Window {
     public:
-        explicit CameraControlWindow(guint id, std::string pix_fmt);
+        explicit CameraControlWindow(guint id, std::string pix_fmt, bool should_split_frames);
 
         ~CameraControlWindow() override;
 
@@ -44,7 +44,6 @@ namespace Keela {
         Keela::LabeledComboBoxText rotation_combo = Keela::LabeledComboBoxText("Select Rotation");
         Gtk::CheckButton flip_horiz_check = Gtk::CheckButton("Flip Along Horizontal Center");
         Gtk::CheckButton flip_vert_check = Gtk::CheckButton("Flip Along Vertical Center");
-        Gtk::CheckButton split_frames_check = Gtk::CheckButton("Split Even/Odd Frames");
         Gtk::Button fetch_image_button = Gtk::Button("Fetch Image");
 
         std::shared_ptr<Keela::TraceGizmo> trace_gizmo_even;
@@ -60,8 +59,6 @@ namespace Keela {
 
         void on_flip_vert_changed() const;
 
-        void on_split_frames_changed();
-
         void add_split_frame_ui();
 
         void remove_split_frame_ui();
@@ -71,7 +68,10 @@ namespace Keela {
     public:
         std::vector<std::shared_ptr<ITraceable>> get_traces();
         void apply_trace_framerate(guint fps);
-        
+
+        // Method for main window to toggle split frame mode
+        void on_split_frames_changed(bool enabled);
+
         // Callback for when traces are updated (e.g., frame splitting enabled/disabled)
         std::function<void()> on_traces_updated_callback;
 

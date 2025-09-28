@@ -63,6 +63,11 @@ MainWindow::MainWindow(): Gtk::Window() {
     num_camera_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &MainWindow::on_camera_spin_changed));
     container.add(num_camera_spin);
 
+    // Add frame splitting control
+    split_frames_check.signal_toggled().connect(sigc::mem_fun(*this, &MainWindow::on_split_frames_changed));
+    split_frames_check.set_active(should_split_frames);
+    container.add(split_frames_check);
+
     show_trace_check.set_label("Show Traces");
     trace_fps_spin.m_spin.set_adjustment(Gtk::Adjustment::create(125, 1, 1000, 1));
     trace_fps_spin.set_sensitive(false);
@@ -104,7 +109,7 @@ void MainWindow::on_camera_spin_changed() {
         auto fmt = pix_fmt_combo.m_combo.get_active_id();
         for (guint i = curr; i < next; i++) {
             auto camera_id = i + 1;
-            auto c = std::make_shared<Keela::CameraControlWindow>(camera_id, fmt);
+            auto c = std::make_shared<Keela::CameraControlWindow>(camera_id, fmt, should_split_frames);
             set_framerate(c->camera_manager.get());
             set_resolution(c.get());
 
@@ -288,4 +293,12 @@ void MainWindow::on_directory_clicked() {
 
 void MainWindow::set_experiment_directory(std::shared_ptr<Keela::CameraControlWindow> c) const {
     c->camera_manager->set_experiment_directory(experiment_directory);
+}
+
+void MainWindow::on_split_frames_changed() {
+    should_split_frames = split_frames_check.get_active();
+    spdlog::info("Frame splitting set to {}", should_split_frames);
+    for (const auto &c : cameras) {
+        c->on_split_frames_changed(should_split_frames);
+    }
 }
