@@ -55,15 +55,15 @@ namespace Keela {
 
         // Even frame path
         std::shared_ptr<PresentationBin> presentation_even = std::make_shared<PresentationBin>("presentation_even");
-        SnapshotBin snapshot_even;
+        std::shared_ptr<SnapshotBin> snapshot_even = std::make_shared<SnapshotBin>("snapshot_even");
         std::shared_ptr<TraceBin> trace_even = std::make_shared<TraceBin>("trace_even");
 
         // Odd frame path
         std::shared_ptr<PresentationBin> presentation_odd = std::make_shared<PresentationBin>("presentation_odd");
-        SnapshotBin snapshot_odd;
+        std::shared_ptr<SnapshotBin> snapshot_odd = std::make_shared<SnapshotBin>("snapshot_odd");
         std::shared_ptr<TraceBin> trace_odd = std::make_shared<TraceBin>("trace_odd");
 
-        SnapshotBin &snapshot = snapshot_even;
+        SnapshotBin &snapshot = *snapshot_even;
         std::shared_ptr<TraceBin> &trace = trace_even;
 
     private:

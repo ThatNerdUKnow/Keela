@@ -25,8 +25,8 @@ Keela::CameraManager::CameraManager(guint id, std::string pix_fmt, bool split_st
         // Add all elements to the bin (except camera_stream_even which has deleted copy constructor)
         add_elements(camera, caps_filter, transform,
                      tee_main, tee_even, tee_odd,
-                     *trace_even, *presentation_even, snapshot_even,
-                     *trace_odd, *presentation_odd, snapshot_odd);
+                     *trace_even, *presentation_even, *snapshot_even,
+                     *trace_odd, *presentation_odd, *snapshot_odd);
 
         // Add camera_stream_even manually due to deleted copy constructor from multiple inheritance
         // Cast to Bin base class first to resolve ambiguous conversion
@@ -54,12 +54,12 @@ Keela::CameraManager::CameraManager(guint id, std::string pix_fmt, bool split_st
 
         // Link even frame outputs
         element_link_many(tee_even, *presentation_even);
-        element_link_many(tee_even, snapshot_even);
+        element_link_many(tee_even, *snapshot_even);
         element_link_many(tee_even, *trace_even);
 
         // Link odd frame outputs
         element_link_many(tee_odd, *presentation_odd);
-        element_link_many(tee_odd, snapshot_odd);
+        element_link_many(tee_odd, *snapshot_odd);
         element_link_many(tee_odd, *trace_odd);
 
         // Set up frame splitting if enabled

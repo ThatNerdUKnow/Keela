@@ -2,9 +2,11 @@
 #define CAMERASTREAMBIN_H
 
 #include <keela-pipeline/presentationbin.h>
+#include <keela-pipeline/snapshotbin.h>
 
 #include "EjectableElement.h"
 #include "caps.h"
+#include "keela-pipeline/TraceBin.h"
 #include "queuebin.h"
 #include "simpleelement.h"
 
@@ -16,6 +18,8 @@ namespace Keela {
         ~CameraStreamBin() override;
 
         std::shared_ptr<PresentationBin> presentation;
+        std::shared_ptr<SnapshotBin> snapshot;
+        std::shared_ptr<TraceBin> trace;
 
     private:
         void init() override;
