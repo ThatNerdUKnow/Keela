@@ -44,27 +44,12 @@ namespace Keela {
 
         // Camera Streams manage presentation, recording, and tracing of their respective frame streams
         std::shared_ptr<CameraStreamBin> camera_stream_even = std::make_shared<CameraStreamBin>("camera_stream_even");
-
-        // Get trace bins for both even and odd paths
-        std::shared_ptr<TraceBin> get_trace_even() { return trace_even; }
-        std::shared_ptr<TraceBin> get_trace_odd() { return trace_odd; }
+        std::shared_ptr<CameraStreamBin> camera_stream_odd = std::make_shared<CameraStreamBin>("camera_stream_odd");
 
         SimpleElement camera = SimpleElement("videotestsrc");
         SimpleElement caps_filter = SimpleElement("capsfilter");
         TransformBin transform = TransformBin("transform");
 
-        // Even frame path
-        std::shared_ptr<PresentationBin> presentation_even = std::make_shared<PresentationBin>("presentation_even");
-        std::shared_ptr<SnapshotBin> snapshot_even = std::make_shared<SnapshotBin>("snapshot_even");
-        std::shared_ptr<TraceBin> trace_even = std::make_shared<TraceBin>("trace_even");
-
-        // Odd frame path
-        std::shared_ptr<PresentationBin> presentation_odd = std::make_shared<PresentationBin>("presentation_odd");
-        std::shared_ptr<SnapshotBin> snapshot_odd = std::make_shared<SnapshotBin>("snapshot_odd");
-        std::shared_ptr<TraceBin> trace_odd = std::make_shared<TraceBin>("trace_odd");
-
-        SnapshotBin &snapshot = *snapshot_even;
-        std::shared_ptr<TraceBin> &trace = trace_even;
 
     private:
         void set_up_frame_splitting();
@@ -100,16 +85,6 @@ namespace Keela {
          */
         SimpleElement tee_main = SimpleElement("tee");
 
-        /**
-         * use to split even frames to multiple outputs
-         */
-        SimpleElement tee_even = SimpleElement("tee");
-
-        /**
-         * use to split odd frames to multiple outputs
-         */
-        SimpleElement tee_odd = SimpleElement("tee");
-
         /* at any moment there may be many active record bins
          *
          * TODO: do these still need to be shared_ptr?
@@ -124,6 +99,8 @@ namespace Keela {
          * supports cross-platform path joining
          */
         static std::string get_filename(std::string directory, guint cam_id, std::string suffix = "");
+
+        void add_odd_camera_stream();
     };
 } // namespace Keela
 #endif  // CAMERAMANAGER_H

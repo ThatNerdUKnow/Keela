@@ -52,8 +52,9 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
     v_container.add(flip_vert_check);
 
     // TODO: dynamically cast camera_manager->presentation to a WidgetElement to get a handle to a widget to add to the window
+    // TODO: do we need to take a snapshot of the odd stream too? maybe not because we just need it for scale calibration?
     fetch_image_button.signal_clicked().connect(
-        sigc::mem_fun(camera_manager->snapshot, &Keela::SnapshotBin::take_snapshot));
+        sigc::mem_fun(*camera_manager->camera_stream_even->snapshot, &Keela::SnapshotBin::take_snapshot));
     v_container.add(fetch_image_button);
 
     set_vexpand(false);
@@ -64,7 +65,7 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
     // Set up video presentations, frame_widget_even renders all frames unless split is enabled
     frame_widget_even = std::make_unique<VideoPresentation>(
         "Camera " + std::to_string(id),
-        camera_manager->presentation_even,
+        camera_manager->camera_stream_even->presentation,
         640, // width
         480 // height
     );
@@ -185,7 +186,7 @@ void Keela::CameraControlWindow::update_traces() {
     }
     
     auto even_trace = std::make_shared<CameraTrace>(
-        camera_manager->get_trace_even(),
+        camera_manager->camera_stream_even->get_trace(),
         trace_gizmo_even,
         even_name
     );
@@ -194,7 +195,7 @@ void Keela::CameraControlWindow::update_traces() {
     // Add odd trace if frame splitting is enabled
     if (camera_manager->is_frame_splitting_enabled() && trace_gizmo_odd) {
         auto odd_trace = std::make_shared<CameraTrace>(
-            camera_manager->get_trace_odd(),
+            camera_manager->camera_stream_odd->get_trace(),
             trace_gizmo_odd,
             "Camera " + std::to_string(id) + " (Odd)"
         );
@@ -222,14 +223,14 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
     if (rotation == ROTATION_90 || rotation == ROTATION_270) {
         frame_widget_odd = std::make_unique<VideoPresentation>(
             "Odd Frames",
-            camera_manager->presentation_odd,
+            camera_manager->camera_stream_odd->presentation,
             480, // width
             640 // height
         );
     } else {
         frame_widget_odd = std::make_unique<VideoPresentation>(
             "Odd Frames",
-            camera_manager->presentation_odd,
+            camera_manager->camera_stream_odd->presentation,
             640, // width
             480 // height
         );

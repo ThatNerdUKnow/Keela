@@ -15,52 +15,37 @@
 #include "keela-pipeline/recordbin.h"
 #include "keela-widgets/plugin_utils.h"
 
-Keela::CameraManager::CameraManager(guint id, std::string pix_fmt, bool split_streams) : Bin("camera_" + std::to_string(
-            id)),
-    camera(Keela::get_video_test_source_name()) {
+Keela::CameraManager::CameraManager(guint id, std::string pix_fmt, bool split_streams) : Bin("camera_" + std::to_string(id)), camera(Keela::get_video_test_source_name()) {
     try {
         spdlog::info("Creating camera manager {}", id);
         this->id = id;
 
         // Add all elements to the bin (except camera_stream_even which has deleted copy constructor)
-        add_elements(camera, caps_filter, transform,
-                     tee_main, tee_even, tee_odd,
-                     *trace_even, *presentation_even, *snapshot_even,
-                     *trace_odd, *presentation_odd, *snapshot_odd);
+        add_elements(camera, caps_filter, transform, tee_main);
 
+        // @TODO: figure out how to do this more cleanly
         // Add camera_stream_even manually due to deleted copy constructor from multiple inheritance
         // Cast to Bin base class first to resolve ambiguous conversion
         Keela::Bin *camera_stream_bin = camera_stream_even.get();
-        GstElement *camera_stream_elem = static_cast<GstElement *>(*camera_stream_bin);
-        gst_object_ref(camera_stream_elem);
+        GstElement *camera_stream_elem_even = static_cast<GstElement *>(*camera_stream_bin);
+        gst_object_ref(camera_stream_elem_even);
         GstBin *this_bin = static_cast<GstBin *>(*this);
-        gboolean ret = gst_bin_add(this_bin, camera_stream_elem);
+        gboolean ret = gst_bin_add(this_bin, camera_stream_elem_even);
         if (!ret) {
             throw std::runtime_error("Failed to add camera_stream_even to bin");
         }
-
-        // Link main pipeline: camera -> videoconvert -> capsfilter -> transform -> main_tee
-        element_link_many(camera, caps_filter, transform, tee_main);
-
-        // Link main tee to both sub-tees
-        element_link_many(tee_main, tee_even);
-        element_link_many(tee_main, tee_odd);
-
         // Link main tee to camera_stream_even manually using gst_element_link
-        gboolean link_result = gst_element_link(tee_main, camera_stream_elem);
+        gboolean link_result = gst_element_link(tee_main, camera_stream_elem_even);
         if (!link_result) {
             throw std::runtime_error("Failed to link tee_main to camera_stream_even");
         }
 
-        // Link even frame outputs
-        element_link_many(tee_even, *presentation_even);
-        element_link_many(tee_even, *snapshot_even);
-        element_link_many(tee_even, *trace_even);
+        // Link main pipeline: camera -> capsfilter -> transform -> main_tee
+        element_link_many(camera, caps_filter, transform, tee_main);
 
-        // Link odd frame outputs
-        element_link_many(tee_odd, *presentation_odd);
-        element_link_many(tee_odd, *snapshot_odd);
-        element_link_many(tee_odd, *trace_odd);
+        if (split_streams) {
+            add_odd_camera_stream();
+        }
 
         // Set up frame splitting if enabled
         this->split_streams = split_streams;
@@ -141,9 +126,9 @@ void Keela::CameraManager::start_recording() {
     assert(sync_even_result);
     assert(sync_odd_result);
 
-    // Link to both tees
-    element_link_many(tee_even, static_cast<Bin &>(*record_bin_even));
-    element_link_many(tee_odd, static_cast<Bin &>(*record_bin_odd));
+    // Link to both tees @TODO: fix this by pulling record logic into CameraStreamBin
+    element_link_many(camera_stream_even->internal_tee, static_cast<Bin &>(*record_bin_even));
+    element_link_many(camera_stream_odd->internal_tee, static_cast<Bin &>(*record_bin_odd));
 
     // Store both record bins
     record_bins.insert(record_bin_even);
@@ -156,11 +141,11 @@ void Keela::CameraManager::stop_recording() {
     // inside the blocking callback, add the EOS probe to the last source pad of the bin (it is unclear if this can also be a sink pad)
     // after installing the EOS callback, send an EOS event to the sink pad of the beginning of the bin
     // inside the EOS callback, set the state of the bin to NULL and remove the bin from the pipeline
-    for (auto bin: record_bins) {
+    for (auto bin : record_bins) {
         bin->PrepareEject();
     }
 
-    for (auto bin: record_bins) {
+    for (auto bin : record_bins) {
         bin->Eject(false);
     }
     record_bins.clear();
@@ -177,7 +162,7 @@ Keela::CameraManager::frame_numbering_probe_cb(GstPad *pad, GstPadProbeInfo *inf
     guint64 frame_number = camera_manager->frame_count.fetch_add(1);
     GST_BUFFER_OFFSET(buffer) = frame_number;
 
-    return GST_PAD_PROBE_OK; // Always pass the frame through
+    return GST_PAD_PROBE_OK;  // Always pass the frame through
 }
 
 // @TODO: DRY this up
@@ -186,9 +171,9 @@ GstPadProbeReturn Keela::CameraManager::even_frame_probe_cb(GstPad *pad, GstPadP
     guint64 frame_number = GST_BUFFER_OFFSET(buffer);
 
     if (frame_number % 2 == 0) {
-        return GST_PAD_PROBE_OK; // Pass the frame
+        return GST_PAD_PROBE_OK;  // Pass the frame
     } else {
-        return GST_PAD_PROBE_DROP; // Drop the frame
+        return GST_PAD_PROBE_DROP;  // Drop the frame
     }
 }
 
@@ -197,9 +182,9 @@ GstPadProbeReturn Keela::CameraManager::odd_frame_probe_cb(GstPad *pad, GstPadPr
     guint64 frame_number = GST_BUFFER_OFFSET(buffer);
 
     if (frame_number % 2 == 1) {
-        return GST_PAD_PROBE_OK; // Pass the frame
+        return GST_PAD_PROBE_OK;  // Pass the frame
     } else {
-        return GST_PAD_PROBE_DROP; // Drop the frame
+        return GST_PAD_PROBE_DROP;  // Drop the frame
     }
 }
 
@@ -212,6 +197,18 @@ void Keela::CameraManager::set_frame_splitting(bool enabled) {
     if (enabled) {
         // Install the probes now that the pipeline is set up
         install_frame_splitting_probes();
+
+        // Only add odd camera stream if it hasn't been added yet
+        // Check if camera_stream_odd is already in the pipeline
+        Keela::Bin *camera_stream_bin = camera_stream_odd.get();
+        GstElement *camera_stream_elem_odd = static_cast<GstElement *>(*camera_stream_bin);
+        GstObject *parent = gst_element_get_parent(camera_stream_elem_odd);
+        if (!parent) {
+            add_odd_camera_stream();
+        } else {
+            g_object_unref(parent);
+            spdlog::info("camera_stream_odd already in pipeline, skipping add");
+        }
     } else {
         // TODO: Remove existing probes when disabled
         // For now, the probes will just pass all frames through
@@ -231,8 +228,8 @@ void Keela::CameraManager::install_frame_splitting_probes() {
     }
 
     // Install filtering probes on the sink pads of the even and odd tees
-    GstPad *even_sink_pad = gst_element_get_static_pad(tee_even, "sink");
-    GstPad *odd_sink_pad = gst_element_get_static_pad(tee_odd, "sink");
+    GstPad *even_sink_pad = gst_element_get_static_pad(camera_stream_even->internal_tee, "sink");
+    GstPad *odd_sink_pad = gst_element_get_static_pad(camera_stream_odd->internal_tee, "sink");
 
     if (even_sink_pad) {
         gst_pad_add_probe(even_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
@@ -262,4 +259,28 @@ std::string Keela::CameraManager::get_filename(std::string directory, guint cam_
     auto path = std::filesystem::path(directory) / (ss.str() + "cam_" + std::to_string(cam_id) + suffix + ".mkv");
 
     return path.string();
+}
+
+void Keela::CameraManager::add_odd_camera_stream() {
+    // @TODO: figure out how to do this more cleanly
+    Keela::Bin *camera_stream_bin = camera_stream_odd.get();
+    GstElement *camera_stream_elem_odd = static_cast<GstElement *>(*camera_stream_bin);
+    gst_object_ref(camera_stream_elem_odd);
+    GstBin *this_bin = static_cast<GstBin *>(*this);
+    gboolean ret = gst_bin_add(this_bin, camera_stream_elem_odd);
+    if (!ret) {
+        throw std::runtime_error("Failed to add camera_stream_odd to bin");
+    }
+    
+    // Sync state with parent if the pipeline is already running
+    gboolean sync_result = gst_element_sync_state_with_parent(camera_stream_elem_odd);
+    if (!sync_result) {
+        spdlog::warn("Failed to sync camera_stream_odd state with parent");
+    }
+    
+    // Link main tee to camera_stream_odd manually using gst_element_link
+    gboolean link_result = gst_element_link(tee_main, camera_stream_elem_odd);
+    if (!link_result) {
+        throw std::runtime_error("Failed to link tee_main to camera_stream_odd");
+    }
 }

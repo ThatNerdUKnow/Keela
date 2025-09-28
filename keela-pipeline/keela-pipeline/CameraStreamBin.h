@@ -17,9 +17,13 @@ namespace Keela {
 
         ~CameraStreamBin() override;
 
+        SimpleElement internal_tee = SimpleElement("tee");
+
         std::shared_ptr<PresentationBin> presentation;
         std::shared_ptr<SnapshotBin> snapshot;
         std::shared_ptr<TraceBin> trace;
+
+        std::shared_ptr<TraceBin> get_trace() { return trace; }
 
     private:
         void init() override;
@@ -36,7 +40,6 @@ namespace Keela {
         }
 
         std::string name;
-        SimpleElement internal_tee = SimpleElement("tee");
     };
 }  // namespace Keela
 #endif  // CAMERASTREAMBIN_H
