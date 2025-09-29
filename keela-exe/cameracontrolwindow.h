@@ -70,10 +70,7 @@ namespace Keela {
         void apply_trace_framerate(guint fps);
 
         // Method for main window to toggle split frame mode
-        void on_split_frames_changed(bool enabled);
-
-        // Callback for when traces are updated (e.g., frame splitting enabled/disabled)
-        std::function<void()> on_traces_updated_callback;
+        void update_split_frame_state(bool enabled);
 
     private:
         std::vector<std::shared_ptr<CameraTrace>> m_traces;

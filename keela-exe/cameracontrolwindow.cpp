@@ -151,7 +151,7 @@ void Keela::CameraControlWindow::on_flip_vert_changed() const {
     camera_manager->transform.flip_vertical(value);
 }
 
-void Keela::CameraControlWindow::on_split_frames_changed(bool should_split_frames) {
+void Keela::CameraControlWindow::update_split_frame_state(bool should_split_frames) {
     camera_manager->set_frame_splitting(should_split_frames);
     if (should_split_frames) {
         spdlog::info("Adding split frame UI");
@@ -197,11 +197,6 @@ void Keela::CameraControlWindow::update_traces() {
             "Camera " + std::to_string(id) + " (Odd)"
         );
         m_traces.push_back(odd_trace);
-    }
-    
-    // Notify parent that traces have been updated
-    if (on_traces_updated_callback) {
-        on_traces_updated_callback();
     }
 }
 

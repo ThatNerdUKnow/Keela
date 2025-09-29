@@ -113,14 +113,6 @@ void MainWindow::on_camera_spin_changed() {
             set_framerate(c->camera_manager.get());
             set_resolution(c.get());
 
-            // @todo: we will move the split frame management up a level to MainWindow and remove this cb
-            // Set up callback to apply trace framerate when traces are updated
-            c->on_traces_updated_callback = [this, c, camera_id]() {
-                const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
-                c->apply_trace_framerate(fps);
-                spdlog::info("Applied trace framerate {} to camera {} after trace update", fps, camera_id);
-            };
-
             // Apply current trace framerate to new camera
             const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
             c->apply_trace_framerate(fps);
@@ -299,6 +291,6 @@ void MainWindow::on_split_frames_changed() {
     should_split_frames = split_frames_check.get_active();
     spdlog::info("Frame splitting set to {}", should_split_frames);
     for (const auto &c : cameras) {
-        c->on_split_frames_changed(should_split_frames);
+        c->update_split_frame_state(should_split_frames);
     }
 }
