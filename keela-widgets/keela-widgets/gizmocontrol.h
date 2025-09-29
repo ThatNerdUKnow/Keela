@@ -23,7 +23,7 @@ namespace Keela {
 
         void set_hovered(bool hovered);
 
-        void set_center(Gdk::Point center);
+        void set_center(Gdk::Point center, bool update_peer = true);
 
         [[nodiscard]] Gdk::Point get_center() const;
 

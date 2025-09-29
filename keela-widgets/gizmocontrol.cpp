@@ -37,7 +37,7 @@ void Keela::GizmoControl::set_hovered(const bool hovered) {
     this->hovered = hovered;
 }
 
-void Keela::GizmoControl::set_center(Gdk::Point center) {
+void Keela::GizmoControl::set_center(Gdk::Point center, bool update_peer) {
     auto x = center.get_x() - HALF(width);
     auto y = center.get_y() - HALF(width);
 

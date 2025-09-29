@@ -47,6 +47,8 @@ bool Keela::TraceGizmo::on_button_press_event(GdkEventButton *button_event) {
         mode = bottom_left;
     } else if (ctrl_bottom_right->intersects(point)) {
         mode = bottom_right;
+    } else if (intersects(point.get_x(), point.get_y())) {
+        mode = translate;
     } else {
         mode = none;
     }
@@ -84,22 +86,28 @@ bool Keela::TraceGizmo::on_motion_notify_event(GdkEventMotion *motion_event) {
     switch (mode) {
         case top_left:
             control = ctrl_top_left.get();
+            control->set_center(pt);
             break;
         case top_right:
             control = ctrl_top_right.get();
+            control->set_center(pt);
             break;
         case bottom_left:
             control = ctrl_bottom_left.get();
+            control->set_center(pt);
             break;
         case bottom_right:
             control = ctrl_bottom_right.get();
+            control->set_center(pt);
+            break;
+        case translate:
+            set_center(pt);
+            return DrawingArea::on_motion_notify_event(motion_event);
             break;
         case none:
             // if there are no edits being made, just skip
             return DrawingArea::on_motion_notify_event(motion_event);
     }
-    assert(control != nullptr);
-    control->set_center(pt);
 
 
     bounds->set_x(ctrl_top_left->get_center().get_x());
@@ -141,6 +149,30 @@ bool Keela::TraceGizmo::on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
     cr->restore();
 
     return DrawingArea::on_draw(cr);
+}
+
+void Keela::TraceGizmo::set_center(Gdk::Point center) {
+    auto x = bounds->get_x() + bounds->get_width() / 2;
+    auto y = bounds->get_y() + bounds->get_height() / 2;
+
+    auto delta_x = x - center.get_x();
+    auto delta_y = y - center.get_y();
+
+    bounds->set_x(bounds->get_x() - delta_x);
+    bounds->set_y(bounds->get_y() - delta_y);
+
+    assert(bounds->get_x() + bounds->get_width()/2 == center.get_x());
+    assert(bounds->get_y() + bounds->get_height()/2 == center.get_y());
+    Gdk::Point pt;
+    pt.set_x(bounds->get_x());
+    pt.set_y(bounds->get_y());
+    ctrl_top_left->set_center(pt, false);
+    pt.set_x(bounds->get_x() + bounds->get_width());
+    ctrl_top_right->set_center(pt, false);
+    pt.set_y(bounds->get_y() + bounds->get_height());
+    ctrl_bottom_right->set_center(pt, false);
+    pt.set_x(bounds->get_x());
+    ctrl_bottom_left->set_center(pt, false);
 }
 
 bool Keela::TraceGizmo::get_enabled() const {

@@ -28,6 +28,8 @@ namespace Keela {
 
         bool on_draw(const Cairo::RefPtr<Cairo::Context> &cr) override;
 
+        void set_center(Gdk::Point center);
+
     private:
         std::unique_ptr<Gdk::Rectangle> bounds = nullptr;
         bool is_dragging = false;
@@ -38,6 +40,7 @@ namespace Keela {
             top_right,
             bottom_left,
             bottom_right,
+            translate,
             none
         };
 
