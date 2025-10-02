@@ -290,7 +290,24 @@ void MainWindow::set_experiment_directory(std::shared_ptr<Keela::CameraControlWi
 void MainWindow::on_split_frames_changed() {
     should_split_frames = split_frames_check.get_active();
     spdlog::info("Frame splitting set to {}", should_split_frames);
+
     for (const auto &c : cameras) {
         c->update_split_frame_state(should_split_frames);
+    }
+    
+    // Update trace window if it's open
+    if (trace_window != nullptr) {
+        // Clear existing traces and re-add them based on new split frame state
+        trace_window = nullptr;
+        trace_window = std::make_unique<Keela::TraceWindow>();
+        trace_window->show();
+        
+        // Add all traces for all cameras, with the correct split state
+        for (const auto &camera : cameras) {
+            auto traces = camera->get_traces();
+            trace_window->addTraces(traces);
+        }
+        
+        trace_fps_spin.set_sensitive(true);
     }
 }
