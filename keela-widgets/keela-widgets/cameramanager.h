@@ -50,11 +50,18 @@ namespace Keela {
         SimpleElement caps_filter = SimpleElement("capsfilter");
         TransformBin transform = TransformBin("transform");
 
-
     private:
+        gulong frame_numbering_probe_id = 0;
+        gulong even_frame_probe_id = 0;
+        gulong odd_frame_probe_id = 0;
+
         void set_up_frame_splitting();
 
         void install_frame_splitting_probes();
+
+        void remove_frame_splitting_probes();
+
+        void remove_probe_by_id(gulong &probe_id, GstPad *pad, const std::string &probe_name);
 
         // Frame filtering callbacks
         static GstPadProbeReturn frame_numbering_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
@@ -102,5 +109,5 @@ namespace Keela {
 
         void add_odd_camera_stream();
     };
-} // namespace Keela
+}  // namespace Keela
 #endif  // CAMERAMANAGER_H

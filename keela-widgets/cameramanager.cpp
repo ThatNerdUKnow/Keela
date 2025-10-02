@@ -195,6 +195,12 @@ void Keela::CameraManager::set_frame_splitting(bool enabled) {
     frame_count.store(0);
 
     if (enabled) {
+        if (camera_stream_odd == nullptr) {
+            // re-create the odd camera stream if it was previously ejected
+            camera_stream_odd = std::make_shared<CameraStreamBin>("camera_stream_odd");
+        }
+
+        // camera_stream_odd = std::make_shared<CameraStreamBin>("camera_stream_odd");
         // Install the probes now that the pipeline is set up
         install_frame_splitting_probes();
 
@@ -210,8 +216,14 @@ void Keela::CameraManager::set_frame_splitting(bool enabled) {
             spdlog::info("camera_stream_odd already in pipeline, skipping add");
         }
     } else {
-        // TODO: Remove existing probes when disabled
-        // For now, the probes will just pass all frames through
+        // Remove probes so the even stream gets all frames
+        remove_frame_splitting_probes();
+
+        // Eject the odd CameraStreamBin
+        camera_stream_odd->PrepareEject();
+        camera_stream_odd->Eject(false);  // false = don't send EOS
+        camera_stream_odd = nullptr;  // clear the shared_ptr to allow re-creation later
+        spdlog::info("Ejected camera_stream_odd from pipeline");
     }
 }
 
@@ -221,8 +233,8 @@ void Keela::CameraManager::install_frame_splitting_probes() {
     // Install a frame numbering probe before the main tee so we can conditionally drop frames later
     GstPad *transform_src = gst_element_get_static_pad(transform, "src");
     if (transform_src) {
-        gst_pad_add_probe(transform_src, GST_PAD_PROBE_TYPE_BUFFER,
-                          frame_numbering_probe_cb, this, nullptr);
+        frame_numbering_probe_id = gst_pad_add_probe(transform_src, GST_PAD_PROBE_TYPE_BUFFER,
+                                                     frame_numbering_probe_cb, this, nullptr);
         g_object_unref(transform_src);
         spdlog::info("Installed frame numbering probe");
     }
@@ -232,15 +244,15 @@ void Keela::CameraManager::install_frame_splitting_probes() {
     GstPad *odd_sink_pad = gst_element_get_static_pad(camera_stream_odd->internal_tee, "sink");
 
     if (even_sink_pad) {
-        gst_pad_add_probe(even_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
-                          even_frame_probe_cb, this, nullptr);
+        even_frame_probe_id = gst_pad_add_probe(even_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
+                                                even_frame_probe_cb, this, nullptr);
         g_object_unref(even_sink_pad);
         spdlog::info("Installed even frame filter probe");
     }
 
     if (odd_sink_pad) {
-        gst_pad_add_probe(odd_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
-                          odd_frame_probe_cb, this, nullptr);
+        odd_frame_probe_id = gst_pad_add_probe(odd_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
+                                               odd_frame_probe_cb, this, nullptr);
         g_object_unref(odd_sink_pad);
         spdlog::info("Installed odd frame filter probe");
     }
@@ -271,16 +283,42 @@ void Keela::CameraManager::add_odd_camera_stream() {
     if (!ret) {
         throw std::runtime_error("Failed to add camera_stream_odd to bin");
     }
-    
+
     // Sync state with parent if the pipeline is already running
     gboolean sync_result = gst_element_sync_state_with_parent(camera_stream_elem_odd);
     if (!sync_result) {
         spdlog::warn("Failed to sync camera_stream_odd state with parent");
     }
-    
+
     // Link main tee to camera_stream_odd manually using gst_element_link
     gboolean link_result = gst_element_link(tee_main, camera_stream_elem_odd);
     if (!link_result) {
         throw std::runtime_error("Failed to link tee_main to camera_stream_odd");
+    }
+}
+
+void Keela::CameraManager::remove_probe_by_id(gulong &probe_id, GstPad *pad, const std::string &probe_name) {
+    if (probe_id != 0) {
+        if (pad) {
+            gst_pad_remove_probe(pad, probe_id);
+            g_object_unref(pad);
+            probe_id = 0;
+            spdlog::info("Removed {} probe", probe_name);
+        }
+    }
+}
+
+void Keela::CameraManager::remove_frame_splitting_probes() {
+    if (frame_numbering_probe_id != 0) {
+        GstPad *transform_src = gst_element_get_static_pad(transform, "src");
+        remove_probe_by_id(frame_numbering_probe_id, transform_src, "frame numbering");
+    }
+    if (even_frame_probe_id != 0) {
+        GstPad *even_sink_pad = gst_element_get_static_pad(camera_stream_even->internal_tee, "sink");
+        remove_probe_by_id(even_frame_probe_id, even_sink_pad, "even frame filter");
+    }
+    if (odd_frame_probe_id != 0) {
+        GstPad *odd_sink_pad = gst_element_get_static_pad(camera_stream_odd->internal_tee, "sink");
+        remove_probe_by_id(odd_frame_probe_id, odd_sink_pad, "odd frame filter");
     }
 }
