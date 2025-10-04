@@ -80,9 +80,6 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
     auto gl_bin = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
     h_container.pack_start(*gl_bin, false, false, 10);
 
-    // Initialize traces
-    update_traces();
-
     show_all_children();
     show();
 }
@@ -165,6 +162,11 @@ void Keela::CameraControlWindow::update_split_frame_state(bool should_split_fram
 }
 
 std::vector<std::shared_ptr<Keela::ITraceable>> Keela::CameraControlWindow::get_traces() {
+    // Lazily create traces if not already done
+    if (m_traces.empty()) {
+        update_traces();
+    }
+
     std::vector<std::shared_ptr<ITraceable>> traces;
     traces.reserve(m_traces.size());
     for (const auto& trace : m_traces) {
