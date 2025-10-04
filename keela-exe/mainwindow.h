@@ -32,7 +32,6 @@ private:
 
     Gtk::CheckButton cv_recording_check;
     Keela::LabeledSpinButton num_camera_spin = Keela::LabeledSpinButton("Number of Cameras");
-    Gtk::CheckButton split_frames_check = Gtk::CheckButton("Split Even/Odd Frames");
     Gtk::CheckButton show_trace_check;
     Keela::LabeledSpinButton trace_fps_spin = Keela::LabeledSpinButton("Trace Framerate (Hz)");
 

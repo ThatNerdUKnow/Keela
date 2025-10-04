@@ -54,19 +54,16 @@ MainWindow::MainWindow(): Gtk::Window() {
     dm_frame->add(data_matrix_h_spin);
     container.add(*dm_frame);
 
-    // calcium voltage recording setting control
+    // calcium voltage recording setting control, controls split frame logic
     cv_recording_check.set_label("Calcium-Voltage Recording Setting");
+    cv_recording_check.signal_toggled().connect(sigc::mem_fun(*this, &MainWindow::on_split_frames_changed));
+    cv_recording_check.set_active(should_split_frames);
     container.add(cv_recording_check);
 
     const auto camera_limits = Gtk::Adjustment::create(1.0, 1.0, std::numeric_limits<double>::max());
     num_camera_spin.m_spin.set_adjustment(camera_limits);
     num_camera_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &MainWindow::on_camera_spin_changed));
     container.add(num_camera_spin);
-
-    // Add frame splitting control
-    split_frames_check.signal_toggled().connect(sigc::mem_fun(*this, &MainWindow::on_split_frames_changed));
-    split_frames_check.set_active(should_split_frames);
-    container.add(split_frames_check);
 
     show_trace_check.set_label("Show Traces");
     trace_fps_spin.m_spin.set_adjustment(Gtk::Adjustment::create(125, 1, 1000, 1));
@@ -288,7 +285,7 @@ void MainWindow::set_experiment_directory(std::shared_ptr<Keela::CameraControlWi
 }
 
 void MainWindow::on_split_frames_changed() {
-    should_split_frames = split_frames_check.get_active();
+    should_split_frames = cv_recording_check.get_active();
     spdlog::info("Frame splitting set to {}", should_split_frames);
 
     for (const auto &c : cameras) {
