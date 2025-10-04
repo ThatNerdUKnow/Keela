@@ -153,35 +153,12 @@ void Keela::CameraManager::stop_recording() {
     dump_bin_graph();
 }
 
-GstPadProbeReturn
-Keela::CameraManager::frame_numbering_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
-    auto *camera_manager = static_cast<CameraManager *>(user_data);
+GstPadProbeReturn Keela::CameraManager::frame_parity_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
     GstBuffer *buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    int frame_number = GST_BUFFER_OFFSET(buffer);
+    int parity = GPOINTER_TO_INT(user_data);
 
-    // Assign a sequence number to this buffer using offset
-    guint64 frame_number = camera_manager->frame_count.fetch_add(1);
-    GST_BUFFER_OFFSET(buffer) = frame_number;
-
-    return GST_PAD_PROBE_OK;  // Always pass the frame through
-}
-
-// @TODO: DRY this up
-GstPadProbeReturn Keela::CameraManager::even_frame_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
-    GstBuffer *buffer = GST_PAD_PROBE_INFO_BUFFER(info);
-    guint64 frame_number = GST_BUFFER_OFFSET(buffer);
-
-    if (frame_number % 2 == 0) {
-        return GST_PAD_PROBE_OK;  // Pass the frame
-    } else {
-        return GST_PAD_PROBE_DROP;  // Drop the frame
-    }
-}
-
-GstPadProbeReturn Keela::CameraManager::odd_frame_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
-    GstBuffer *buffer = GST_PAD_PROBE_INFO_BUFFER(info);
-    guint64 frame_number = GST_BUFFER_OFFSET(buffer);
-
-    if (frame_number % 2 == 1) {
+    if (frame_number % 2 == parity) {
         return GST_PAD_PROBE_OK;  // Pass the frame
     } else {
         return GST_PAD_PROBE_DROP;  // Drop the frame
@@ -210,7 +187,7 @@ void Keela::CameraManager::set_frame_splitting(bool enabled) {
         // Eject the odd CameraStreamBin
         camera_stream_odd->PrepareEject();
         camera_stream_odd->Eject(false);  // false = don't send EOS
-        camera_stream_odd = nullptr;  // clear the shared_ptr to allow re-creation later
+        camera_stream_odd = nullptr;      // clear the shared_ptr to allow re-creation later
         spdlog::info("Ejected camera_stream_odd from pipeline");
     }
 }
@@ -218,29 +195,20 @@ void Keela::CameraManager::set_frame_splitting(bool enabled) {
 void Keela::CameraManager::install_frame_splitting_probes() {
     spdlog::info("Installing frame splitting probes");
 
-    // Install a frame numbering probe before the main tee so we can conditionally drop frames later
-    GstPad *transform_src = gst_element_get_static_pad(transform, "src");
-    if (transform_src) {
-        frame_numbering_probe_id = gst_pad_add_probe(transform_src, GST_PAD_PROBE_TYPE_BUFFER,
-                                                     frame_numbering_probe_cb, this, nullptr);
-        g_object_unref(transform_src);
-        spdlog::info("Installed frame numbering probe");
-    }
-
     // Install filtering probes on the sink pads of the even and odd tees
     GstPad *even_sink_pad = gst_element_get_static_pad(camera_stream_even->internal_tee, "sink");
     GstPad *odd_sink_pad = gst_element_get_static_pad(camera_stream_odd->internal_tee, "sink");
 
     if (even_sink_pad) {
         even_frame_probe_id = gst_pad_add_probe(even_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
-                                                even_frame_probe_cb, this, nullptr);
+                                                frame_parity_probe_cb, GINT_TO_POINTER(EVEN_FRAME), nullptr);
         g_object_unref(even_sink_pad);
         spdlog::info("Installed even frame filter probe");
     }
 
     if (odd_sink_pad) {
         odd_frame_probe_id = gst_pad_add_probe(odd_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
-                                               odd_frame_probe_cb, this, nullptr);
+                                               frame_parity_probe_cb, GINT_TO_POINTER(ODD_FRAME), nullptr);
         g_object_unref(odd_sink_pad);
         spdlog::info("Installed odd frame filter probe");
     }
@@ -291,10 +259,6 @@ void Keela::CameraManager::remove_probe_by_id(gulong &probe_id, GstPad *pad, con
 }
 
 void Keela::CameraManager::remove_frame_splitting_probes() {
-    if (frame_numbering_probe_id != 0) {
-        GstPad *transform_src = gst_element_get_static_pad(transform, "src");
-        remove_probe_by_id(frame_numbering_probe_id, transform_src, "frame numbering");
-    }
     if (even_frame_probe_id != 0) {
         GstPad *even_sink_pad = gst_element_get_static_pad(camera_stream_even->internal_tee, "sink");
         remove_probe_by_id(even_frame_probe_id, even_sink_pad, "even frame filter");

@@ -18,6 +18,9 @@
 
 #include "keela-pipeline/TraceBin.h"
 
+#define EVEN_FRAME 0
+#define ODD_FRAME 1
+
 namespace Keela {
     class CameraManager final : public Keela::Bin {
     public:
@@ -51,7 +54,6 @@ namespace Keela {
         TransformBin transform = TransformBin("transform");
 
     private:
-        gulong frame_numbering_probe_id = 0;
         gulong even_frame_probe_id = 0;
         gulong odd_frame_probe_id = 0;
 
@@ -63,12 +65,8 @@ namespace Keela {
 
         void remove_probe_by_id(gulong &probe_id, GstPad *pad, const std::string &probe_name);
 
-        // Frame filtering callbacks
-        static GstPadProbeReturn frame_numbering_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
-
-        static GstPadProbeReturn even_frame_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
-
-        static GstPadProbeReturn odd_frame_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
+        // Frame filtering callback
+        static GstPadProbeReturn frame_parity_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
 
         guint id;
         bool split_streams;
