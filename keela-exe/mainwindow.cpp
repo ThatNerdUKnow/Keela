@@ -137,7 +137,7 @@ void MainWindow::on_camera_spin_changed() {
             gst_bin_remove(GST_BIN(pipeline), *camera_win->camera_manager);
             cameras.pop_back();
             if (trace_window != nullptr) {
-                trace_window->removeTrace();
+                trace_window->removeTraceRow();
             }
         }
     }
@@ -298,10 +298,10 @@ void MainWindow::on_split_frames_changed() {
     // Update trace window if it's open
     if (trace_window != nullptr) {
         // Clear existing traces and re-add them based on new split frame state
-        trace_window = nullptr;
-        trace_window = std::make_unique<Keela::TraceWindow>();
-        trace_window->show();
-        
+        while (trace_window->num_traces() > 0) {
+            trace_window->removeTraceRow();
+        }
+
         // Add all traces for all cameras, with the correct split state
         for (const auto &camera : cameras) {
             auto traces = camera->get_traces();

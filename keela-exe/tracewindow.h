@@ -20,7 +20,8 @@ namespace Keela {
 
         void addTraces(const std::vector<std::shared_ptr<Keela::ITraceable>>& traces);
 
-        void removeTrace();
+        /** A row contains all of the traces for one camera. */
+        void removeTraceRow();
 
         int num_traces() const;
 
