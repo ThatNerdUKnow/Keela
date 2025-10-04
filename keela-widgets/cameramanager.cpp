@@ -105,52 +105,21 @@ void Keela::CameraManager::set_experiment_directory(const std::string &path) {
 }
 
 void Keela::CameraManager::start_recording() {
-    // Create record bins for both even and odd streams
-    std::shared_ptr<RecordBin> record_bin_even = std::make_shared<RecordBin>("recordbin_even");
-    std::shared_ptr<RecordBin> record_bin_odd = std::make_shared<RecordBin>("recordbin_odd");
+    std::string suffix = split_streams ? "even" : "";
 
-    // Set up file paths for even and odd streams
-    std::string filename_even = get_filename(experiment_directory, this->id, "even");
-    std::string filename_odd = get_filename(experiment_directory, this->id, "odd");
+    camera_stream_even->start_recording(get_filename(experiment_directory, this->id, suffix));
 
-    record_bin_even->set_directory(filename_even);
-    record_bin_odd->set_directory(filename_odd);
-
-    // Add both record bins to the pipeline
-    add_elements(static_cast<Bin &>(*record_bin_even));
-    add_elements(static_cast<Bin &>(*record_bin_odd));
-
-    // Sync state with parent
-    gboolean sync_even_result = gst_element_sync_state_with_parent(static_cast<Bin &>(*record_bin_even));
-    gboolean sync_odd_result = gst_element_sync_state_with_parent(static_cast<Bin &>(*record_bin_odd));
-    assert(sync_even_result);
-    assert(sync_odd_result);
-
-    // Link to both tees @TODO: fix this by pulling record logic into CameraStreamBin
-    element_link_many(camera_stream_even->internal_tee, static_cast<Bin &>(*record_bin_even));
-    element_link_many(camera_stream_odd->internal_tee, static_cast<Bin &>(*record_bin_odd));
-
-    // Store both record bins
-    record_bins.insert(record_bin_even);
-    record_bins.insert(record_bin_odd);
+    if (split_streams) {
+        camera_stream_odd->start_recording(get_filename(experiment_directory, this->id, "odd"));
+    }
 }
 
 void Keela::CameraManager::stop_recording() {
-    // notes from example to dynamically remove a bin from a playing pipeline:
-    // add a blocking downstream probe to the queue "src" pad
-    // inside the blocking callback, add the EOS probe to the last source pad of the bin (it is unclear if this can also be a sink pad)
-    // after installing the EOS callback, send an EOS event to the sink pad of the beginning of the bin
-    // inside the EOS callback, set the state of the bin to NULL and remove the bin from the pipeline
-    for (auto bin : record_bins) {
-        bin->PrepareEject();
-    }
+    camera_stream_even->stop_recording();
 
-    for (auto bin : record_bins) {
-        bin->Eject(false);
+    if (split_streams) {
+        camera_stream_odd->stop_recording();
     }
-    record_bins.clear();
-    spdlog::info("Removed all recordbins from pipeline");
-    dump_bin_graph();
 }
 
 GstPadProbeReturn Keela::CameraManager::frame_parity_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {

@@ -3,6 +3,7 @@
 
 #include <keela-pipeline/presentationbin.h>
 #include <keela-pipeline/snapshotbin.h>
+#include <keela-pipeline/recordbin.h>
 
 #include "EjectableElement.h"
 #include "caps.h"
@@ -23,6 +24,12 @@ namespace Keela {
         std::shared_ptr<SnapshotBin> snapshot;
         std::shared_ptr<TraceBin> trace;
 
+        std::shared_ptr<RecordBin> record_bin = nullptr;
+        
+        void start_recording(const std::string& filename);
+
+        void stop_recording();
+
         std::shared_ptr<TraceBin> get_trace() { return trace; }
 
     private:
@@ -33,9 +40,7 @@ namespace Keela {
         };
 
         std::vector<Keela::Element *> Leaves() override {
-            std::vector<Keela::Element *> ret;
-            // @TODO: return any record_bins
-            return ret;
+            return std::vector<Keela::Element *>{record_bin.get()};
         }
 
         std::string name;
