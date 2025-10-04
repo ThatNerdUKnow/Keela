@@ -18,9 +18,10 @@ namespace Keela {
 
         ~TraceWindow() override;
 
-        void addTrace(std::shared_ptr<Keela::ITraceable> trace);
+        void addTraces(const std::vector<std::shared_ptr<Keela::ITraceable>>& traces);
 
-        void removeTrace();
+        /** A row contains all of the traces for one camera. */
+        void removeTraceRow();
 
         int num_traces() const;
 

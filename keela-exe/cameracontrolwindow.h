@@ -9,15 +9,16 @@
 #include <keela-widgets/labeledspinbutton.h>
 
 #include "../keela-widgets/keela-widgets/cameramanager.h"
+#include "../keela-widgets/keela-widgets/cameratrace.h"
 #include "keela-widgets/GLCameraRender.h"
 #include "keela-widgets/GLTraceRender.h"
 #include "keela-widgets/tracegizmo.h"
 #include "keela-widgets/videopresentation.h"
 
 namespace Keela {
-    class CameraControlWindow final : public Gtk::Window, public Keela::ITraceable {
+    class CameraControlWindow final : public Gtk::Window {
     public:
-        explicit CameraControlWindow(guint id, std::string pix_fmt);
+        explicit CameraControlWindow(guint id, std::string pix_fmt, bool should_split_frames);
 
         ~CameraControlWindow() override;
 
@@ -43,7 +44,6 @@ namespace Keela {
         Keela::LabeledComboBoxText rotation_combo = Keela::LabeledComboBoxText("Select Rotation");
         Gtk::CheckButton flip_horiz_check = Gtk::CheckButton("Flip Along Horizontal Center");
         Gtk::CheckButton flip_vert_check = Gtk::CheckButton("Flip Along Vertical Center");
-        Gtk::CheckButton split_frames_check = Gtk::CheckButton("Split Even/Odd Frames");
         Gtk::Button fetch_image_button = Gtk::Button("Fetch Image");
 
         std::shared_ptr<Keela::TraceGizmo> trace_gizmo_even;
@@ -59,20 +59,21 @@ namespace Keela {
 
         void on_flip_vert_changed() const;
 
-        void on_split_frames_changed();
-
         void add_split_frame_ui();
 
         void remove_split_frame_ui();
 
+        void update_traces();
+
     public:
-        std::shared_ptr<TraceBin> get_trace_bin() override;
+        std::vector<std::shared_ptr<ITraceable>> get_traces();
+        void apply_trace_framerate(guint fps);
 
-        std::shared_ptr<TraceGizmo> get_trace_gizmo() override;
-
-        std::string get_name() override;
+        // Method for main window to toggle split frame mode
+        void update_split_frame_state(bool enabled);
 
     private:
+        std::vector<std::shared_ptr<CameraTrace>> m_traces;
         // set width and height initially to a sentinel value
         int m_width = -1, m_height = -1;
     };

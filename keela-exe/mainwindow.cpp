@@ -54,8 +54,10 @@ MainWindow::MainWindow(): Gtk::Window() {
     dm_frame->add(data_matrix_h_spin);
     container.add(*dm_frame);
 
-    // calcium voltage recording setting control
+    // calcium voltage recording setting control, controls split frame logic
     cv_recording_check.set_label("Calcium-Voltage Recording Setting");
+    cv_recording_check.signal_toggled().connect(sigc::mem_fun(*this, &MainWindow::on_split_frames_changed));
+    cv_recording_check.set_active(should_split_frames);
     container.add(cv_recording_check);
 
     const auto camera_limits = Gtk::Adjustment::create(1.0, 1.0, std::numeric_limits<double>::max());
@@ -104,16 +106,14 @@ void MainWindow::on_camera_spin_changed() {
         auto fmt = pix_fmt_combo.m_combo.get_active_id();
         for (guint i = curr; i < next; i++) {
             auto camera_id = i + 1;
-            auto c = std::make_shared<Keela::CameraControlWindow>(camera_id, fmt);
+            auto c = std::make_shared<Keela::CameraControlWindow>(camera_id, fmt, should_split_frames);
             set_framerate(c->camera_manager.get());
             set_resolution(c.get());
 
-            auto trace_bin = c->get_trace_bin();
-            if (trace_bin) {
-                const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
-                trace_bin->set_trace_framerate(fps);
-            }
-            
+            // Apply current trace framerate to new camera
+            const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
+            c->apply_trace_framerate(fps);
+
             g_object_ref(static_cast<GstElement*>(*c->camera_manager));
             auto inner_ret = gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
             if (!inner_ret) {
@@ -124,7 +124,8 @@ void MainWindow::on_camera_spin_changed() {
             set_experiment_directory(c);
             cameras.push_back(c);
             if (trace_window != nullptr) {
-                trace_window->addTrace(c);
+                auto traces = c->get_traces();
+                trace_window->addTraces(traces);
             }
         }
     } else if (next < curr) {
@@ -133,7 +134,7 @@ void MainWindow::on_camera_spin_changed() {
             gst_bin_remove(GST_BIN(pipeline), *camera_win->camera_manager);
             cameras.pop_back();
             if (trace_window != nullptr) {
-                trace_window->removeTrace();
+                trace_window->removeTraceRow();
             }
         }
     }
@@ -232,8 +233,9 @@ void MainWindow::on_trace_button_clicked() {
 
         spdlog::debug("num traces: {}\t num cameras: {}", trace_window->num_traces(), trace_window->num_traces());
         for (unsigned int i = trace_window->num_traces(); i < cameras.size(); i++) {
-            auto trace = cameras.at(i);
-            trace_window->addTrace(trace);
+            auto camera = cameras.at(i);
+            auto traces = camera->get_traces();
+            trace_window->addTraces(traces);
         }
         trace_fps_spin.set_sensitive(true);
     } else {
@@ -247,11 +249,8 @@ void MainWindow::on_trace_fps_changed() {
     spdlog::info("Setting trace framerate to {} fps for all cameras", fps);
     
     // Update trace framerate for all cameras
-    for (const auto &camera: cameras) {
-        auto trace_bin = camera->get_trace_bin();
-        if (trace_bin) {
-            trace_bin->set_trace_framerate(fps);
-        }
+    for (const auto &camera : cameras) {
+        camera->apply_trace_framerate(fps);
     }
 }
 
@@ -283,4 +282,29 @@ void MainWindow::on_directory_clicked() {
 
 void MainWindow::set_experiment_directory(std::shared_ptr<Keela::CameraControlWindow> c) const {
     c->camera_manager->set_experiment_directory(experiment_directory);
+}
+
+void MainWindow::on_split_frames_changed() {
+    should_split_frames = cv_recording_check.get_active();
+    spdlog::info("Frame splitting set to {}", should_split_frames);
+
+    for (const auto &c : cameras) {
+        c->update_split_frame_state(should_split_frames);
+    }
+    
+    // Update trace window if it's open
+    if (trace_window != nullptr) {
+        // Clear existing traces and re-add them based on new split frame state
+        while (trace_window->num_traces() > 0) {
+            trace_window->removeTraceRow();
+        }
+
+        // Add all traces for all cameras, with the correct split state
+        for (const auto &camera : cameras) {
+            auto traces = camera->get_traces();
+            trace_window->addTraces(traces);
+        }
+        
+        trace_fps_spin.set_sensitive(true);
+    }
 }

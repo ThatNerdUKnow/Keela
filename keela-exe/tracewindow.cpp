@@ -16,18 +16,44 @@ Keela::TraceWindow::TraceWindow() {
 Keela::TraceWindow::~TraceWindow() {
 }
 
-void Keela::TraceWindow::addTrace(std::shared_ptr<Keela::ITraceable> trace) {
-    auto widget = std::make_shared<GLTraceRender>(trace);
-    traces.push_back(widget);
-    container.add(*widget);
+void Keela::TraceWindow::addTraces(const std::vector<std::shared_ptr<Keela::ITraceable>>& traces_to_add) {
+    if (traces_to_add.empty()) {
+        return;
+    }
+
+    // Create a horizontal box to hold traces from this camera
+    auto row_box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL);
+    row_box->set_spacing(10);
+
+    for (const auto& trace : traces_to_add) {
+        auto widget = std::make_shared<GLTraceRender>(trace);
+        traces.push_back(widget);
+        row_box->pack_start(*widget, true, true, 0);
+    }
+
+    container.pack_start(*row_box, false, false, 10);
     show_all_children();
-    spdlog::info("TraceWindow::{}: Trace added", __func__);
+    spdlog::info("TraceWindow::{}: Added {} traces in a row", __func__, traces_to_add.size());
 }
 
-void Keela::TraceWindow::removeTrace() {
-    // TODO:
-    auto trace = std::move(traces.back());
-    traces.pop_back();
+void Keela::TraceWindow::removeTraceRow() {
+    // Get the most recently added row box
+    auto children = container.get_children();
+    if (!children.empty()) {
+        auto* last_row = children.back();
+        container.remove(*last_row);
+
+        // Count how many traces were in that last row
+        auto last_row_box = dynamic_cast<Gtk::Box*>(last_row);
+        int traces_in_last_row = last_row_box->get_children().size();
+
+        // Remove the corresponding number of traces
+        for (int i = 0; i < traces_in_last_row; i++) {
+            traces.pop_back();
+        }
+
+        spdlog::info("TraceWindow::{}: Removed last trace row with {} traces", __func__, traces_in_last_row);
+    }
 }
 
 int Keela::TraceWindow::num_traces() const {

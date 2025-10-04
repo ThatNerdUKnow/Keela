@@ -7,11 +7,10 @@
 #include <keela-widgets/framebox.h>
 #include <spdlog/spdlog.h>
 
-Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_fmt) {
+Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_fmt, bool should_split_frames) {
     this->id = id;
     spdlog::info("Creating {} for camera {}", __func__, id);
-    bool split_frames = false;
-    camera_manager = std::make_unique<Keela::CameraManager>(id, pix_fmt, split_frames);
+    camera_manager = std::make_unique<Keela::CameraManager>(id, pix_fmt, should_split_frames);
 
     set_title("Image control for Camera " + std::to_string(id));
     set_resizable(false);
@@ -51,11 +50,6 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
     v_container.add(flip_horiz_check);
     flip_vert_check.signal_toggled().connect(sigc::mem_fun(*this, &CameraControlWindow::on_flip_vert_changed));
     v_container.add(flip_vert_check);
-
-    // Add frame splitting control
-    split_frames_check.signal_toggled().connect(sigc::mem_fun(*this, &CameraControlWindow::on_split_frames_changed));
-    split_frames_check.set_active(camera_manager->is_frame_splitting_enabled());
-    v_container.add(split_frames_check);
 
     // TODO: dynamically cast camera_manager->presentation to a WidgetElement to get a handle to a widget to add to the window
     fetch_image_button.signal_clicked().connect(
@@ -154,32 +148,68 @@ void Keela::CameraControlWindow::on_flip_vert_changed() const {
     camera_manager->transform.flip_vertical(value);
 }
 
-void Keela::CameraControlWindow::on_split_frames_changed() {
-    const auto value = split_frames_check.get_active();
-    camera_manager->set_frame_splitting(value);
-    if (value) {
+void Keela::CameraControlWindow::update_split_frame_state(bool should_split_frames) {
+    camera_manager->set_frame_splitting(should_split_frames);
+    if (should_split_frames) {
         spdlog::info("Adding split frame UI");
         add_split_frame_ui();
     } else {
         spdlog::info("Removing split frame UI");
         remove_split_frame_ui();
     }
+    // Update traces whenever split frame state changes
+    update_traces();
 }
 
-std::shared_ptr<Keela::TraceBin> Keela::CameraControlWindow::get_trace_bin() {
-    // For now, return the even frame trace bin
-    // TODO: Extend interface to support both even and odd trace bins
-    return camera_manager->get_trace_even();
+std::vector<std::shared_ptr<Keela::ITraceable>> Keela::CameraControlWindow::get_traces() {
+    // Lazily create traces if not already done
+    if (m_traces.empty()) {
+        update_traces();
+    }
+
+    std::vector<std::shared_ptr<ITraceable>> traces;
+    traces.reserve(m_traces.size());
+    for (const auto& trace : m_traces) {
+        traces.push_back(trace);
+    }
+    return traces;
 }
 
-std::shared_ptr<Keela::TraceGizmo> Keela::CameraControlWindow::get_trace_gizmo() {
-    return trace_gizmo_even;
+void Keela::CameraControlWindow::update_traces() {
+    m_traces.clear();
+    
+    // Always add the even trace
+    std::string even_name = "Camera " + std::to_string(id);
+    if (camera_manager->is_frame_splitting_enabled()) {
+        even_name += " (Even)";
+    }
+    
+    auto even_trace = std::make_shared<CameraTrace>(
+        camera_manager->get_trace_even(),
+        trace_gizmo_even,
+        even_name
+    );
+    m_traces.push_back(even_trace);
+    
+    // Add odd trace if frame splitting is enabled
+    if (camera_manager->is_frame_splitting_enabled() && trace_gizmo_odd) {
+        auto odd_trace = std::make_shared<CameraTrace>(
+            camera_manager->get_trace_odd(),
+            trace_gizmo_odd,
+            "Camera " + std::to_string(id) + " (Odd)"
+        );
+        m_traces.push_back(odd_trace);
+    }
 }
 
-std::string Keela::CameraControlWindow::get_name() {
-    std::stringstream ss;
-    ss << "Camera " << std::to_string(id);
-    return ss.str();
+void Keela::CameraControlWindow::apply_trace_framerate(guint fps) {
+    spdlog::info("Applying trace framerate {} to all traces for camera {}", fps, id);
+    for (const auto &trace : m_traces) {
+        auto trace_bin = trace->get_trace_bin();
+        if (trace_bin) {
+            trace_bin->set_trace_framerate(fps);
+        }
+    }
 }
 
 void Keela::CameraControlWindow::add_split_frame_ui() {

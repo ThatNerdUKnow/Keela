@@ -72,6 +72,10 @@ private:
 
     bool is_recording = false;
 
+    bool should_split_frames = false;
+
+    void on_split_frames_changed();
+
     void set_pix_fmt();
 };
 
