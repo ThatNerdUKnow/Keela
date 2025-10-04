@@ -14,17 +14,11 @@ Keela::CameraStreamBin::CameraStreamBin(const std::string &name) : QueueBin(name
     snapshot = std::make_shared<SnapshotBin>("snapshot_" + this->name);
     trace = std::make_shared<TraceBin>("trace_" + this->name);
 
-    CameraStreamBin::init();
     CameraStreamBin::link();
 }
 
 Keela::CameraStreamBin::~CameraStreamBin() {
     spdlog::debug(__func__);
-}
-
-void Keela::CameraStreamBin::init() {
-    // Just configure elements, don't link yet
-    spdlog::info("Initializing CameraStreamBin {} elements", name);
 }
 
 void Keela::CameraStreamBin::link() {
@@ -38,6 +32,4 @@ void Keela::CameraStreamBin::link() {
     element_link_many(internal_tee, *snapshot);
     element_link_many(internal_tee, *trace);
     link_queue(internal_tee);
-
-    spdlog::info("CameraStreamBin linked: queue -> tee -> presentation");
 }

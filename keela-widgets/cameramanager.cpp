@@ -200,21 +200,9 @@ void Keela::CameraManager::set_frame_splitting(bool enabled) {
             camera_stream_odd = std::make_shared<CameraStreamBin>("camera_stream_odd");
         }
 
-        // camera_stream_odd = std::make_shared<CameraStreamBin>("camera_stream_odd");
         // Install the probes now that the pipeline is set up
         install_frame_splitting_probes();
-
-        // Only add odd camera stream if it hasn't been added yet
-        // Check if camera_stream_odd is already in the pipeline
-        Keela::Bin *camera_stream_bin = camera_stream_odd.get();
-        GstElement *camera_stream_elem_odd = static_cast<GstElement *>(*camera_stream_bin);
-        GstObject *parent = gst_element_get_parent(camera_stream_elem_odd);
-        if (!parent) {
-            add_odd_camera_stream();
-        } else {
-            g_object_unref(parent);
-            spdlog::info("camera_stream_odd already in pipeline, skipping add");
-        }
+        add_odd_camera_stream();
     } else {
         // Remove probes so the even stream gets all frames
         remove_frame_splitting_probes();
@@ -296,14 +284,10 @@ void Keela::CameraManager::add_odd_camera_stream() {
 }
 
 void Keela::CameraManager::remove_probe_by_id(gulong &probe_id, GstPad *pad, const std::string &probe_name) {
-    if (probe_id != 0) {
-        if (pad) {
-            gst_pad_remove_probe(pad, probe_id);
-            g_object_unref(pad);
-            probe_id = 0;
-            spdlog::info("Removed {} probe", probe_name);
-        }
-    }
+    gst_pad_remove_probe(pad, probe_id);
+    g_object_unref(pad);
+    probe_id = 0;
+    spdlog::info("Removed {} probe", probe_name);
 }
 
 void Keela::CameraManager::remove_frame_splitting_probes() {

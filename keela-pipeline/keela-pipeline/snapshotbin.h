@@ -13,8 +13,6 @@ namespace Keela {
     public:
         explicit SnapshotBin(const std::string &name);
 
-        SnapshotBin();
-
         ~SnapshotBin() override;
 
         void take_snapshot();

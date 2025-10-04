@@ -26,7 +26,6 @@ namespace Keela {
         std::shared_ptr<TraceBin> get_trace() { return trace; }
 
     private:
-        void init() override;
         void link() override;
 
         Keela::Element *Head() override {
