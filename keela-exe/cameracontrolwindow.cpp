@@ -34,7 +34,10 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
     range_frame->add(range_max_spin);
     v_container.add(*range_frame);
 
-    gain_spin.m_spin.set_adjustment(Gtk::Adjustment::create(0.0, 0.0, 100));
+    
+    // Disable gain control until camera is ready and we can query for gain support and supported range
+    gain_spin.m_spin.set_sensitive(false);
+    gain_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_gain_changed));
     v_container.add(gain_spin);
 
     // TODO: add rotation options
@@ -93,6 +96,12 @@ void Keela::CameraControlWindow::on_range_check_toggled() {
     const auto active = range_check.get_active();
     range_min_spin.set_sensitive(active);
     range_max_spin.set_sensitive(active);
+}
+
+void Keela::CameraControlWindow::on_gain_changed() const {
+    const auto gain = gain_spin.m_spin.get_value();
+    spdlog::info("Gain changed to {}", gain);
+    camera_manager->set_gain(gain);
 }
 
 void Keela::CameraControlWindow::set_resolution(const int width, const int height) {
@@ -257,4 +266,22 @@ void Keela::CameraControlWindow::remove_split_frame_ui() {
         video_hbox.remove(*frame_widget_odd);
         frame_widget_odd.reset();
     }
+}
+
+void Keela::CameraControlWindow::update_gain_range() {
+    // get the range supported by the camera hardware
+    auto gain_range = camera_manager->get_gain_range();
+    double min_gain = gain_range.first;
+    double max_gain = gain_range.second;
+    
+    if (min_gain == 0.0 && max_gain == 0.0) {
+        gain_spin.m_spin.set_sensitive(false);
+        spdlog::warn("Gain control not supported by camera - disabling gain control UI");
+        return;
+    }
+    // update the gain spin with the new range
+    gain_spin.m_spin.set_adjustment(Gtk::Adjustment::create(min_gain, min_gain, max_gain, 1.0));
+    gain_spin.m_spin.set_sensitive(true);
+    
+    spdlog::info("Updated gain control range to {:.1f} - {:.1f} dB", min_gain, max_gain);
 }

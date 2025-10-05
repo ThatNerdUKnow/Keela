@@ -4,6 +4,7 @@
 
 #include "keela-widgets/cameramanager.h"
 
+#include <arv.h>
 #include <keela-pipeline/utils.h>
 #include <spdlog/spdlog.h>
 
@@ -15,7 +16,7 @@
 #include "keela-pipeline/recordbin.h"
 #include "keela-widgets/plugin_utils.h"
 
-Keela::CameraManager::CameraManager(guint id, std::string pix_fmt, bool split_streams) : Bin("camera_" + std::to_string(id)), camera(Keela::get_video_test_source_name()) {
+Keela::CameraManager::CameraManager(guint id, std::string pix_fmt, bool split_streams) : Bin("camera_" + std::to_string(id)), camera(Keela::get_video_source_name()) {
     try {
         spdlog::info("Creating camera manager {}", id);
         this->id = id;
@@ -102,6 +103,67 @@ void Keela::CameraManager::set_resolution(const int width, const int height) {
 
 void Keela::CameraManager::set_experiment_directory(const std::string &path) {
     experiment_directory = path;
+}
+
+std::pair<double, double> Keela::CameraManager::get_gain_range() const {
+    double min_gain = 0.0;
+    double max_gain = 0.0;
+
+    if (!is_aravis_src()) {
+        spdlog::warn("Gain control not supported");
+        return {min_gain, max_gain};
+    }
+
+    spdlog::debug("Querying gain range from camera hardware via ArvCamera object");
+    GstElement *camera_element = static_cast<GstElement *>(camera);
+    // Try to get the underlying ArvCamera object from aravissrc
+    ArvCamera *arv_camera = nullptr;
+    g_object_get(camera_element, "camera", &arv_camera, nullptr);
+
+    if (arv_camera == nullptr) {
+        spdlog::warn("Could not access ArvCamera object");
+        return {min_gain, max_gain};
+    }
+
+    GError *error = nullptr;
+    // Query the actual hardware gain limits
+    arv_camera_get_gain_bounds(arv_camera, &min_gain, &max_gain, &error);
+    if (error == nullptr) {
+        spdlog::info("Queried hardware gain range from camera: {:.1f} to {:.1f} dB", min_gain, max_gain);
+    } else {
+        spdlog::warn("Error querying gain range from camera: {}", error->message);
+        g_error_free(error);
+    }
+
+    g_object_unref(arv_camera);
+
+    return {min_gain, max_gain};
+}
+
+void Keela::CameraManager::set_gain(double gain) {
+    spdlog::info("Setting camera gain to {}", gain);
+
+    GstElement *camera_element = static_cast<GstElement *>(camera);
+
+    // Set the gain property on the aravissrc element
+    g_object_set(camera_element, "gain", gain, nullptr);
+
+    // Read back the actual gain value to confirm it was set
+    gdouble actual_gain = 0.0;
+    g_object_get(camera_element, "gain", &actual_gain, nullptr);
+
+    spdlog::info("Set gain to {:.1f} dB, actual camera gain: {:.1f} dB",
+                 gain, actual_gain);
+}
+
+bool Keela::CameraManager::is_aravis_src() const {
+    GstElement *camera_element = static_cast<GstElement *>(camera);
+
+    // Check if this is an aravissrc element by checking its factory name
+    GstElementFactory *factory = gst_element_get_factory(camera_element);
+    const gchar *factory_name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
+
+    return (g_strcmp0(factory_name, "aravissrc") == 0);
 }
 
 void Keela::CameraManager::start_recording() {

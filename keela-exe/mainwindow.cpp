@@ -5,6 +5,7 @@
 #include "mainwindow.h"
 
 #include <keela-widgets/labeledspinbutton.h>
+#include <keela-widgets/plugin_utils.h>
 #include <spdlog/spdlog.h>
 
 #include "cameracontrolwindow.h"
@@ -88,6 +89,15 @@ MainWindow::MainWindow(): Gtk::Window() {
     // Initialize recording settings here
     on_camera_spin_changed();
     gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
+
+    // @todo: implement a callback to update the gain range after the camera is ready
+    //        this is just to get help get started for now
+    Glib::signal_timeout().connect_once([this]() {
+        for (const auto &camera : cameras) {
+            camera->update_gain_range();
+        }
+    }, 1000);  // 1 second delay
+
     show_all_children();
 }
 

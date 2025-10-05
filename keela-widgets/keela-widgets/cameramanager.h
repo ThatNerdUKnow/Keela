@@ -36,6 +36,11 @@ namespace Keela {
 
         void set_experiment_directory(const std::string &path);
 
+        void set_gain(double gain);
+
+        // Query hardware capabilities
+        std::pair<double, double> get_gain_range() const;
+
         void start_recording();
 
         void stop_recording();
@@ -49,7 +54,7 @@ namespace Keela {
         std::shared_ptr<CameraStreamBin> camera_stream_even = std::make_shared<CameraStreamBin>("camera_stream_even");
         std::shared_ptr<CameraStreamBin> camera_stream_odd = std::make_shared<CameraStreamBin>("camera_stream_odd");
 
-        SimpleElement camera = SimpleElement("videotestsrc");
+        SimpleElement camera;
         SimpleElement caps_filter = SimpleElement("capsfilter");
         TransformBin transform = TransformBin("transform");
 
@@ -103,6 +108,8 @@ namespace Keela {
         static std::string get_filename(std::string directory, guint cam_id, std::string suffix = "");
 
         void add_odd_camera_stream();
+
+        bool is_aravis_src() const;
     };
 }  // namespace Keela
 #endif  // CAMERAMANAGER_H

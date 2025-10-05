@@ -17,6 +17,7 @@ pkg_search_module(GTKMM REQUIRED IMPORTED_TARGET gtkmm-3.0)
 pkg_search_module(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0)
 pkg_search_module(SPDLOG REQUIRED IMPORTED_TARGET spdlog)
 pkg_search_module(GIO REQUIRED IMPORTED_TARGET gio-2.0)
+pkg_search_module(ARAVIS REQUIRED IMPORTED_TARGET aravis-0.8)
 
 # compile the keela-videotestsrc plugin if enabled
 if (ENABLE_KEELA_VIDEOTESTSRC)
