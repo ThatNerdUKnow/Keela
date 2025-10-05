@@ -40,7 +40,10 @@ namespace Keela {
         };
 
         std::vector<Keela::Element *> Leaves() override {
-            return std::vector<Keela::Element *>{record_bin.get()};
+            if (record_bin != nullptr) {
+                return std::vector<Keela::Element *>{record_bin.get()};
+            }
+            return std::vector<Keela::Element *>{};
         }
 
         std::string name;

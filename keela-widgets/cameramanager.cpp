@@ -137,8 +137,6 @@ GstPadProbeReturn Keela::CameraManager::frame_parity_probe_cb(GstPad *pad, GstPa
 void Keela::CameraManager::set_frame_splitting(bool enabled) {
     split_streams = enabled;
     spdlog::info("Frame splitting {}", enabled ? "enabled" : "disabled");
-    // Reset frame counter when toggling
-    frame_count.store(0);
 
     if (enabled) {
         if (camera_stream_odd == nullptr) {

@@ -71,9 +71,6 @@ namespace Keela {
         guint id;
         bool split_streams;
 
-        // Frame counting for even/odd filtering
-        std::atomic<guint64> frame_count{0};
-
         /// caps filter to apply to the entire stream
         Caps base_caps;
 
