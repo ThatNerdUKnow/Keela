@@ -109,25 +109,17 @@ std::pair<double, double> Keela::CameraManager::get_gain_range() const {
     double min_gain = 0.0;
     double max_gain = 0.0;
 
-    if (!is_aravis_src()) {
+    ArvCamera *aravis_camera = get_aravis_camera();
+    if (aravis_camera == nullptr) {
         spdlog::warn("Gain control not supported");
         return {min_gain, max_gain};
     }
 
     spdlog::debug("Querying gain range from camera hardware via ArvCamera object");
-    GstElement *camera_element = static_cast<GstElement *>(camera);
-    // Try to get the underlying ArvCamera object from aravissrc
-    ArvCamera *arv_camera = nullptr;
-    g_object_get(camera_element, "camera", &arv_camera, nullptr);
-
-    if (arv_camera == nullptr) {
-        spdlog::warn("Could not access ArvCamera object");
-        return {min_gain, max_gain};
-    }
 
     GError *error = nullptr;
     // Query the actual hardware gain limits
-    arv_camera_get_gain_bounds(arv_camera, &min_gain, &max_gain, &error);
+    arv_camera_get_gain_bounds(aravis_camera, &min_gain, &max_gain, &error);
     if (error == nullptr) {
         spdlog::info("Queried hardware gain range from camera: {:.1f} to {:.1f} dB", min_gain, max_gain);
     } else {
@@ -135,9 +127,34 @@ std::pair<double, double> Keela::CameraManager::get_gain_range() const {
         g_error_free(error);
     }
 
-    g_object_unref(arv_camera);
+    g_object_unref(aravis_camera);
 
     return {min_gain, max_gain};
+}
+
+std::pair<double, double> Keela::CameraManager::get_exposure_time_range() const {
+    double min_exposure = 0.0;
+    double max_exposure = 0.0;
+
+    ArvCamera *aravis_camera = get_aravis_camera();
+    if (aravis_camera == nullptr) {
+        spdlog::warn("Exposure time control not supported");
+        return {min_exposure, max_exposure};
+    }
+
+    spdlog::debug("Querying exposure time range from camera hardware via ArvCamera object");
+
+    GError *error = nullptr;
+    // Query the actual hardware exposure time limits
+    arv_camera_get_exposure_time_bounds(aravis_camera, &min_exposure, &max_exposure, &error);
+    if (error == nullptr) {
+        spdlog::info("Queried hardware exposure time range from camera: {:.1f} to {:.1f} us", min_exposure, max_exposure);
+    } else {
+        spdlog::warn("Error querying exposure time range from camera: {}", error->message);
+        g_error_free(error);
+    }
+
+    return {min_exposure, max_exposure};
 }
 
 void Keela::CameraManager::set_gain(double gain) {
@@ -156,14 +173,15 @@ void Keela::CameraManager::set_gain(double gain) {
                  gain, actual_gain);
 }
 
-bool Keela::CameraManager::is_aravis_src() const {
+ArvCamera *Keela::CameraManager::get_aravis_camera() const {
+    if (aravis_camera != nullptr) {
+        return aravis_camera;
+    }
+
     GstElement *camera_element = static_cast<GstElement *>(camera);
-
-    // Check if this is an aravissrc element by checking its factory name
-    GstElementFactory *factory = gst_element_get_factory(camera_element);
-    const gchar *factory_name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
-
-    return (g_strcmp0(factory_name, "aravissrc") == 0);
+    // Try to get the underlying ArvCamera object from aravissrc
+    g_object_get(camera_element, "camera", &aravis_camera, nullptr);
+    return aravis_camera;
 }
 
 void Keela::CameraManager::start_recording() {
@@ -187,9 +205,9 @@ void Keela::CameraManager::stop_recording() {
 GstPadProbeReturn Keela::CameraManager::frame_parity_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
     GstBuffer *buffer = GST_PAD_PROBE_INFO_BUFFER(info);
     int parity = GPOINTER_TO_INT(user_data);
-    
+
     guint64 frame_number = 0;
-    
+
     // Some sources will have the frame number in the buffer offset (e.g. videotestsrc)
     if (GST_BUFFER_OFFSET(buffer) != GST_BUFFER_OFFSET_NONE) {
         frame_number = GST_BUFFER_OFFSET(buffer);
@@ -199,7 +217,7 @@ GstPadProbeReturn Keela::CameraManager::frame_parity_probe_cb(GstPad *pad, GstPa
         static guint64 manual_counter = 0;
         frame_number = manual_counter++;
     }
-    
+
     if (frame_number % 2 == parity) {
         return GST_PAD_PROBE_OK;  // Pass the frame
     } else {

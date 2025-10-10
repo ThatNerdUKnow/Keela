@@ -12,6 +12,7 @@
 #include <keela-pipeline/simpleelement.h>
 #include <keela-pipeline/snapshotbin.h>
 #include <keela-pipeline/transformbin.h>
+#include <arv.h>
 
 #include <atomic>
 #include <set>
@@ -36,10 +37,16 @@ namespace Keela {
 
         void set_experiment_directory(const std::string &path);
 
-        void set_gain(double gain);
-
         // Query hardware capabilities
         std::pair<double, double> get_gain_range() const;
+
+        std::pair<double, double> get_exposure_time_range() const;
+
+        // Control hardware settings
+        void set_gain(double gain);
+
+        void set_exposure(double exposure);
+
 
         void start_recording();
 
@@ -109,7 +116,9 @@ namespace Keela {
 
         void add_odd_camera_stream();
 
-        bool is_aravis_src() const;
+        ArvCamera* get_aravis_camera() const;
+
+        ArvCamera* aravis_camera = nullptr;
     };
 }  // namespace Keela
 #endif  // CAMERAMANAGER_H
