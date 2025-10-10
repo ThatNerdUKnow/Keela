@@ -186,9 +186,20 @@ void Keela::CameraManager::stop_recording() {
 
 GstPadProbeReturn Keela::CameraManager::frame_parity_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
     GstBuffer *buffer = GST_PAD_PROBE_INFO_BUFFER(info);
-    int frame_number = GST_BUFFER_OFFSET(buffer);
     int parity = GPOINTER_TO_INT(user_data);
-
+    
+    guint64 frame_number = 0;
+    
+    // Some sources will have the frame number in the buffer offset (e.g. videotestsrc)
+    if (GST_BUFFER_OFFSET(buffer) != GST_BUFFER_OFFSET_NONE) {
+        frame_number = GST_BUFFER_OFFSET(buffer);
+    }
+    // But others like aravissrc do not set offset, so we fall back to our own counter
+    else {
+        static guint64 manual_counter = 0;
+        frame_number = manual_counter++;
+    }
+    
     if (frame_number % 2 == parity) {
         return GST_PAD_PROBE_OK;  // Pass the frame
     } else {
