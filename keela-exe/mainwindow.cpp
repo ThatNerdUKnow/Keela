@@ -95,6 +95,7 @@ MainWindow::MainWindow(): Gtk::Window() {
     Glib::signal_timeout().connect_once([this]() {
         for (const auto &camera : cameras) {
             camera->update_gain_range();
+            camera->update_exposure_time_range();
         }
     }, 1000);  // 1 second delay
 

@@ -34,11 +34,15 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
     range_frame->add(range_max_spin);
     v_container.add(*range_frame);
 
-    
     // Disable gain control until camera is ready and we can query for gain support and supported range
     gain_spin.m_spin.set_sensitive(false);
     gain_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_gain_changed));
     v_container.add(gain_spin);
+
+    // Disable exposure time control until camera is ready and we can query for exposure time support and supported range
+    exposure_time_spin.m_spin.set_sensitive(false);
+    exposure_time_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_exposure_time_changed));
+    v_container.add(exposure_time_spin);
 
     // TODO: add rotation options
     rotation_combo.m_combo.signal_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_rotation_changed));
@@ -69,8 +73,8 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
     frame_widget_even = std::make_unique<VideoPresentation>(
         "Camera " + std::to_string(id),
         camera_manager->camera_stream_even->presentation,
-        640, // width
-        480 // height
+        640,  // width
+        480   // height
     );
     frame_widget_even->add_overlay_widget(*trace_gizmo_even);
     video_hbox.pack_start(*frame_widget_even, false, false, 10);
@@ -102,6 +106,12 @@ void Keela::CameraControlWindow::on_gain_changed() const {
     const auto gain = gain_spin.m_spin.get_value();
     spdlog::info("Gain changed to {}", gain);
     camera_manager->set_gain(gain);
+}
+
+void Keela::CameraControlWindow::on_exposure_time_changed() const {
+    const auto exposure_time = exposure_time_spin.m_spin.get_value();
+    spdlog::info("Exposure time changed to {}", exposure_time);
+    camera_manager->set_exposure_time(exposure_time);
 }
 
 void Keela::CameraControlWindow::set_resolution(const int width, const int height) {
@@ -187,34 +197,32 @@ std::vector<std::shared_ptr<Keela::ITraceable>> Keela::CameraControlWindow::get_
 
 void Keela::CameraControlWindow::update_traces() {
     m_traces.clear();
-    
+
     // Always add the even trace
     std::string even_name = "Camera " + std::to_string(id);
     if (camera_manager->is_frame_splitting_enabled()) {
         even_name += " (Even)";
     }
-    
+
     auto even_trace = std::make_shared<CameraTrace>(
         camera_manager->camera_stream_even->get_trace(),
         trace_gizmo_even,
-        even_name
-    );
+        even_name);
     m_traces.push_back(even_trace);
-    
+
     // Add odd trace if frame splitting is enabled
     if (camera_manager->is_frame_splitting_enabled() && trace_gizmo_odd) {
         auto odd_trace = std::make_shared<CameraTrace>(
             camera_manager->camera_stream_odd->get_trace(),
             trace_gizmo_odd,
-            "Camera " + std::to_string(id) + " (Odd)"
-        );
+            "Camera " + std::to_string(id) + " (Odd)");
         m_traces.push_back(odd_trace);
     }
 }
 
 void Keela::CameraControlWindow::apply_trace_framerate(guint fps) {
     spdlog::info("Applying trace framerate {} to all traces for camera {}", fps, id);
-    for (const auto &trace : m_traces) {
+    for (const auto& trace : m_traces) {
         auto trace_bin = trace->get_trace_bin();
         if (trace_bin) {
             trace_bin->set_trace_framerate(fps);
@@ -223,7 +231,7 @@ void Keela::CameraControlWindow::apply_trace_framerate(guint fps) {
 }
 
 void Keela::CameraControlWindow::add_split_frame_ui() {
-    if (frame_widget_odd) return; // Already added
+    if (frame_widget_odd) return;  // Already added
 
     // Create trace gizmo for odd frames
     trace_gizmo_odd = std::make_shared<TraceGizmo>();
@@ -233,15 +241,15 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
         frame_widget_odd = std::make_unique<VideoPresentation>(
             "Odd Frames",
             camera_manager->camera_stream_odd->presentation,
-            480, // width
-            640 // height
+            480,  // width
+            640   // height
         );
     } else {
         frame_widget_odd = std::make_unique<VideoPresentation>(
             "Odd Frames",
             camera_manager->camera_stream_odd->presentation,
-            640, // width
-            480 // height
+            640,  // width
+            480   // height
         );
     }
 
@@ -273,7 +281,7 @@ void Keela::CameraControlWindow::update_gain_range() {
     auto gain_range = camera_manager->get_gain_range();
     double min_gain = gain_range.first;
     double max_gain = gain_range.second;
-    
+
     if (min_gain == 0.0 && max_gain == 0.0) {
         gain_spin.m_spin.set_sensitive(false);
         spdlog::warn("Gain control not supported by camera - disabling gain control UI");
@@ -282,6 +290,24 @@ void Keela::CameraControlWindow::update_gain_range() {
     // update the gain spin with the new range
     gain_spin.m_spin.set_adjustment(Gtk::Adjustment::create(min_gain, min_gain, max_gain, 1.0));
     gain_spin.m_spin.set_sensitive(true);
-    
+
     spdlog::info("Updated gain control range to {:.1f} - {:.1f} dB", min_gain, max_gain);
+}
+
+void Keela::CameraControlWindow::update_exposure_time_range() {
+    // get the range supported by the camera hardware
+    auto exposure_time_range = camera_manager->get_exposure_time_range();
+    double min_exposure_time = exposure_time_range.first;
+    double max_exposure_time = exposure_time_range.second;
+
+    if (min_exposure_time == 0.0 && max_exposure_time == 0.0) {
+        exposure_time_spin.m_spin.set_sensitive(false);
+        spdlog::warn("Exposure time control not supported by camera - disabling exposure time control UI");
+        return;
+    }
+    // update the exposure time spin with the new range
+    exposure_time_spin.m_spin.set_adjustment(Gtk::Adjustment::create(min_exposure_time, min_exposure_time, max_exposure_time, 1000.0));
+    exposure_time_spin.m_spin.set_sensitive(true);
+
+    spdlog::info("Updated exposure time control range to {:.1f} - {:.1f} μs", min_exposure_time, max_exposure_time);
 }

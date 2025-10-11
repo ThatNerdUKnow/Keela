@@ -4,6 +4,7 @@
 
 #ifndef CAMERAMANAGER_H
 #define CAMERAMANAGER_H
+#include <arv.h>
 #include <keela-pipeline/CameraStreamBin.h>
 #include <keela-pipeline/bin.h>
 #include <keela-pipeline/caps.h>
@@ -12,7 +13,6 @@
 #include <keela-pipeline/simpleelement.h>
 #include <keela-pipeline/snapshotbin.h>
 #include <keela-pipeline/transformbin.h>
-#include <arv.h>
 
 #include <atomic>
 #include <set>
@@ -45,8 +45,7 @@ namespace Keela {
         // Control hardware settings
         void set_gain(double gain);
 
-        void set_exposure(double exposure);
-
+        void set_exposure_time(double exposure);
 
         void start_recording();
 
@@ -116,9 +115,9 @@ namespace Keela {
 
         void add_odd_camera_stream();
 
-        ArvCamera* get_aravis_camera() const;
+        ArvCamera *get_aravis_camera() const;
 
-        ArvCamera* aravis_camera = nullptr;
+        ArvCamera *aravis_camera = nullptr;
     };
 }  // namespace Keela
 #endif  // CAMERAMANAGER_H

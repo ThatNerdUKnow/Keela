@@ -160,17 +160,52 @@ std::pair<double, double> Keela::CameraManager::get_exposure_time_range() const 
 void Keela::CameraManager::set_gain(double gain) {
     spdlog::info("Setting camera gain to {}", gain);
 
-    GstElement *camera_element = static_cast<GstElement *>(camera);
+    ArvCamera *aravis_camera = get_aravis_camera();
 
-    // Set the gain property on the aravissrc element
-    g_object_set(camera_element, "gain", gain, nullptr);
+    GError *error = nullptr;
+    arv_camera_set_gain(aravis_camera, gain, &error);
+
+    if (error != nullptr) {
+        spdlog::error("Error setting gain on camera: {}", error->message);
+        g_error_free(error);
+        return;
+    }
 
     // Read back the actual gain value to confirm it was set
-    gdouble actual_gain = 0.0;
-    g_object_get(camera_element, "gain", &actual_gain, nullptr);
+    gdouble actual_gain = arv_camera_get_gain(aravis_camera, &error);
+
+    if (error != nullptr) {
+        spdlog::error("Error getting gain from camera: {}", error->message);
+        g_error_free(error);
+        return;
+    }
 
     spdlog::info("Set gain to {:.1f} dB, actual camera gain: {:.1f} dB",
                  gain, actual_gain);
+}
+
+void Keela::CameraManager::set_exposure_time(double exposure) {
+    spdlog::info("Setting camera exposure time to {}", exposure);
+
+    ArvCamera *aravis_camera = get_aravis_camera();
+
+    GError *error = nullptr;
+    arv_camera_set_exposure_time(aravis_camera, exposure, &error);
+
+    if (error != nullptr) {
+        spdlog::error("Error setting exposure time on camera: {}", error->message);
+        g_error_free(error);
+        return;
+    }
+    // Read back the actual exposure time value to confirm it was set
+    gdouble actual_exposure = arv_camera_get_exposure_time(aravis_camera, &error);
+    if (error != nullptr) {
+        spdlog::error("Error getting exposure time from camera: {}", error->message);
+        g_error_free(error);
+        return;
+    }
+    spdlog::info("Set exposure time to {:.1f} us, actual camera exposure time: {:.1f} us",
+                 exposure, actual_exposure);
 }
 
 ArvCamera *Keela::CameraManager::get_aravis_camera() const {
