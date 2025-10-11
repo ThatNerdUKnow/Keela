@@ -90,14 +90,11 @@ MainWindow::MainWindow(): Gtk::Window() {
     on_camera_spin_changed();
     gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
 
-    // @todo: implement a callback to update the gain range after the camera is ready
-    //        this is just to get help get started for now
-    Glib::signal_timeout().connect_once([this]() {
-        for (const auto &camera : cameras) {
-            camera->update_gain_range();
-            camera->update_exposure_time_range();
-        }
-    }, 1000);  // 1 second delay
+    // Query hardware capabilities to set ranges in the UI
+    for (const auto &camera : cameras) {
+        camera->update_gain_range();
+        camera->update_exposure_time_range();
+    }
 
     show_all_children();
 }
