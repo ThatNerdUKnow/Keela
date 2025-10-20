@@ -20,28 +20,13 @@ Keela::CameraManager::CameraManager(guint id, std::string pix_fmt, bool split_st
         spdlog::info("Creating camera manager {}", id);
         this->id = id;
 
-        // Add all elements to the bin (except camera_stream_even which has deleted copy constructor)
-        add_elements(camera, caps_filter, transform, tee_main);
+        Bin camera_stream_bin = static_cast<Bin & >(*camera_stream_even);
 
-        // @TODO: figure out how to do this more cleanly
-        // Add camera_stream_even manually due to deleted copy constructor from multiple inheritance
-        // Cast to Bin base class first to resolve ambiguous conversion
-        Keela::Bin *camera_stream_bin = camera_stream_even.get();
-        GstElement *camera_stream_elem_even = static_cast<GstElement *>(*camera_stream_bin);
-        gst_object_ref(camera_stream_elem_even);
-        GstBin *this_bin = static_cast<GstBin *>(*this);
-        gboolean ret = gst_bin_add(this_bin, camera_stream_elem_even);
-        if (!ret) {
-            throw std::runtime_error("Failed to add camera_stream_even to bin");
-        }
-        // Link main tee to camera_stream_even manually using gst_element_link
-        gboolean link_result = gst_element_link(tee_main, camera_stream_elem_even);
-        if (!link_result) {
-            throw std::runtime_error("Failed to link tee_main to camera_stream_even");
-        }
+        // Add all elements to the bin
+        add_elements(camera, caps_filter, transform, tee_main, camera_stream_bin);
 
-        // Link main pipeline: camera -> capsfilter -> transform -> main_tee
-        element_link_many(camera, caps_filter, transform, tee_main);
+        // Link main pipeline: camera -> capsfilter -> transform -> main_tee -> camera_stream_even
+        element_link_many(camera, caps_filter, transform, tee_main, camera_stream_bin);
 
         if (split_streams) {
             add_odd_camera_stream();
@@ -197,25 +182,18 @@ std::string Keela::CameraManager::get_filename(std::string directory, guint cam_
 }
 
 void Keela::CameraManager::add_odd_camera_stream() {
-    // @TODO: figure out how to do this more cleanly
-    Keela::Bin *camera_stream_bin = camera_stream_odd.get();
-    GstElement *camera_stream_elem_odd = static_cast<GstElement *>(*camera_stream_bin);
-    gst_object_ref(camera_stream_elem_odd);
-    GstBin *this_bin = static_cast<GstBin *>(*this);
-    gboolean ret = gst_bin_add(this_bin, camera_stream_elem_odd);
-    if (!ret) {
-        throw std::runtime_error("Failed to add camera_stream_odd to bin");
-    }
+    Bin camera_stream_odd_bin = static_cast<Bin & >(*camera_stream_odd);
+
+    add_elements(camera_stream_odd_bin);
+
     // Sync state with parent if the pipeline is already running
-    gboolean sync_result = gst_element_sync_state_with_parent(camera_stream_elem_odd);
+    gboolean sync_result = gst_element_sync_state_with_parent(camera_stream_odd_bin);
     if (!sync_result) {
         spdlog::warn("Failed to sync camera_stream_odd state with parent");
     }
-    // Link main tee to camera_stream_odd manually using gst_element_link
-    gboolean link_result = gst_element_link(tee_main, camera_stream_elem_odd);
-    if (!link_result) {
-        throw std::runtime_error("Failed to link tee_main to camera_stream_odd");
-    }
+
+    // Link main tee to camera_stream_odd 
+    element_link_many(tee_main, camera_stream_odd_bin);
 }
 
 void Keela::CameraManager::remove_probe_by_id(gulong &probe_id, GstPad *pad, const std::string &probe_name) {
