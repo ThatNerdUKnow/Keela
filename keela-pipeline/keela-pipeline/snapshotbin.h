@@ -11,7 +11,7 @@
 namespace Keela {
     class SnapshotBin final : public Keela::QueueBin {
     public:
-        SnapshotBin();
+        explicit SnapshotBin(const std::string &name);
 
         ~SnapshotBin() override;
 

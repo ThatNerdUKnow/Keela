@@ -4,6 +4,7 @@
 
 #ifndef CAMERAMANAGER_H
 #define CAMERAMANAGER_H
+#include <keela-pipeline/CameraStreamBin.h>
 #include <keela-pipeline/bin.h>
 #include <keela-pipeline/caps.h>
 #include <keela-pipeline/presentationbin.h>
@@ -16,6 +17,9 @@
 #include <set>
 
 #include "keela-pipeline/TraceBin.h"
+
+#define EVEN_FRAME 0
+#define ODD_FRAME 1
 
 namespace Keela {
     class CameraManager final : public Keela::Bin {
@@ -41,44 +45,31 @@ namespace Keela {
 
         bool is_frame_splitting_enabled() const { return split_streams; }
 
-        // Get trace bins for both even and odd paths
-        std::shared_ptr<TraceBin> get_trace_even() { return trace_even; }
-        std::shared_ptr<TraceBin> get_trace_odd() { return trace_odd; }
+        // Camera Streams manage presentation, recording, and tracing of their respective frame streams
+        std::shared_ptr<CameraStreamBin> camera_stream_even = std::make_shared<CameraStreamBin>("camera_stream_even");
+        std::shared_ptr<CameraStreamBin> camera_stream_odd = std::make_shared<CameraStreamBin>("camera_stream_odd");
 
         SimpleElement camera = SimpleElement("videotestsrc");
         SimpleElement caps_filter = SimpleElement("capsfilter");
         TransformBin transform = TransformBin("transform");
 
-        // Even frame path
-        std::shared_ptr<PresentationBin> presentation_even = std::make_shared<PresentationBin>("presentation_even");
-        SnapshotBin snapshot_even;
-        std::shared_ptr<TraceBin> trace_even = std::make_shared<TraceBin>("trace_even");
-
-        // Odd frame path
-        std::shared_ptr<PresentationBin> presentation_odd = std::make_shared<PresentationBin>("presentation_odd");
-        SnapshotBin snapshot_odd;
-        std::shared_ptr<TraceBin> trace_odd = std::make_shared<TraceBin>("trace_odd");
-
-        SnapshotBin &snapshot = snapshot_even;
-        std::shared_ptr<TraceBin> &trace = trace_even;
-
     private:
+        gulong even_frame_probe_id = 0;
+        gulong odd_frame_probe_id = 0;
+
         void set_up_frame_splitting();
 
         void install_frame_splitting_probes();
 
-        // Frame filtering callbacks
-        static GstPadProbeReturn frame_numbering_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
+        void remove_frame_splitting_probes();
 
-        static GstPadProbeReturn even_frame_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
+        void remove_probe_by_id(gulong &probe_id, GstPad *pad, const std::string &probe_name);
 
-        static GstPadProbeReturn odd_frame_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
+        // Frame filtering callback
+        static GstPadProbeReturn frame_parity_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
 
         guint id;
         bool split_streams;
-
-        // Frame counting for even/odd filtering
-        std::atomic<guint64> frame_count{0};
 
         /// caps filter to apply to the entire stream
         Caps base_caps;
@@ -96,16 +87,6 @@ namespace Keela {
          */
         SimpleElement tee_main = SimpleElement("tee");
 
-        /**
-         * use to split even frames to multiple outputs
-         */
-        SimpleElement tee_even = SimpleElement("tee");
-
-        /**
-         * use to split odd frames to multiple outputs
-         */
-        SimpleElement tee_odd = SimpleElement("tee");
-
         /* at any moment there may be many active record bins
          *
          * TODO: do these still need to be shared_ptr?
@@ -120,6 +101,8 @@ namespace Keela {
          * supports cross-platform path joining
          */
         static std::string get_filename(std::string directory, guint cam_id, std::string suffix = "");
+
+        void add_odd_camera_stream();
     };
-} // namespace Keela
+}  // namespace Keela
 #endif  // CAMERAMANAGER_H

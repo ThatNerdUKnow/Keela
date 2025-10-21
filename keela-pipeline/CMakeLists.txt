@@ -29,6 +29,8 @@ add_library(keela-pipeline presentationbin.cpp keela-pipeline/presentationbin.h
         EjectableElement.cpp
         keela-pipeline/EjectableElement.h
         keela-pipeline/consts.h
+        CameraStreamBin.cpp
+        keela-pipeline/CameraStreamBin.h
 )
 target_link_libraries(keela-pipeline PUBLIC PkgConfig::GSTREAMER PkgConfig::SPDLOG)
 

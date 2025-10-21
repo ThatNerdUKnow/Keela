@@ -9,7 +9,7 @@
 #include "keela-pipeline/gst-helpers.h"
 #include "keela-pipeline/utils.h"
 
-Keela::SnapshotBin::SnapshotBin() {
+Keela::SnapshotBin::SnapshotBin(const std::string &name) : QueueBin(name) {
     SnapshotBin::init();
     SnapshotBin::link();
 }
