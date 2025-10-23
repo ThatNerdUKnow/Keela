@@ -25,6 +25,9 @@ namespace Keela {
 
         int num_traces() const;
 
+        /** Callback passed by the MainWindow to update "Show Traces" UI when we close the trace window */
+        void set_on_closed_callback(std::function<void()> callback);
+
     private:
         std::vector<std::shared_ptr<GLTraceRender> > traces;
         Gtk::ScrolledWindow scrolled_window;
@@ -32,6 +35,9 @@ namespace Keela {
 
         // sync up queueing draw events for trace widgets
         bool on_timeout();
+
+        std::function<void()> on_window_closed_callback;
+        bool on_delete_event(GdkEventAny* any_event);
     };
 }
 

@@ -5,7 +5,8 @@
 #include "tracewindow.h"
 
 Keela::TraceWindow::TraceWindow() {
-    set_deletable(false);
+    signal_delete_event().connect(sigc::mem_fun(this, &TraceWindow::on_delete_event));
+
     set_default_size(640, 480);
     set_title("Traces");
     Window::add(scrolled_window);
@@ -60,9 +61,21 @@ int Keela::TraceWindow::num_traces() const {
     return traces.size();
 }
 
+void Keela::TraceWindow::set_on_closed_callback(std::function<void()> callback) {
+    on_window_closed_callback = std::move(callback);
+}
+
 bool Keela::TraceWindow::on_timeout() {
     for (const auto &trace: traces) {
         trace->queue_draw();
     }
     return true;
 }
+
+bool Keela::TraceWindow::on_delete_event(GdkEventAny* any_event) {
+    if (on_window_closed_callback) {
+        on_window_closed_callback();
+    }
+    return false; // Allow the default handler to destroy the window
+}
+

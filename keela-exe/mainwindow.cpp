@@ -76,7 +76,8 @@ MainWindow::MainWindow(): Gtk::Window() {
     restart_camera_button.set_label("Restart Camera(s)");
     container.add(restart_camera_button);
 
-    show_trace_check.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_trace_button_clicked));
+    // Store connection so we can block it when closing the window programmatically
+    trace_signal_connection = show_trace_check.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_trace_button_clicked));
     // create the pipeline
     pipeline = GST_PIPELINE(gst_pipeline_new("pipeline"));
     if (!pipeline) {
@@ -229,6 +230,16 @@ void MainWindow::on_trace_button_clicked() {
     spdlog::info(__func__);
     if (trace_window == nullptr) {
         trace_window = std::make_unique<Keela::TraceWindow>();
+        trace_window->set_on_closed_callback([this]() {
+            spdlog::info("Trace window closed manually, performing cleanup");
+            trace_window = nullptr;
+            trace_fps_spin.set_sensitive(false);
+
+            // Block the signal to prevent recursive calls
+            trace_signal_connection.block();
+            show_trace_check.set_active(false);
+            trace_signal_connection.unblock();
+        });
         trace_window->show();
 
         spdlog::debug("num traces: {}\t num cameras: {}", trace_window->num_traces(), trace_window->num_traces());
