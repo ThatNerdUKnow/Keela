@@ -40,6 +40,7 @@ private:
     Gtk::Box container;
     std::vector<std::shared_ptr<Keela::CameraControlWindow> > cameras;
     std::shared_ptr<Keela::TraceWindow> trace_window = nullptr;
+    sigc::connection trace_signal_connection;
 
     void on_camera_spin_changed();
 
