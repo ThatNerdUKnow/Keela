@@ -46,7 +46,7 @@ void main() {
         float range = heatmap_threshold_high - heatmap_threshold_low;
         // if range is 0, set range to 1 to protect against division by zero.
         // this will have the effect to map the samples in the range as if there were no threshold
-        if (range = 0) {
+        if (range == 0.0) {
             range = 1;
         }
         float sample_factor = heatmap_scale * 1 / range;
