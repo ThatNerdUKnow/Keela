@@ -50,13 +50,11 @@ void main() {
         if (range == 0.0) {
             range = 1;
         }
-        float sample_factor = heatmap_scale * 1 / range;
-
         // scale texture sample to the range [0,heatmap_scale]
-        float H = texSample.x * sample_factor;
+        float H = heatmap_scale * (texSample.x - heatmap_threshold_low) / range;
         // invert the colors so that higher valued samples are mapped to "hot" colors
         // and lower valued samples are mapped to "cold" colors
-        float invert_offset = range * sample_factor / 2;
+        float invert_offset = heatmap_scale / 2;
         H = -(H - invert_offset) + invert_offset;
         // finally, offset the entire color wheel so that purple will map to samples of ~1.0
         H = H + heatmap_offset;

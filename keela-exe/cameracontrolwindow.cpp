@@ -27,9 +27,11 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
 
     range_min_spin.set_sensitive(false);
     range_max_spin.set_sensitive(false);
-    range_min_spin.m_spin.set_adjustment(Gtk::Adjustment::create(0.0, 0.0, 100, 0.01));
+    range_min_spin.m_spin.set_digits(2);
+    range_min_spin.m_spin.set_adjustment(Gtk::Adjustment::create(0.0, 0.0, 100, 0.1));
+    range_max_spin.m_spin.set_digits(2);
     range_max_spin.m_spin.set_adjustment(
-        Gtk::Adjustment::create(100, 0.0, 100, 0.01));
+        Gtk::Adjustment::create(100, 0.0, 100, 0.1));
     range_frame->add(range_min_spin);
     range_frame->add(range_max_spin);
     v_container.add(*range_frame);
