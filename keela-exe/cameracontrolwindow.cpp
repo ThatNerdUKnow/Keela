@@ -27,9 +27,9 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
 
     range_min_spin.set_sensitive(false);
     range_max_spin.set_sensitive(false);
-    range_min_spin.m_spin.set_adjustment(Gtk::Adjustment::create(0.0, 0.0, std::numeric_limits<uint8_t>::max()));
+    range_min_spin.m_spin.set_adjustment(Gtk::Adjustment::create(0.0, 0.0, 100, 0.01));
     range_max_spin.m_spin.set_adjustment(
-        Gtk::Adjustment::create(std::numeric_limits<uint8_t>::max(), 0.0, std::numeric_limits<uint8_t>::max()));
+        Gtk::Adjustment::create(100, 0.0, 100, 0.01));
     range_frame->add(range_min_spin);
     range_frame->add(range_max_spin);
     v_container.add(*range_frame);
@@ -66,6 +66,7 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
     frame_widget_even = std::make_unique<VideoPresentation>(
         "Camera " + std::to_string(id),
         camera_manager->camera_stream_even->presentation,
+        *this,
         640, // width
         480 // height
     );
@@ -162,15 +163,27 @@ void Keela::CameraControlWindow::update_split_frame_state(bool should_split_fram
     update_traces();
 }
 
-std::vector<std::shared_ptr<Keela::ITraceable>> Keela::CameraControlWindow::get_traces() {
+bool Keela::CameraControlWindow::is_heatmap_enabled() {
+    return range_check.get_active();
+}
+
+float Keela::CameraControlWindow::heatmap_min() {
+    return static_cast<float>(range_min_spin.m_spin.get_value()) / 100;
+}
+
+float Keela::CameraControlWindow::heatmap_max() {
+    return static_cast<float>(range_max_spin.m_spin.get_value()) / 100;
+}
+
+std::vector<std::shared_ptr<Keela::ITraceable> > Keela::CameraControlWindow::get_traces() {
     // Lazily create traces if not already done
     if (m_traces.empty()) {
         update_traces();
     }
 
-    std::vector<std::shared_ptr<ITraceable>> traces;
+    std::vector<std::shared_ptr<ITraceable> > traces;
     traces.reserve(m_traces.size());
-    for (const auto& trace : m_traces) {
+    for (const auto &trace: m_traces) {
         traces.push_back(trace);
     }
     return traces;
@@ -178,20 +191,20 @@ std::vector<std::shared_ptr<Keela::ITraceable>> Keela::CameraControlWindow::get_
 
 void Keela::CameraControlWindow::update_traces() {
     m_traces.clear();
-    
+
     // Always add the even trace
     std::string even_name = "Camera " + std::to_string(id);
     if (camera_manager->is_frame_splitting_enabled()) {
         even_name += " (Even)";
     }
-    
+
     auto even_trace = std::make_shared<CameraTrace>(
         camera_manager->camera_stream_even->get_trace(),
         trace_gizmo_even,
         even_name
     );
     m_traces.push_back(even_trace);
-    
+
     // Add odd trace if frame splitting is enabled
     if (camera_manager->is_frame_splitting_enabled() && trace_gizmo_odd) {
         auto odd_trace = std::make_shared<CameraTrace>(
@@ -205,7 +218,7 @@ void Keela::CameraControlWindow::update_traces() {
 
 void Keela::CameraControlWindow::apply_trace_framerate(guint fps) {
     spdlog::info("Applying trace framerate {} to all traces for camera {}", fps, id);
-    for (const auto &trace : m_traces) {
+    for (const auto &trace: m_traces) {
         auto trace_bin = trace->get_trace_bin();
         if (trace_bin) {
             trace_bin->set_trace_framerate(fps);
@@ -224,6 +237,7 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
         frame_widget_odd = std::make_unique<VideoPresentation>(
             "Odd Frames",
             camera_manager->camera_stream_odd->presentation,
+            *this,
             480, // width
             640 // height
         );
@@ -231,6 +245,7 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
         frame_widget_odd = std::make_unique<VideoPresentation>(
             "Odd Frames",
             camera_manager->camera_stream_odd->presentation,
+            *this,
             640, // width
             480 // height
         );

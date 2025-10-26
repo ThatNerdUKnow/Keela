@@ -9,9 +9,23 @@
 #include <keela-pipeline/presentationbin.h>
 
 namespace Keela {
+    /**
+     * An object that can control the heatmap behavior of a GLCameraRender object
+     */
+    class IControlGLCameraRenderHeatmap {
+    public:
+        virtual ~IControlGLCameraRenderHeatmap() = default;
+
+        virtual bool is_heatmap_enabled() = 0;
+
+        virtual float heatmap_min() = 0;
+
+        virtual float heatmap_max() = 0;
+    };
+
     class GLCameraRender final : public Gtk::GLArea {
     public:
-        GLCameraRender(std::shared_ptr<PresentationBin> bin);
+        explicit GLCameraRender(std::shared_ptr<PresentationBin> bin, IControlGLCameraRenderHeatmap &controller);
 
         ~GLCameraRender() override;
 
@@ -43,6 +57,8 @@ namespace Keela {
             1, 1, 1, 0,
             -1, -1, 0, 1
         };
+
+        IControlGLCameraRenderHeatmap &m_controller;
     };
 }
 #endif //GLCAMERARENDER_H

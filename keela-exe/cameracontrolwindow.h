@@ -16,7 +16,7 @@
 #include "keela-widgets/videopresentation.h"
 
 namespace Keela {
-    class CameraControlWindow final : public Gtk::Window {
+    class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCameraRenderHeatmap {
     public:
         explicit CameraControlWindow(guint id, std::string pix_fmt, bool should_split_frames);
 
@@ -35,8 +35,8 @@ namespace Keela {
         std::unique_ptr<VideoPresentation> frame_widget_odd;
 
         Gtk::CheckButton range_check = Gtk::CheckButton("Range");
-        Keela::LabeledSpinButton range_min_spin = Keela::LabeledSpinButton("Minimum");
-        Keela::LabeledSpinButton range_max_spin = Keela::LabeledSpinButton("Maximum");
+        Keela::LabeledSpinButton range_min_spin = Keela::LabeledSpinButton("% Minimum");
+        Keela::LabeledSpinButton range_max_spin = Keela::LabeledSpinButton("% Maximum");
 
         // TODO: histogram
         Keela::LabeledSpinButton gain_spin = Keela::LabeledSpinButton("Gain");
@@ -66,14 +66,21 @@ namespace Keela {
         void update_traces();
 
     public:
-        std::vector<std::shared_ptr<ITraceable>> get_traces();
+        std::vector<std::shared_ptr<ITraceable> > get_traces();
+
         void apply_trace_framerate(guint fps);
 
         // Method for main window to toggle split frame mode
         void update_split_frame_state(bool enabled);
 
     private:
-        std::vector<std::shared_ptr<CameraTrace>> m_traces;
+        bool is_heatmap_enabled() override;
+
+        float heatmap_min() override;
+
+        float heatmap_max() override;
+
+        std::vector<std::shared_ptr<CameraTrace> > m_traces;
         // set width and height initially to a sentinel value
         int m_width = -1, m_height = -1;
     };

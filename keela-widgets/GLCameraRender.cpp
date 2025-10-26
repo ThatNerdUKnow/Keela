@@ -12,7 +12,8 @@
 
 #include "keela-pipeline/consts.h"
 
-Keela::GLCameraRender::GLCameraRender(std::shared_ptr<PresentationBin> bin) {
+Keela::GLCameraRender::GLCameraRender(std::shared_ptr<PresentationBin> bin,
+                                      IControlGLCameraRenderHeatmap &controller): m_controller(controller) {
     GError *error = nullptr;
     spdlog::debug("{}: Loading vertex shader resource", __func__);
     auto vertex_res = g_resources_lookup_data("/org/gatech/keela/shaders/video-vertex.glsl",
@@ -192,7 +193,11 @@ bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &contex
     glUseProgram(shaderProgram);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
+
     glUniform1i(glGetUniformLocation(shaderProgram, "videoTexture"), 0);
+    glUniform1i(glGetUniformLocation(shaderProgram, "heatmap_enabled"), m_controller.is_heatmap_enabled());
+    glUniform1f(glGetUniformLocation(shaderProgram, "heatmap_threshold_high"), m_controller.heatmap_max());
+    glUniform1f(glGetUniformLocation(shaderProgram, "heatmap_threshold_low"), m_controller.heatmap_min());
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
