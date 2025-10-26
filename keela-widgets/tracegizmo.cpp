@@ -125,7 +125,7 @@ bool Keela::TraceGizmo::on_draw(const Cairo::RefPtr<Cairo::Context> &cr) {
         return Gtk::DrawingArea::on_draw(cr);
     }
     cr->save();
-    cr->set_source_rgb(1, 0, 0);
+    cr->set_source_rgb(0, 0, 1);
     cr->set_line_width(2);
     if (ctrl_top_left != nullptr && ctrl_top_right != nullptr && ctrl_bottom_left != nullptr && ctrl_bottom_right !=
         nullptr) {
