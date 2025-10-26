@@ -44,6 +44,11 @@ void main() {
     if (heatmap_enabled && texSample.x >= heatmap_threshold_low && texSample.x <= heatmap_threshold_high) {
         // convert texSample into the range [0,heatmap_scale]. This is assuming that texSample.x is in the range [0,1]
         float range = heatmap_threshold_high - heatmap_threshold_low;
+        // if range is 0, set range to 1 to protect against division by zero.
+        // this will have the effect to map the samples in the range as if there were no threshold
+        if (range = 0) {
+            range = 1;
+        }
         float sample_factor = heatmap_scale * 1 / range;
 
         // scale texture sample to the range [0,heatmap_scale]
