@@ -23,6 +23,11 @@
 #define ODD_FRAME 1
 
 namespace Keela {
+    // Structure to pass both parity and counter to frame probe callback
+    struct FrameProbeData {
+        int parity;
+        guint64* counter;
+    };
     class CameraManager final : public Keela::Bin {
     public:
         explicit CameraManager(guint id, std::string pix_fmt, bool split_streams);
@@ -67,6 +72,13 @@ namespace Keela {
     private:
         gulong even_frame_probe_id = 0;
         gulong odd_frame_probe_id = 0;
+
+        // Per-camera frame counter for sources that don't set buffer offset
+        guint64 manual_frame_counter = 0;
+        
+        // Data structures for frame probes
+        FrameProbeData even_probe_data{EVEN_FRAME, &manual_frame_counter};
+        FrameProbeData odd_probe_data{ODD_FRAME, &manual_frame_counter};
 
         void set_up_frame_splitting();
 

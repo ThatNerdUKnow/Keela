@@ -239,18 +239,18 @@ void Keela::CameraManager::stop_recording() {
 
 GstPadProbeReturn Keela::CameraManager::frame_parity_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
     GstBuffer *buffer = GST_PAD_PROBE_INFO_BUFFER(info);
-    int parity = GPOINTER_TO_INT(user_data);
+    FrameProbeData* probe_data = static_cast<FrameProbeData*>(user_data);
+    int parity = probe_data->parity;
 
-    guint64 frame_number = 0;
+    int frame_number = 0;
 
     // Some sources will have the frame number in the buffer offset (e.g. videotestsrc)
     if (GST_BUFFER_OFFSET(buffer) != GST_BUFFER_OFFSET_NONE) {
         frame_number = GST_BUFFER_OFFSET(buffer);
     }
-    // But others like aravissrc do not set offset, so we fall back to our own counter
+    // But others like aravissrc do not set offset, so we fall back to our own per-camera counter
     else {
-        static guint64 manual_counter = 0;
-        frame_number = manual_counter++;
+        frame_number = (*probe_data->counter)++;
     }
 
     if (frame_number % 2 == parity) {
@@ -294,14 +294,14 @@ void Keela::CameraManager::install_frame_splitting_probes() {
 
     if (even_sink_pad) {
         even_frame_probe_id = gst_pad_add_probe(even_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
-                                                frame_parity_probe_cb, GINT_TO_POINTER(EVEN_FRAME), nullptr);
+                                                frame_parity_probe_cb, &even_probe_data, nullptr);
         g_object_unref(even_sink_pad);
         spdlog::info("Installed even frame filter probe");
     }
 
     if (odd_sink_pad) {
         odd_frame_probe_id = gst_pad_add_probe(odd_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
-                                               frame_parity_probe_cb, GINT_TO_POINTER(ODD_FRAME), nullptr);
+                                               frame_parity_probe_cb, &odd_probe_data, nullptr);
         g_object_unref(odd_sink_pad);
         spdlog::info("Installed odd frame filter probe");
     }
