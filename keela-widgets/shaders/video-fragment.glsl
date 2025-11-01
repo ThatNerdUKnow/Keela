@@ -9,11 +9,12 @@ uniform sampler2D videoTexture;
 uniform float heatmap_threshold_high; // expected range [heatmap_threshold_low,1]
 uniform float heatmap_threshold_low; // expected range [0,heatmap_threshold_high]
 uniform bool heatmap_enabled;
+// should we use HSLuv for color mapping or should we use HSLuv?
 uniform bool use_hsluv = false;
 
 /// used for artistic effect, not expected to be provided by user program
 uniform float heatmap_saturation = 1.0;
-uniform float heatmap_lightness = 0 / 5;
+uniform float heatmap_lightness = 0.5;
 uniform float heatmap_scale = 240; // scaling factor to apply to samples
 uniform float heatmap_offset = -60; // hue offset
 

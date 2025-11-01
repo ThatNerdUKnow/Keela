@@ -16,10 +16,37 @@ namespace Keela {
     public:
         virtual ~IControlGLCameraRenderHeatmap() = default;
 
+        /**
+                * Should we perform color mapping?
+                * @return
+                */
         virtual bool is_heatmap_enabled() = 0;
 
+
+        /**
+         * Should we map colors using HSLuv or just HSL?
+         * @return
+         */
+        virtual bool use_hsluv() {
+#ifdef KEELA_USE_HSLUV
+            return true;
+#endif
+#ifndef KEELA_USE_HSLUV
+            return false;
+#endif
+        }
+
+
+        /**
+         * minimum threshold to begin color mapping
+         * @return
+         */
         virtual float heatmap_min() = 0;
 
+        /**
+         * maximum threshold to begin color mapping
+         * @return
+         */
         virtual float heatmap_max() = 0;
     };
 

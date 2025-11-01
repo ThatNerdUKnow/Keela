@@ -198,7 +198,7 @@ bool Keela::GLCameraRender::on_render(const Glib::RefPtr<Gdk::GLContext> &contex
     glUniform1i(glGetUniformLocation(shaderProgram, "heatmap_enabled"), m_controller.is_heatmap_enabled());
     glUniform1f(glGetUniformLocation(shaderProgram, "heatmap_threshold_high"), m_controller.heatmap_max());
     glUniform1f(glGetUniformLocation(shaderProgram, "heatmap_threshold_low"), m_controller.heatmap_min());
-
+    glUniform1f(glGetUniformLocation(shaderProgram, "use_hsluv"), m_controller.use_hsluv());
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     return GLArea::on_render(context);
