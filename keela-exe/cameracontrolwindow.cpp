@@ -43,7 +43,8 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
 
     // Disable exposure time control until camera is ready and we can query for exposure time support and supported range
     exposure_time_spin.m_spin.set_sensitive(false);
-    exposure_time_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_exposure_time_changed));
+    exposure_time_spin.m_spin.signal_value_changed().connect(
+        sigc::mem_fun(*this, &CameraControlWindow::on_exposure_time_changed));
     v_container.add(exposure_time_spin);
 
     // TODO: add rotation options
@@ -238,16 +239,17 @@ void Keela::CameraControlWindow::update_traces() {
 void Keela::CameraControlWindow::apply_trace_framerate(guint fps) {
     spdlog::info("Applying trace framerate {} to all traces for camera {}", fps, id);
     for (const auto &trace: m_traces) {
-    for (const auto& trace : m_traces) {
-        auto trace_bin = trace->get_trace_bin();
-        if (trace_bin) {
-            trace_bin->set_trace_framerate(fps);
+        for (const auto &trace: m_traces) {
+            auto trace_bin = trace->get_trace_bin();
+            if (trace_bin) {
+                trace_bin->set_trace_framerate(fps);
+            }
         }
     }
 }
 
 void Keela::CameraControlWindow::add_split_frame_ui() {
-    if (frame_widget_odd) return;  // Already added
+    if (frame_widget_odd) return; // Already added
 
     // Create trace gizmo for odd frames
     trace_gizmo_odd = std::make_shared<TraceGizmo>();
@@ -324,7 +326,8 @@ void Keela::CameraControlWindow::update_exposure_time_range() {
         return;
     }
     // update the exposure time spin with the new range
-    exposure_time_spin.m_spin.set_adjustment(Gtk::Adjustment::create(min_exposure_time, min_exposure_time, max_exposure_time, 1000.0));
+    exposure_time_spin.m_spin.set_adjustment(
+        Gtk::Adjustment::create(min_exposure_time, min_exposure_time, max_exposure_time, 1000.0));
     exposure_time_spin.m_spin.set_sensitive(true);
 
     spdlog::info("Updated exposure time control range to {:.1f} - {:.1f} μs", min_exposure_time, max_exposure_time);
