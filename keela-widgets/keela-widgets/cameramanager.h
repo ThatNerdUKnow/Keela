@@ -4,6 +4,7 @@
 
 #ifndef CAMERAMANAGER_H
 #define CAMERAMANAGER_H
+#include <arv.h>
 #include <keela-pipeline/CameraStreamBin.h>
 #include <keela-pipeline/bin.h>
 #include <keela-pipeline/caps.h>
@@ -22,6 +23,11 @@
 #define ODD_FRAME 1
 
 namespace Keela {
+    // Structure to pass both parity and counter to frame probe callback
+    struct FrameProbeData {
+        int parity;
+        guint64* counter;
+    };
     class CameraManager final : public Keela::Bin {
     public:
         explicit CameraManager(guint id, std::string pix_fmt, bool split_streams);
@@ -36,6 +42,16 @@ namespace Keela {
 
         void set_experiment_directory(const std::string &path);
 
+        // Query hardware capabilities
+        std::pair<double, double> get_gain_range() const;
+
+        std::pair<double, double> get_exposure_time_range() const;
+
+        // Control hardware settings
+        void set_gain(double gain);
+
+        void set_exposure_time(double exposure);
+
         void start_recording();
 
         void stop_recording();
@@ -49,13 +65,20 @@ namespace Keela {
         std::shared_ptr<CameraStreamBin> camera_stream_even = std::make_shared<CameraStreamBin>("camera_stream_even");
         std::shared_ptr<CameraStreamBin> camera_stream_odd = std::make_shared<CameraStreamBin>("camera_stream_odd");
 
-        SimpleElement camera = SimpleElement("videotestsrc");
+        SimpleElement camera;
         SimpleElement caps_filter = SimpleElement("capsfilter");
         TransformBin transform = TransformBin("transform");
 
     private:
         gulong even_frame_probe_id = 0;
         gulong odd_frame_probe_id = 0;
+
+        // Per-camera frame counter for sources that don't set buffer offset
+        guint64 manual_frame_counter = 0;
+        
+        // Data structures for frame probes
+        FrameProbeData even_probe_data{EVEN_FRAME, &manual_frame_counter};
+        FrameProbeData odd_probe_data{ODD_FRAME, &manual_frame_counter};
 
         void set_up_frame_splitting();
 
@@ -103,6 +126,10 @@ namespace Keela {
         static std::string get_filename(std::string directory, guint cam_id, std::string suffix = "");
 
         void add_odd_camera_stream();
+
+        ArvCamera *get_aravis_camera() const;
+
+        ArvCamera *aravis_camera = nullptr;
     };
 }  // namespace Keela
 #endif  // CAMERAMANAGER_H

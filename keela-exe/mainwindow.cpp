@@ -5,6 +5,7 @@
 #include "mainwindow.h"
 
 #include <keela-widgets/labeledspinbutton.h>
+#include <keela-widgets/plugin_utils.h>
 #include <spdlog/spdlog.h>
 
 #include "cameracontrolwindow.h"
@@ -89,6 +90,13 @@ MainWindow::MainWindow(): Gtk::Window() {
     // Initialize recording settings here
     on_camera_spin_changed();
     gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
+
+    // Query hardware capabilities to set ranges in the UI
+    for (const auto &camera : cameras) {
+        camera->update_gain_range();
+        camera->update_exposure_time_range();
+    }
+
     show_all_children();
 }
 

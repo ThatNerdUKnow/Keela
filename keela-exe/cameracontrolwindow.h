@@ -39,7 +39,8 @@ namespace Keela {
         Keela::LabeledSpinButton range_max_spin = Keela::LabeledSpinButton("Maximum");
 
         // TODO: histogram
-        Keela::LabeledSpinButton gain_spin = Keela::LabeledSpinButton("Gain");
+        Keela::LabeledSpinButton gain_spin = Keela::LabeledSpinButton("Gain (dB)");
+        Keela::LabeledSpinButton exposure_time_spin = Keela::LabeledSpinButton("Exposure Time (μs)");
 
         Keela::LabeledComboBoxText rotation_combo = Keela::LabeledComboBoxText("Select Rotation");
         Gtk::CheckButton flip_horiz_check = Gtk::CheckButton("Flip Along Horizontal Center");
@@ -52,6 +53,10 @@ namespace Keela {
         guint id;
 
         void on_range_check_toggled();
+
+        void on_gain_changed() const;
+
+        void on_exposure_time_changed() const;
 
         void on_rotation_changed();
 
@@ -71,6 +76,12 @@ namespace Keela {
 
         // Method for main window to toggle split frame mode
         void update_split_frame_state(bool enabled);
+        
+        // Update gain range after camera is ready
+        void update_gain_range();
+
+        // Update exposure time range after camera is ready
+        void update_exposure_time_range();
 
     private:
         std::vector<std::shared_ptr<CameraTrace>> m_traces;

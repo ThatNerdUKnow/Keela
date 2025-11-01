@@ -4,6 +4,7 @@
 
 #include "keela-widgets/cameramanager.h"
 
+#include <arv.h>
 #include <keela-pipeline/utils.h>
 #include <spdlog/spdlog.h>
 
@@ -15,7 +16,7 @@
 #include "keela-pipeline/recordbin.h"
 #include "keela-widgets/plugin_utils.h"
 
-Keela::CameraManager::CameraManager(guint id, std::string pix_fmt, bool split_streams) : Bin("camera_" + std::to_string(id)), camera(Keela::get_video_test_source_name()) {
+Keela::CameraManager::CameraManager(guint id, std::string pix_fmt, bool split_streams) : Bin("camera_" + std::to_string(id)), camera(Keela::get_video_source_name()) {
     try {
         spdlog::info("Creating camera manager {}", id);
         this->id = id;
@@ -89,6 +90,120 @@ void Keela::CameraManager::set_experiment_directory(const std::string &path) {
     experiment_directory = path;
 }
 
+std::pair<double, double> Keela::CameraManager::get_gain_range() const {
+    double min_gain = 0.0;
+    double max_gain = 0.0;
+
+    ArvCamera *aravis_camera = get_aravis_camera();
+    if (aravis_camera == nullptr) {
+        spdlog::warn("Gain control not supported");
+        return {min_gain, max_gain};
+    }
+
+    spdlog::debug("Querying gain range from camera hardware via ArvCamera object");
+
+    GError *error = nullptr;
+    // Query the actual hardware gain limits
+    arv_camera_get_gain_bounds(aravis_camera, &min_gain, &max_gain, &error);
+    if (error == nullptr) {
+        spdlog::info("Queried hardware gain range from camera: {:.1f} to {:.1f} dB", min_gain, max_gain);
+    } else {
+        spdlog::warn("Error querying gain range from camera: {}", error->message);
+        g_error_free(error);
+    }
+
+    g_object_unref(aravis_camera);
+
+    return {min_gain, max_gain};
+}
+
+std::pair<double, double> Keela::CameraManager::get_exposure_time_range() const {
+    double min_exposure = 0.0;
+    double max_exposure = 0.0;
+
+    ArvCamera *aravis_camera = get_aravis_camera();
+    if (aravis_camera == nullptr) {
+        spdlog::warn("Exposure time control not supported");
+        return {min_exposure, max_exposure};
+    }
+
+    spdlog::debug("Querying exposure time range from camera hardware via ArvCamera object");
+
+    GError *error = nullptr;
+    // Query the actual hardware exposure time limits
+    arv_camera_get_exposure_time_bounds(aravis_camera, &min_exposure, &max_exposure, &error);
+    if (error == nullptr) {
+        spdlog::info("Queried hardware exposure time range from camera: {:.1f} to {:.1f} us", min_exposure, max_exposure);
+    } else {
+        spdlog::warn("Error querying exposure time range from camera: {}", error->message);
+        g_error_free(error);
+    }
+
+    return {min_exposure, max_exposure};
+}
+
+void Keela::CameraManager::set_gain(double gain) {
+    spdlog::info("Setting camera gain to {}", gain);
+
+    ArvCamera *aravis_camera = get_aravis_camera();
+
+    GError *error = nullptr;
+    arv_camera_set_gain(aravis_camera, gain, &error);
+
+    if (error != nullptr) {
+        spdlog::error("Error setting gain on camera: {}", error->message);
+        g_error_free(error);
+        return;
+    }
+
+    // Read back the actual gain value to confirm it was set
+    gdouble actual_gain = arv_camera_get_gain(aravis_camera, &error);
+
+    if (error != nullptr) {
+        spdlog::error("Error getting gain from camera: {}", error->message);
+        g_error_free(error);
+        return;
+    }
+
+    spdlog::info("Set gain to {:.1f} dB, actual camera gain: {:.1f} dB",
+                 gain, actual_gain);
+}
+
+void Keela::CameraManager::set_exposure_time(double exposure) {
+    spdlog::info("Setting camera exposure time to {}", exposure);
+
+    ArvCamera *aravis_camera = get_aravis_camera();
+
+    GError *error = nullptr;
+    arv_camera_set_exposure_time(aravis_camera, exposure, &error);
+
+    if (error != nullptr) {
+        spdlog::error("Error setting exposure time on camera: {}", error->message);
+        g_error_free(error);
+        return;
+    }
+    // Read back the actual exposure time value to confirm it was set
+    gdouble actual_exposure = arv_camera_get_exposure_time(aravis_camera, &error);
+    if (error != nullptr) {
+        spdlog::error("Error getting exposure time from camera: {}", error->message);
+        g_error_free(error);
+        return;
+    }
+    spdlog::info("Set exposure time to {:.1f} us, actual camera exposure time: {:.1f} us",
+                 exposure, actual_exposure);
+}
+
+ArvCamera *Keela::CameraManager::get_aravis_camera() const {
+    if (aravis_camera != nullptr) {
+        return aravis_camera;
+    }
+
+    GstElement *camera_element = static_cast<GstElement *>(camera);
+    // Try to get the underlying ArvCamera object from aravissrc
+    g_object_get(camera_element, "camera", &aravis_camera, nullptr);
+    return aravis_camera;
+}
+
 void Keela::CameraManager::start_recording() {
     std::string suffix = split_streams ? "even" : "";
 
@@ -109,8 +224,19 @@ void Keela::CameraManager::stop_recording() {
 
 GstPadProbeReturn Keela::CameraManager::frame_parity_probe_cb(GstPad *pad, GstPadProbeInfo *info, gpointer user_data) {
     GstBuffer *buffer = GST_PAD_PROBE_INFO_BUFFER(info);
-    int frame_number = GST_BUFFER_OFFSET(buffer);
-    int parity = GPOINTER_TO_INT(user_data);
+    FrameProbeData* probe_data = static_cast<FrameProbeData*>(user_data);
+    int parity = probe_data->parity;
+
+    int frame_number = 0;
+
+    // Some sources will have the frame number in the buffer offset (e.g. videotestsrc)
+    if (GST_BUFFER_OFFSET(buffer) != GST_BUFFER_OFFSET_NONE) {
+        frame_number = GST_BUFFER_OFFSET(buffer);
+    }
+    // But others like aravissrc do not set offset, so we fall back to our own per-camera counter
+    else {
+        frame_number = (*probe_data->counter)++;
+    }
 
     if (frame_number % 2 == parity) {
         return GST_PAD_PROBE_OK;  // Pass the frame
@@ -153,14 +279,14 @@ void Keela::CameraManager::install_frame_splitting_probes() {
 
     if (even_sink_pad) {
         even_frame_probe_id = gst_pad_add_probe(even_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
-                                                frame_parity_probe_cb, GINT_TO_POINTER(EVEN_FRAME), nullptr);
+                                                frame_parity_probe_cb, &even_probe_data, nullptr);
         g_object_unref(even_sink_pad);
         spdlog::info("Installed even frame filter probe");
     }
 
     if (odd_sink_pad) {
         odd_frame_probe_id = gst_pad_add_probe(odd_sink_pad, GST_PAD_PROBE_TYPE_BUFFER,
-                                               frame_parity_probe_cb, GINT_TO_POINTER(ODD_FRAME), nullptr);
+                                               frame_parity_probe_cb, &odd_probe_data, nullptr);
         g_object_unref(odd_sink_pad);
         spdlog::info("Installed odd frame filter probe");
     }
