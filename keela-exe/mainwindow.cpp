@@ -41,6 +41,7 @@ MainWindow::MainWindow(): Gtk::Window() {
     pix_fmt_combo.m_combo.append(GRAY16_LE, "16 Bit (Little Endian)");
     pix_fmt_combo.m_combo.append(GRAY16_BE, "16 Bit (Big Endian)");
     pix_fmt_combo.m_combo.set_active_id(GRAY8);
+    set_pix_fmt();
     container.add(pix_fmt_combo);
     // Framerate controls
     framerate_spin.m_spin.set_adjustment(Gtk::Adjustment::create(500, 1, 1000, 0.1));
@@ -78,7 +79,8 @@ MainWindow::MainWindow(): Gtk::Window() {
     container.add(restart_camera_button);
 
     // Store connection so we can block it when closing the window programmatically
-    trace_signal_connection = show_trace_check.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_trace_button_clicked));
+    trace_signal_connection = show_trace_check.signal_clicked().connect(
+        sigc::mem_fun(this, &MainWindow::on_trace_button_clicked));
     // create the pipeline
     pipeline = GST_PIPELINE(gst_pipeline_new("pipeline"));
     if (!pipeline) {
@@ -92,7 +94,7 @@ MainWindow::MainWindow(): Gtk::Window() {
     gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
 
     // Query hardware capabilities to set ranges in the UI
-    for (const auto &camera : cameras) {
+    for (const auto &camera: cameras) {
         camera->update_gain_range();
         camera->update_exposure_time_range();
     }
@@ -112,10 +114,9 @@ void MainWindow::on_camera_spin_changed() {
         spdlog::error("Failed to set state of pipeline");
     }
     if (next > curr) {
-        auto fmt = pix_fmt_combo.m_combo.get_active_id();
         for (guint i = curr; i < next; i++) {
             auto camera_id = i + 1;
-            auto c = std::make_shared<Keela::CameraControlWindow>(camera_id, fmt, should_split_frames);
+            auto c = std::make_shared<Keela::CameraControlWindow>(camera_id, pix_fmt, should_split_frames);
             set_framerate(c->camera_manager.get());
             set_resolution(c.get());
 
@@ -192,6 +193,7 @@ void MainWindow::reset_cameras() {
     // apply settings while the pipeline isn't actively playing
     set_framerate();
     set_resolution();
+    set_pix_fmt();
     set_state(GST_STATE_PLAYING, false);
 }
 
@@ -212,6 +214,7 @@ void MainWindow::set_state(GstState state, bool wait) {
 }
 
 void MainWindow::set_framerate() {
+    spdlog::info("Updating framerate of all cameras");
     for (const auto &c: cameras) {
         set_framerate(c->camera_manager.get());
     }
@@ -223,8 +226,18 @@ void MainWindow::set_framerate(Keela::CameraManager *cm) const {
 }
 
 void MainWindow::set_resolution() const {
+    spdlog::info("Updating resolution of all cameras");
     for (const auto &c: cameras) {
         set_resolution(c.get());
+    }
+}
+
+void MainWindow::set_pix_fmt() {
+    spdlog::info("Updating pixel format of all cameras");
+    this->pix_fmt = pix_fmt_combo.m_combo.get_active_id().raw();
+    // inform all cameras of the pixel format change
+    for (const auto &c: cameras) {
+        c->set_pix_fmt(pix_fmt);
     }
 }
 
@@ -266,9 +279,9 @@ void MainWindow::on_trace_button_clicked() {
 void MainWindow::on_trace_fps_changed() {
     const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
     spdlog::info("Setting trace framerate to {} fps for all cameras", fps);
-    
+
     // Update trace framerate for all cameras
-    for (const auto &camera : cameras) {
+    for (const auto &camera: cameras) {
         camera->apply_trace_framerate(fps);
     }
 }
@@ -307,10 +320,10 @@ void MainWindow::on_split_frames_changed() {
     should_split_frames = cv_recording_check.get_active();
     spdlog::info("Frame splitting set to {}", should_split_frames);
 
-    for (const auto &c : cameras) {
+    for (const auto &c: cameras) {
         c->update_split_frame_state(should_split_frames);
     }
-    
+
     // Update trace window if it's open
     if (trace_window != nullptr) {
         // Clear existing traces and re-add them based on new split frame state
@@ -319,11 +332,11 @@ void MainWindow::on_split_frames_changed() {
         }
 
         // Add all traces for all cameras, with the correct split state
-        for (const auto &camera : cameras) {
+        for (const auto &camera: cameras) {
             auto traces = camera->get_traces();
             trace_window->addTraces(traces);
         }
-        
+
         trace_fps_spin.set_sensitive(true);
     }
 }

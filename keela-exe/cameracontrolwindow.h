@@ -26,6 +26,8 @@ namespace Keela {
 
         void set_resolution(int width, int height);
 
+        void set_pix_fmt(std::string pix_fmt);
+
     private:
         Gtk::Box h_container = Gtk::Box();
         Gtk::Box v_container = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
@@ -77,7 +79,7 @@ namespace Keela {
 
         // Method for main window to toggle split frame mode
         void update_split_frame_state(bool enabled);
-        
+
         // Update gain range after camera is ready
         void update_gain_range();
 
@@ -90,6 +92,9 @@ namespace Keela {
         float heatmap_min() override;
 
         float heatmap_max() override;
+
+        // scaling factor to apply to heatmap_max and heatmap_min to ensure they remain in the range [0,1]
+        float heatmap_scale;
 
         std::vector<std::shared_ptr<CameraTrace> > m_traces;
         // set width and height initially to a sentinel value

@@ -42,6 +42,9 @@ private:
     std::shared_ptr<Keela::TraceWindow> trace_window = nullptr;
     sigc::connection trace_signal_connection;
 
+    // The current pixel format
+    std::string pix_fmt;
+
     void on_camera_spin_changed();
 
     void on_record_button_clicked();
@@ -55,6 +58,8 @@ private:
     void set_framerate(Keela::CameraManager *cm) const;
 
     void set_resolution() const;
+
+    void set_pix_fmt() const;
 
     void set_resolution(Keela::CameraControlWindow *c) const;
 
