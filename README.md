@@ -22,6 +22,8 @@ Based off of the game engine Hazel by The Cherno
     - mingw-w64-x86_64-gst-plugins-bad
     - mingw-w64-x86_64-gst-plugins-ugly
     - mingw-w64-x86_64-spdlog
+    - mingw-w64-x86_64-aravis
+    - mingw-w64-x86_64-aravis-gst
 - (Optional) if you like, in a fresh terminal, run the command `gst-inspect-1.0` to confirm gstreamer is installed
 - run the following commands in the repository directory
     - mkdir build
@@ -41,6 +43,7 @@ Based off of the game engine Hazel by The Cherno
     - gst-plugins-ugly
     - build-essential
     - spdlog
+    - libaravis-dev
 
 ### Building
 
