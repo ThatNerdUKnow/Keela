@@ -37,8 +37,8 @@ namespace Keela {
         std::unique_ptr<VideoPresentation> frame_widget_odd;
 
         Gtk::CheckButton range_check = Gtk::CheckButton("Range");
-        Keela::LabeledSpinButton range_min_spin = Keela::LabeledSpinButton("% Minimum");
-        Keela::LabeledSpinButton range_max_spin = Keela::LabeledSpinButton("% Maximum");
+        Keela::LabeledSpinButton range_min_spin = Keela::LabeledSpinButton("Minimum");
+        Keela::LabeledSpinButton range_max_spin = Keela::LabeledSpinButton("Maximum");
 
         // TODO: histogram
         Keela::LabeledSpinButton gain_spin = Keela::LabeledSpinButton("Gain (dB)");
