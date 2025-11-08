@@ -34,6 +34,9 @@ private:
     Keela::LabeledSpinButton num_camera_spin = Keela::LabeledSpinButton("Number of Cameras");
     Gtk::CheckButton show_trace_check;
     Keela::LabeledSpinButton trace_fps_spin = Keela::LabeledSpinButton("Trace Framerate (Hz)");
+    Keela::LabeledSpinButton trace_buffer_seconds_spin = Keela::LabeledSpinButton("Trace Buffer Retention (seconds)");
+    Gtk::Button trace_clear_buffer_button = Gtk::Button("Clear Trace Buffer");
+
 
     Gtk::Button dump_graph_button = Gtk::Button("Dump Pipeline Graph (debug)");
 
@@ -62,6 +65,10 @@ private:
 
     void on_trace_fps_changed();
 
+    void on_trace_buffer_seconds_changed();
+
+    void on_trace_clear_buffer_button_clicked();
+
     void dump_graph() const;
 
     // TODO: maybe provide some platform dependent default?
@@ -76,6 +83,8 @@ private:
     bool should_split_frames = false;
 
     void on_split_frames_changed();
+
+    void set_trace_dependent_sensitivities(bool is_enabled);
 
     void set_pix_fmt();
 };

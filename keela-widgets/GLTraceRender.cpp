@@ -73,7 +73,7 @@ Keela::GLTraceRender::~GLTraceRender() = default;
 
 void Keela::GLTraceRender::set_trace_render_framerate(double framerate) {
     // calculate new buffer size
-    auto tmp_plot_length = static_cast<unsigned long long>(PLOT_DURATION_SEC * framerate);
+    auto tmp_plot_length = static_cast<unsigned long long>(plot_duration_sec * framerate);
     if (tmp_plot_length == plot_length)
         return;
 
@@ -89,6 +89,15 @@ void Keela::GLTraceRender::set_trace_render_framerate(double framerate) {
         std::ranges::rotate(plot_points, plot_points.begin() + diff);
         plot_points.resize(plot_length);
     }
+}
+
+void Keela::GLTraceRender::set_plot_duration_sec(int duration_sec) {
+    plot_duration_sec = duration_sec;
+}
+
+void Keela::GLTraceRender::clear_buffer() {
+    spdlog::info("Clearing trace buffers");
+    plot_points.resize(0);
 }
 
 void Keela::GLTraceRender::on_gl_realize() {
@@ -234,7 +243,6 @@ void Keela::GLTraceRender::process_video_data(const std::stop_token &token) {
         assert(caps != nullptr);
         auto structure = gst_caps_get_structure(caps, 0);
         assert(structure != nullptr);
-
         auto fmt = std::string(gst_structure_get_string(structure, "format"));
         if (fmt == GRAY8) {
             mean = calculate_roi_average<guint8>(sample, structure, std::endian::native);

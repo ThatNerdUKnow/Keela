@@ -67,10 +67,25 @@ MainWindow::MainWindow() : Gtk::Window() {
 
     show_trace_check.set_label("Show Traces");
     trace_fps_spin.m_spin.set_adjustment(Gtk::Adjustment::create(DEFAULT_TRACE_FPS, 1, 1000, 1));
-    trace_fps_spin.set_sensitive(false);
     trace_fps_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &MainWindow::on_trace_fps_changed));
+    
+    trace_buffer_seconds_spin.m_spin.set_adjustment(Gtk::Adjustment::create(10, 1, 100, 1));
+    trace_buffer_seconds_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(this, &MainWindow::on_trace_buffer_seconds_changed));
+
+    trace_clear_buffer_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_trace_clear_buffer_button_clicked));
+
+    // These components are only relevant when traces are enabled
+    set_trace_dependent_sensitivities(false);
+
+    // Horizontal box for trace modifiers
+    auto trace_control_row_box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL);
+    trace_control_row_box->set_spacing(10);
+    trace_control_row_box->pack_start(trace_fps_spin);
+    trace_control_row_box->pack_start(trace_buffer_seconds_spin);
+    trace_control_row_box->pack_start(trace_clear_buffer_button);
+
     container.add(show_trace_check);
-    container.add(trace_fps_spin);
+    container.pack_start(*trace_control_row_box);
 
     restart_camera_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::reset_cameras));
     restart_camera_button.set_label("Restart Camera(s)");
@@ -233,8 +248,7 @@ void MainWindow::on_trace_button_clicked() {
         trace_window->set_on_closed_callback([this]() {
             spdlog::info("Trace window closed manually, performing cleanup");
             trace_window = nullptr;
-            trace_fps_spin.set_sensitive(false);
-
+            set_trace_dependent_sensitivities(false);
             // Block the signal to prevent recursive calls
             trace_signal_connection.block();
             show_trace_check.set_active(false);
@@ -248,7 +262,7 @@ void MainWindow::on_trace_button_clicked() {
             auto traces = camera->get_traces();
             trace_window->addTraces(traces);
         }
-        trace_fps_spin.set_sensitive(true);
+        set_trace_dependent_sensitivities(true);
     } else {
         trace_window = nullptr;
         trace_fps_spin.set_sensitive(false);
@@ -265,6 +279,17 @@ void MainWindow::on_trace_fps_changed() {
     }
     // Update the trace plot duration based on the new framerate
     trace_window->set_trace_render_framerates(fps);
+}
+
+void MainWindow::on_trace_buffer_seconds_changed() {
+    const auto trace_buffer_seconds = static_cast<guint>(trace_buffer_seconds_spin.m_spin.get_value());
+    spdlog::info("Setting trace buffer retention to {} seconds for all cameras", trace_buffer_seconds);
+    trace_window->set_trace_window_retention(trace_buffer_seconds);
+}
+
+void MainWindow::on_trace_clear_buffer_button_clicked() {
+    spdlog::info("Clear trace buffer button clicked");
+    trace_window->clear_trace_buffer();
 }
 
 void MainWindow::dump_graph() const {
@@ -320,4 +345,10 @@ void MainWindow::on_split_frames_changed() {
 
         trace_fps_spin.set_sensitive(true);
     }
+}
+
+void MainWindow::set_trace_dependent_sensitivities(bool is_enabled) {
+    trace_fps_spin.set_sensitive(is_enabled);
+    trace_buffer_seconds_spin.set_sensitive(is_enabled);
+    trace_clear_buffer_button.set_sensitive(is_enabled);
 }
