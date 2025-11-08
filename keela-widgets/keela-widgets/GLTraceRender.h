@@ -11,6 +11,7 @@
 #include "cameramanager.h"
 #include "tracegizmo.h"
 #include "glad/glad.h"
+#include "keela-pipeline/consts.h"
 
 namespace Keela {
     /**
@@ -33,8 +34,9 @@ namespace Keela {
 
         ~GLTraceRender() override;
 
+        void set_trace_render_framerate(double framerate);
+
     private:
-        void set_framerate(double framerate);
 
         Gtk::GLArea gl_area;
         Gtk::Label name_label;
@@ -60,14 +62,14 @@ namespace Keela {
         std::mutex worker_mutex;
         std::deque<float> plot_points;
 
+        const int PLOT_DURATION_SEC = 10;
         /**
          * target length of plot_points buffer. Should equal PLOT_DURATION_SEC * framerate
          */
-        unsigned long long plot_length = 2000;
+        unsigned long long plot_length = DEFAULT_TRACE_FPS * PLOT_DURATION_SEC;
         float plot_max = 255;
         float plot_min = 0;
 
-        const int PLOT_DURATION_SEC = 10;
 
         /**
          * function to be used in worker_thread in order to process video data

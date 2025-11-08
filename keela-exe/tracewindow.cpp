@@ -61,6 +61,12 @@ int Keela::TraceWindow::num_traces() const {
     return traces.size();
 }
 
+void Keela::TraceWindow::set_trace_render_framerates(double framerate) {
+    for (const auto& trace : traces) {
+        trace->set_trace_render_framerate(framerate);
+    }
+}
+
 void Keela::TraceWindow::set_on_closed_callback(std::function<void()> callback) {
     on_window_closed_callback = std::move(callback);
 }
