@@ -61,7 +61,7 @@ int Keela::TraceWindow::num_traces() const {
     return traces.size();
 }
 
-void Keela::TraceWindow::set_trace_render_framerates(double framerate) {
+void Keela::TraceWindow::set_trace_render_framerate(double framerate) {
     for (const auto& trace : traces) {
         trace->set_trace_render_framerate(framerate);
     }

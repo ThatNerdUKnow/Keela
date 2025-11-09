@@ -38,6 +38,8 @@ namespace Keela {
 
         void set_plot_duration_sec(int duration_sec);
 
+        void update_trace_buffer_length();
+
         void clear_buffer();
 
     private:
@@ -65,11 +67,12 @@ namespace Keela {
         std::mutex worker_mutex;
         std::deque<float> plot_points;
 
-        const int PLOT_DURATION_SEC = 10;
+        int plot_duration_sec = 10;
+        int trace_framerate = DEFAULT_TRACE_FPS;
         /**
          * target length of plot_points buffer. Should equal plot_duration_sec * framerate
          */
-        unsigned long long plot_length = DEFAULT_TRACE_FPS * PLOT_DURATION_SEC;
+        unsigned long long plot_length = plot_duration_sec * trace_framerate;
         float plot_max = 255;
         float plot_min = 0;
 

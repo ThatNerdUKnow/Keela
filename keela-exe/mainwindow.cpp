@@ -278,7 +278,7 @@ void MainWindow::on_trace_fps_changed() {
         camera->set_trace_bin_framerate_caps(fps);
     }
     // Update the trace plot duration based on the new framerate
-    trace_window->set_trace_render_framerates(fps);
+    trace_window->set_trace_render_framerate(fps);
 }
 
 void MainWindow::on_trace_buffer_seconds_changed() {
