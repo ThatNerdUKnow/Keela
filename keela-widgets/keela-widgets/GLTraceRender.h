@@ -9,8 +9,9 @@
 #include <gtkmm/label.h>
 
 #include "cameramanager.h"
-#include "tracegizmo.h"
 #include "glad/glad.h"
+#include "keela-pipeline/consts.h"
+#include "tracegizmo.h"
 
 namespace Keela {
     /**
@@ -29,13 +30,19 @@ namespace Keela {
 
     class GLTraceRender final : public Gtk::Box {
     public:
-        explicit GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_trace);
+        explicit GLTraceRender(const std::shared_ptr<ITraceable>& cam_to_trace);
 
         ~GLTraceRender() override;
 
-    private:
-        void set_framerate(double framerate);
+        void set_trace_render_framerate(double framerate);
 
+        void set_plot_duration_sec(int duration_sec);
+
+        void update_trace_buffer_length();
+
+        void clear_buffer();
+
+    private:
         Gtk::GLArea gl_area;
         Gtk::Label name_label;
         Gtk::Label min_label;
@@ -48,7 +55,7 @@ namespace Keela {
 
         void on_gl_realize();
 
-        bool on_gl_render(const Glib::RefPtr<Gdk::GLContext> &context);
+        bool on_gl_render(const Glib::RefPtr<Gdk::GLContext>& context);
 
         unsigned int VAO = -1;
         unsigned int VBO = -1;
@@ -60,23 +67,23 @@ namespace Keela {
         std::mutex worker_mutex;
         std::deque<float> plot_points;
 
+        int plot_duration_sec = 10;
+        int trace_framerate = DEFAULT_TRACE_FPS;
         /**
-         * target length of plot_points buffer. Should equal PLOT_DURATION_SEC * framerate
+         * target length of plot_points buffer. Should equal plot_duration_sec * framerate
          */
-        unsigned long long plot_length = 2000;
+        unsigned long long plot_length = plot_duration_sec * trace_framerate;
         float plot_max = 255;
         float plot_min = 0;
-
-        const int PLOT_DURATION_SEC = 10;
 
         /**
          * function to be used in worker_thread in order to process video data
          * @param token
          */
-        void process_video_data(const std::stop_token &token);
+        void process_video_data(const std::stop_token& token);
 
-        template<typename T>
-        double calculate_roi_average(GstSample *sample, GstStructure *structure, std::endian endianness);
+        template <typename T>
+        double calculate_roi_average(GstSample* sample, GstStructure* structure, std::endian endianness);
     };
-}
-#endif //GLTRACERENDER_H
+}  // namespace Keela
+#endif  // GLTRACERENDER_H

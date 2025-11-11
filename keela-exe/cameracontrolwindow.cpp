@@ -205,7 +205,7 @@ void Keela::CameraControlWindow::update_traces() {
     }
 
     auto even_trace = std::make_shared<CameraTrace>(
-        camera_manager->camera_stream_even->get_trace(),
+        camera_manager->camera_stream_even->get_trace_bin(),
         trace_gizmo_even,
         even_name);
     m_traces.push_back(even_trace);
@@ -213,14 +213,14 @@ void Keela::CameraControlWindow::update_traces() {
     // Add odd trace if frame splitting is enabled
     if (camera_manager->is_frame_splitting_enabled() && trace_gizmo_odd) {
         auto odd_trace = std::make_shared<CameraTrace>(
-            camera_manager->camera_stream_odd->get_trace(),
+            camera_manager->camera_stream_odd->get_trace_bin(),
             trace_gizmo_odd,
             "Camera " + std::to_string(id) + " (Odd)");
         m_traces.push_back(odd_trace);
     }
 }
 
-void Keela::CameraControlWindow::apply_trace_framerate(guint fps) {
+void Keela::CameraControlWindow::set_trace_bin_framerate_caps(guint fps) {
     spdlog::info("Applying trace framerate {} to all traces for camera {}", fps, id);
     for (const auto& trace : m_traces) {
         auto trace_bin = trace->get_trace_bin();
