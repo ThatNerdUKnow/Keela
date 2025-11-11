@@ -32,11 +32,12 @@ private:
 
     Gtk::CheckButton cv_recording_check;
     Keela::LabeledSpinButton num_camera_spin = Keela::LabeledSpinButton("Number of Cameras");
+
     Gtk::CheckButton show_trace_check;
+    Gtk::Box trace_control_row_box;
     Keela::LabeledSpinButton trace_fps_spin = Keela::LabeledSpinButton("Trace Framerate (Hz)");
     Keela::LabeledSpinButton trace_buffer_seconds_spin = Keela::LabeledSpinButton("Trace Buffer Retention (seconds)");
     Gtk::Button trace_clear_buffer_button = Gtk::Button("Clear Trace Buffer");
-
 
     Gtk::Button dump_graph_button = Gtk::Button("Dump Pipeline Graph (debug)");
 
@@ -83,8 +84,6 @@ private:
     bool should_split_frames = false;
 
     void on_split_frames_changed();
-
-    void set_trace_dependent_sensitivities(bool is_enabled);
 
     void set_pix_fmt();
 };

@@ -75,17 +75,17 @@ MainWindow::MainWindow() : Gtk::Window() {
     trace_clear_buffer_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_trace_clear_buffer_button_clicked));
 
     // These components are only relevant when traces are enabled
-    set_trace_dependent_sensitivities(false);
+    trace_control_row_box.set_sensitive(false);
 
     // Horizontal box for trace modifiers
-    auto trace_control_row_box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL);
-    trace_control_row_box->set_spacing(10);
-    trace_control_row_box->pack_start(trace_fps_spin);
-    trace_control_row_box->pack_start(trace_buffer_seconds_spin);
-    trace_control_row_box->pack_start(trace_clear_buffer_button);
+    trace_control_row_box.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
+    trace_control_row_box.set_spacing(10);
+    trace_control_row_box.pack_start(trace_fps_spin);
+    trace_control_row_box.pack_start(trace_buffer_seconds_spin);
+    trace_control_row_box.pack_start(trace_clear_buffer_button);
 
     container.add(show_trace_check);
-    container.pack_start(*trace_control_row_box);
+    container.pack_start(trace_control_row_box);
 
     restart_camera_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::reset_cameras));
     restart_camera_button.set_label("Restart Camera(s)");
@@ -248,7 +248,7 @@ void MainWindow::on_trace_button_clicked() {
         trace_window->set_on_closed_callback([this]() {
             spdlog::info("Trace window closed manually, performing cleanup");
             trace_window = nullptr;
-            set_trace_dependent_sensitivities(false);
+            trace_control_row_box.set_sensitive(false);
             // Block the signal to prevent recursive calls
             trace_signal_connection.block();
             show_trace_check.set_active(false);
@@ -262,10 +262,10 @@ void MainWindow::on_trace_button_clicked() {
             auto traces = camera->get_traces();
             trace_window->addTraces(traces);
         }
-        set_trace_dependent_sensitivities(true);
+        trace_control_row_box.set_sensitive(true);
     } else {
         trace_window = nullptr;
-        trace_fps_spin.set_sensitive(false);
+        trace_control_row_box.set_sensitive(false);
     }
 }
 
@@ -343,12 +343,6 @@ void MainWindow::on_split_frames_changed() {
             trace_window->addTraces(traces);
         }
 
-        trace_fps_spin.set_sensitive(true);
+        trace_control_row_box.set_sensitive(true);
     }
-}
-
-void MainWindow::set_trace_dependent_sensitivities(bool is_enabled) {
-    trace_fps_spin.set_sensitive(is_enabled);
-    trace_buffer_seconds_spin.set_sensitive(is_enabled);
-    trace_clear_buffer_button.set_sensitive(is_enabled);
 }
