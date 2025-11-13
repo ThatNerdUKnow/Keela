@@ -25,12 +25,12 @@ namespace Keela {
         std::shared_ptr<TraceBin> trace;
 
         std::shared_ptr<RecordBin> record_bin = nullptr;
-        
+
         void start_recording(const std::string& filename);
 
         void stop_recording();
 
-        std::shared_ptr<TraceBin> get_trace() { return trace; }
+        std::shared_ptr<TraceBin> get_trace_bin() { return trace; }
 
     private:
         void link() override;

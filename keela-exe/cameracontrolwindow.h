@@ -73,9 +73,8 @@ namespace Keela {
         void update_traces();
 
     public:
-        std::vector<std::shared_ptr<ITraceable> > get_traces();
-
-        void apply_trace_framerate(guint fps);
+        std::vector<std::shared_ptr<ITraceable>> get_traces();
+        void set_trace_bin_framerate_caps(guint fps);
 
         // Method for main window to toggle split frame mode
         void update_split_frame_state(bool enabled);
