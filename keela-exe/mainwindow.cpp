@@ -41,6 +41,7 @@ MainWindow::MainWindow() : Gtk::Window() {
     pix_fmt_combo.m_combo.append(GRAY16_LE, "16 Bit (Little Endian)");
     pix_fmt_combo.m_combo.append(GRAY16_BE, "16 Bit (Big Endian)");
     pix_fmt_combo.m_combo.set_active_id(GRAY8);
+    set_pix_fmt();
     container.add(pix_fmt_combo);
     // Framerate controls
     framerate_spin.m_spin.set_adjustment(Gtk::Adjustment::create(500, 1, 1000, 0.1));
@@ -93,7 +94,8 @@ MainWindow::MainWindow() : Gtk::Window() {
     container.add(restart_camera_button);
 
     // Store connection so we can block it when closing the window programmatically
-    trace_signal_connection = show_trace_check.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::on_trace_button_clicked));
+    trace_signal_connection = show_trace_check.signal_clicked().connect(
+        sigc::mem_fun(this, &MainWindow::on_trace_button_clicked));
     // create the pipeline
     pipeline = GST_PIPELINE(gst_pipeline_new("pipeline"));
     if (!pipeline) {
@@ -107,7 +109,7 @@ MainWindow::MainWindow() : Gtk::Window() {
     gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
 
     // Query hardware capabilities to set ranges in the UI
-    for (const auto &camera : cameras) {
+    for (const auto &camera: cameras) {
         camera->update_gain_range();
         camera->update_exposure_time_range();
     }
@@ -127,10 +129,9 @@ void MainWindow::on_camera_spin_changed() {
         spdlog::error("Failed to set state of pipeline");
     }
     if (next > curr) {
-        auto fmt = pix_fmt_combo.m_combo.get_active_id();
         for (guint i = curr; i < next; i++) {
             auto camera_id = i + 1;
-            auto c = std::make_shared<Keela::CameraControlWindow>(camera_id, fmt, should_split_frames);
+            auto c = std::make_shared<Keela::CameraControlWindow>(camera_id, pix_fmt, should_split_frames);
             set_framerate(c->camera_manager.get());
             set_resolution(c.get());
 
@@ -207,6 +208,7 @@ void MainWindow::reset_cameras() {
     // apply settings while the pipeline isn't actively playing
     set_framerate();
     set_resolution();
+    set_pix_fmt();
     set_state(GST_STATE_PLAYING, false);
 }
 
@@ -227,7 +229,8 @@ void MainWindow::set_state(GstState state, bool wait) {
 }
 
 void MainWindow::set_framerate() {
-    for (const auto& c : cameras) {
+    spdlog::info("Updating framerate of all cameras");
+    for (const auto &c: cameras) {
         set_framerate(c->camera_manager.get());
     }
 }
@@ -238,12 +241,22 @@ void MainWindow::set_framerate(Keela::CameraManager* cm) const {
 }
 
 void MainWindow::set_resolution() const {
-    for (const auto& c : cameras) {
+    spdlog::info("Updating resolution of all cameras");
+    for (const auto &c: cameras) {
         set_resolution(c.get());
     }
 }
 
-void MainWindow::set_resolution(Keela::CameraControlWindow* c) const {
+void MainWindow::set_pix_fmt() {
+    spdlog::info("Updating pixel format of all cameras");
+    this->pix_fmt = pix_fmt_combo.m_combo.get_active_id().raw();
+    // inform all cameras of the pixel format change
+    for (const auto &c: cameras) {
+        c->set_pix_fmt(pix_fmt);
+    }
+}
+
+void MainWindow::set_resolution(Keela::CameraControlWindow *c) const {
     const auto w = data_matrix_w_spin.m_spin.get_value_as_int();
     const auto h = data_matrix_h_spin.m_spin.get_value_as_int();
     c->set_resolution(w, h);

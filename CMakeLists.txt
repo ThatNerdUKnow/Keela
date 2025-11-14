@@ -12,6 +12,7 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -Wall)
 
 option(MAKE_REFERENCE "Build reference gstreamer gtk integration" false)
 option(ENABLE_KEELA_VIDEOTESTSRC "Enable custom Keela videotestsrc plugin for development/testing" false)
+option(USE_HSLUV "Use HSLuv color mapping instead of basic HSL" false)
 
 pkg_search_module(GTKMM REQUIRED IMPORTED_TARGET gtkmm-3.0)
 pkg_search_module(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0)
@@ -25,6 +26,10 @@ if (ENABLE_KEELA_VIDEOTESTSRC)
     pkg_search_module(GST_VIDEO REQUIRED IMPORTED_TARGET gstreamer-video-1.0)
     add_compile_definitions(KEELA_VIDEOTESTSRC_ENABLED)
     add_subdirectory(keela-videotestsrc)
+endif ()
+
+if (USE_HSLUV)
+    add_compile_definitions(KEELA_USE_HSLUV)
 endif ()
 
 add_subdirectory(vendor)

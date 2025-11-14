@@ -9,9 +9,50 @@
 #include <keela-pipeline/presentationbin.h>
 
 namespace Keela {
+    /**
+     * An object that can control the heatmap behavior of a GLCameraRender object
+     */
+    class IControlGLCameraRenderHeatmap {
+    public:
+        virtual ~IControlGLCameraRenderHeatmap() = default;
+
+        /**
+                * Should we perform color mapping?
+                * @return
+                */
+        virtual bool is_heatmap_enabled() = 0;
+
+
+        /**
+         * Should we map colors using HSLuv or just HSL?
+         * @return
+         */
+        virtual bool use_hsluv() {
+#ifdef KEELA_USE_HSLUV
+            return true;
+#endif
+#ifndef KEELA_USE_HSLUV
+            return false;
+#endif
+        }
+
+
+        /**
+         * minimum threshold to begin color mapping
+         * @return
+         */
+        virtual float heatmap_min() = 0;
+
+        /**
+         * maximum threshold to begin color mapping
+         * @return
+         */
+        virtual float heatmap_max() = 0;
+    };
+
     class GLCameraRender final : public Gtk::GLArea {
     public:
-        GLCameraRender(std::shared_ptr<PresentationBin> bin);
+        explicit GLCameraRender(std::shared_ptr<PresentationBin> bin, IControlGLCameraRenderHeatmap &controller);
 
         ~GLCameraRender() override;
 
@@ -43,6 +84,8 @@ namespace Keela {
             1, 1, 1, 0,
             -1, -1, 0, 1
         };
+
+        IControlGLCameraRenderHeatmap &m_controller;
     };
 }
 #endif //GLCAMERARENDER_H

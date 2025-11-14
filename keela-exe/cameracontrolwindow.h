@@ -16,7 +16,7 @@
 #include "keela-widgets/videopresentation.h"
 
 namespace Keela {
-    class CameraControlWindow final : public Gtk::Window {
+    class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCameraRenderHeatmap {
     public:
         explicit CameraControlWindow(guint id, std::string pix_fmt, bool should_split_frames);
 
@@ -25,6 +25,8 @@ namespace Keela {
         std::shared_ptr<Keela::CameraManager> camera_manager;
 
         void set_resolution(int width, int height);
+
+        void set_pix_fmt(std::string pix_fmt);
 
     private:
         Gtk::Box h_container = Gtk::Box();
@@ -76,7 +78,7 @@ namespace Keela {
 
         // Method for main window to toggle split frame mode
         void update_split_frame_state(bool enabled);
-        
+
         // Update gain range after camera is ready
         void update_gain_range();
 
@@ -84,7 +86,16 @@ namespace Keela {
         void update_exposure_time_range();
 
     private:
-        std::vector<std::shared_ptr<CameraTrace>> m_traces;
+        bool is_heatmap_enabled() override;
+
+        float heatmap_min() override;
+
+        float heatmap_max() override;
+
+        // scaling factor to apply to heatmap_max and heatmap_min to ensure they remain in the range [0,1]
+        float heatmap_scale;
+
+        std::vector<std::shared_ptr<CameraTrace> > m_traces;
         // set width and height initially to a sentinel value
         int m_width = -1, m_height = -1;
     };

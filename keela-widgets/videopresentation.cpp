@@ -1,10 +1,11 @@
 #include "keela-widgets/videopresentation.h"
 
-Keela::VideoPresentation::VideoPresentation(const std::string& label_text,
+Keela::VideoPresentation::VideoPresentation(const std::string &label_text,
                                             std::shared_ptr<Keela::PresentationBin> presentation_bin,
+                                            Keela::IControlGLCameraRenderHeatmap &controller,
                                             int width, int height)
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL),
-      gl_area(std::make_unique<GLCameraRender>(presentation_bin)),
+      gl_area(std::make_unique<GLCameraRender>(presentation_bin, controller)),
       label(label_text) {
     set_spacing(5);
     set_border_width(5);
@@ -25,10 +26,10 @@ void Keela::VideoPresentation::set_video_size(int width, int height) {
     gl_area->set_size_request(width, height);
 }
 
-void Keela::VideoPresentation::add_overlay_widget(Gtk::Widget& widget) {
+void Keela::VideoPresentation::add_overlay_widget(Gtk::Widget &widget) {
     overlay.add_overlay(widget);
 }
 
-Gtk::Overlay& Keela::VideoPresentation::get_overlay() {
+Gtk::Overlay &Keela::VideoPresentation::get_overlay() {
     return overlay;
 }
