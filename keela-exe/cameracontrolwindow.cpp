@@ -15,8 +15,7 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id,
   this->id = id;
   spdlog::info("Creating {} for camera {}", __func__, id);
   camera_manager =
-      std::make_unique<Keela::CameraManager>(id, pix_fmt, should_split_frames);
-  // I know it's redundant
+      std::make_unique<Keela::CameraManager>(id, should_split_frames);
   set_pix_fmt(pix_fmt);
   set_title("Image control for Camera " + std::to_string(id));
   set_resizable(false);
