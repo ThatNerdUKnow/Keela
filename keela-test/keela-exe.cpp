@@ -7,14 +7,14 @@
 //
 
 TEST(KeelaExe, ConstructCameraManager) {
-	Keela::CameraManager cm(1, GRAY8, false);
+	Keela::CameraManager cm(1, false);
 	GstElement *b = cm;
 	gst_debug_bin_to_dot_file(GST_BIN(b), GST_DEBUG_GRAPH_SHOW_ALL, "cameramanager1");
 }
 
 TEST(KeelaExe, PlayCameraManager) {
 	auto pipeline = gst_pipeline_new("pipeline");
-	Keela::CameraManager *camera = new Keela::CameraManager(1, GRAY8, false);
+	Keela::CameraManager *camera = new Keela::CameraManager(1, false);
 	guint *refcount = &GST_OBJECT_REFCOUNT(static_cast<GstElement *>(*camera));
 	EXPECT_EQ(*refcount, 1);
 	spdlog::info("adding cameramanager to pipeline");
