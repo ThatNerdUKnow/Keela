@@ -89,7 +89,7 @@ MainWindow::MainWindow() : Gtk::Window() {
 	trace_control_row_box.pack_start(trace_clear_buffer_button);
 
 	container.add(show_trace_check);
-	container.pack_start(trace_control_row_box);
+	container.pack_start(trace_control_row_box, false, false, 0);
 
 	restart_camera_button.signal_clicked().connect(sigc::mem_fun(this, &MainWindow::reset_cameras));
 	restart_camera_button.set_label("Restart Camera(s)");
