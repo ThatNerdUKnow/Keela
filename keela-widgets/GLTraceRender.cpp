@@ -25,7 +25,9 @@ Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_tr
 	hbox->pack_end(min_label);
 	hbox->pack_end(max_label);
 	Container::add(gl_area);
-	gl_area.set_size_request(300, 128);
+	// Expand so traces take up all available space
+	gl_area.set_vexpand(true);
+	gl_area.set_hexpand(true);
 	trace = cam_to_trace;
 
 	spdlog::debug("{}: Loading vertex shader resource", __func__);

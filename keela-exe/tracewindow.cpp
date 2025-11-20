@@ -31,8 +31,8 @@ void Keela::TraceWindow::addTraces(const std::vector<std::shared_ptr<Keela::ITra
 		traces.push_back(widget);
 		row_box->pack_start(*widget, true, true, 0);
 	}
-
-	container.pack_start(*row_box, false, false, 10);
+	// Expand so traces take up all available space
+	container.pack_start(*row_box, true, true, 10);
 	show_all_children();
 	spdlog::info("TraceWindow::{}: Added {} traces in a row", __func__, traces_to_add.size());
 }
