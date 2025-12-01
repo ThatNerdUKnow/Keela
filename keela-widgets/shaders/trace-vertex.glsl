@@ -5,6 +5,7 @@ A point to plot in non-clip coordinates
 */
 layout (location = 0) in float y;
 uniform uint numSamples;
+uniform bool invertY = false;
 
 uniform float sampleMax = 255;
 uniform float sampleMin = 0;
@@ -29,4 +30,8 @@ void main() {
     // offset is applied to every y coord such that sampleMin will be transformed to 0.0
     yoffset = min >= 0 ? min : -min;
     gl_Position = vec4(((x + xoffset) * 2 / numSamples) - 1, 2 * scale * (y - yoffset) - 1, 0.0, 1.0);
+    
+    if (invertY) {
+        gl_Position.y = -gl_Position.y;
+    }
 }

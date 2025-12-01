@@ -18,12 +18,18 @@
 Keela::GLTraceRender::GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_trace)
     : Gtk::Box(Gtk::ORIENTATION_VERTICAL) {
 	spdlog::info(__func__);
+
 	name_label.set_text(cam_to_trace->get_name());
 	auto hbox = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL);
 	Container::add(*hbox);
+
 	hbox->add(name_label);
 	hbox->pack_end(min_label);
 	hbox->pack_end(max_label);
+
+	invert_y_axis_check.set_label("Invert Y Axis");
+	hbox->pack_end(invert_y_axis_check);
+
 	Container::add(gl_area);
 	// Expand so traces take up all available space
 	gl_area.set_vexpand(true);
@@ -208,6 +214,8 @@ bool Keela::GLTraceRender::on_gl_render(const Glib::RefPtr<Gdk::GLContext> &cont
 	loc = glGetUniformLocation(shader_program, "xoffset");
 	auto xoffset = plot_length - plot_points.size();
 	glUniform1f(loc, static_cast<float>(xoffset));
+	loc = glGetUniformLocation(shader_program, "invertY");
+	glUniform1i(loc, invert_y_axis_check.get_active());
 
 	glBufferData(GL_ARRAY_BUFFER, static_cast<long long>(plot_points.size() * sizeof(float)), plot_points_vec.data(),
 	             GL_DYNAMIC_DRAW);
