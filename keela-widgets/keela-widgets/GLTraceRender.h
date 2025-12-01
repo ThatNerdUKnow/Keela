@@ -30,7 +30,7 @@ class ITraceable {
 
 class GLTraceRender final : public Gtk::Box {
    public:
-	explicit GLTraceRender(const std::shared_ptr<ITraceable>& cam_to_trace);
+	explicit GLTraceRender(const std::shared_ptr<ITraceable> &cam_to_trace);
 
 	~GLTraceRender() override;
 
@@ -47,6 +47,9 @@ class GLTraceRender final : public Gtk::Box {
 	Gtk::Label name_label;
 	Gtk::Label min_label;
 	Gtk::Label max_label;
+	// Some experiments use fluorescence that is stronger at lower values
+	// this checkbox allows inverting the y axis for better visualization of the "real" signal
+	Gtk::CheckButton invert_y_axis_check;
 
 	// *basically* a pointer to the camera control window
 	std::shared_ptr<Keela::ITraceable> trace;
@@ -55,7 +58,7 @@ class GLTraceRender final : public Gtk::Box {
 
 	void on_gl_realize();
 
-	bool on_gl_render(const Glib::RefPtr<Gdk::GLContext>& context);
+	bool on_gl_render(const Glib::RefPtr<Gdk::GLContext> &context);
 
 	unsigned int VAO = -1;
 	unsigned int VBO = -1;
@@ -80,10 +83,10 @@ class GLTraceRender final : public Gtk::Box {
 	 * function to be used in worker_thread in order to process video data
 	 * @param token
 	 */
-	void process_video_data(const std::stop_token& token);
+	void process_video_data(const std::stop_token &token);
 
 	template <typename T>
-	double calculate_roi_average(GstSample* sample, GstStructure* structure, std::endian endianness);
+	double calculate_roi_average(GstSample *sample, GstStructure *structure, std::endian endianness);
 };
 }  // namespace Keela
 #endif  // GLTRACERENDER_H
