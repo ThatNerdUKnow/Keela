@@ -18,7 +18,7 @@ MainWindow::MainWindow() : Gtk::Window() {
 	set_default_size(800, 600);
 	container.set_orientation(Gtk::ORIENTATION_VERTICAL);
 	container.set_spacing(10);
-	container.set_homogeneous(false);
+	container.set_homogeneous(true);
 	container.set_border_width(10);
 	MainWindow::add(container);
 
@@ -47,14 +47,6 @@ MainWindow::MainWindow() : Gtk::Window() {
 	framerate_spin.m_spin.set_adjustment(Gtk::Adjustment::create(500, 1, 1000, 0.1));
 	framerate_spin.m_spin.set_digits(1);
 	container.add(framerate_spin);
-
-	const auto dm_frame = Gtk::make_managed<Keela::FrameBox>("Data Matrix Dimensions", Gtk::ORIENTATION_VERTICAL);
-	dm_frame->set_spacing(10);
-	data_matrix_w_spin.m_spin.set_adjustment(Gtk::Adjustment::create(720.0, 1.0, std::numeric_limits<double>::max()));
-	data_matrix_h_spin.m_spin.set_adjustment(Gtk::Adjustment::create(540.0, 1.0, std::numeric_limits<double>::max()));
-	dm_frame->add(data_matrix_w_spin);
-	dm_frame->add(data_matrix_h_spin);
-	container.add(*dm_frame);
 
 	// calcium voltage recording setting control, controls split frame logic
 	cv_recording_check.set_label("Calcium-Voltage Recording Setting");
@@ -111,7 +103,7 @@ MainWindow::MainWindow() : Gtk::Window() {
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
 
 	// Query hardware capabilities to set ranges in the UI
-	for(const auto& camera : cameras) {
+	for(const auto &camera : cameras) {
 		camera->update_gain_range();
 		camera->update_exposure_time_range();
 	}
@@ -135,13 +127,12 @@ void MainWindow::on_camera_spin_changed() {
 			auto camera_id = i + 1;
 			auto c = std::make_shared<Keela::CameraControlWindow>(camera_id, pix_fmt, should_split_frames);
 			set_framerate(c->camera_manager.get());
-			set_resolution(c.get());
 
 			// Apply current trace framerate to new camera
 			const auto fps = static_cast<guint>(trace_fps_spin.m_spin.get_value());
 			c->set_trace_bin_framerate_caps(fps);
 
-			g_object_ref(static_cast<GstElement*>(*c->camera_manager));
+			g_object_ref(static_cast<GstElement *>(*c->camera_manager));
 			auto inner_ret = gst_bin_add(GST_BIN(pipeline), *c->camera_manager);
 			if(!inner_ret) {
 				std::stringstream ss = std::stringstream();
@@ -178,8 +169,6 @@ void MainWindow::on_record_button_clicked() {
 	record_button.set_label(button_text);
 	// set_sensitive
 	framerate_spin.set_sensitive(!is_recording);
-	data_matrix_w_spin.set_sensitive(!is_recording);
-	data_matrix_h_spin.set_sensitive(!is_recording);
 	cv_recording_check.set_sensitive(!is_recording);
 	num_camera_spin.set_sensitive(!is_recording);
 	show_trace_check.set_sensitive(!is_recording);
@@ -190,7 +179,7 @@ void MainWindow::on_record_button_clicked() {
 		}
 		directory_button.set_sensitive(false);
 		set_state(GST_STATE_NULL);
-		for(const auto& camera : cameras) {
+		for(const auto &camera : cameras) {
 			camera->camera_manager->start_recording();
 		}
 		// this resets the pipeline clock
@@ -198,7 +187,7 @@ void MainWindow::on_record_button_clicked() {
 	} else {
 		auto message_dialog = Gtk::MessageDialog("Remember to take calibration photos");
 		message_dialog.run();
-		for(const auto& camera : cameras) {
+		for(const auto &camera : cameras) {
 			camera->camera_manager->stop_recording();
 		}
 		directory_button.set_sensitive(true);
@@ -209,7 +198,6 @@ void MainWindow::reset_cameras() {
 	set_state(GST_STATE_NULL);
 	// apply settings while the pipeline isn't actively playing
 	set_framerate();
-	set_resolution();
 	set_pix_fmt();
 	set_state(GST_STATE_PLAYING, false);
 }
@@ -232,36 +220,23 @@ void MainWindow::set_state(GstState state, bool wait) {
 
 void MainWindow::set_framerate() {
 	spdlog::info("Updating framerate of all cameras");
-	for(const auto& c : cameras) {
+	for(const auto &c : cameras) {
 		set_framerate(c->camera_manager.get());
 	}
 }
 
-void MainWindow::set_framerate(Keela::CameraManager* cm) const {
+void MainWindow::set_framerate(Keela::CameraManager *cm) const {
 	const auto fr = framerate_spin.m_spin.get_value();
 	cm->set_framerate(fr);
-}
-
-void MainWindow::set_resolution() const {
-	spdlog::info("Updating resolution of all cameras");
-	for(const auto& c : cameras) {
-		set_resolution(c.get());
-	}
 }
 
 void MainWindow::set_pix_fmt() {
 	spdlog::info("Updating pixel format of all cameras");
 	this->pix_fmt = pix_fmt_combo.m_combo.get_active_id().raw();
 	// inform all cameras of the pixel format change
-	for(const auto& c : cameras) {
+	for(const auto &c : cameras) {
 		c->set_pix_fmt(pix_fmt);
 	}
-}
-
-void MainWindow::set_resolution(Keela::CameraControlWindow* c) const {
-	const auto w = data_matrix_w_spin.m_spin.get_value_as_int();
-	const auto h = data_matrix_h_spin.m_spin.get_value_as_int();
-	c->set_resolution(w, h);
 }
 
 void MainWindow::on_trace_button_clicked() {
@@ -297,7 +272,7 @@ void MainWindow::on_trace_fps_changed() {
 	spdlog::info("Setting trace framerate to {} fps for all cameras", fps);
 
 	// Update trace framerate for all cameras
-	for(const auto& camera : cameras) {
+	for(const auto &camera : cameras) {
 		camera->set_trace_bin_framerate_caps(fps);
 	}
 	// Update the trace plot duration based on the new framerate
@@ -333,7 +308,7 @@ void MainWindow::on_directory_clicked() {
 	auto result = dialog.run();
 	if(result == Gtk::RESPONSE_OK) {
 		experiment_directory = dialog.get_filename();
-		for(const auto& c : cameras) {
+		for(const auto &c : cameras) {
 			set_experiment_directory(c);
 		}
 		record_button.set_tooltip_text("Current experiment directory: " + experiment_directory);
@@ -349,7 +324,7 @@ void MainWindow::on_split_frames_changed() {
 	should_split_frames = cv_recording_check.get_active();
 	spdlog::info("Frame splitting set to {}", should_split_frames);
 
-	for(const auto& c : cameras) {
+	for(const auto &c : cameras) {
 		c->update_split_frame_state(should_split_frames);
 	}
 
@@ -361,7 +336,7 @@ void MainWindow::on_split_frames_changed() {
 		}
 
 		// Add all traces for all cameras, with the correct split state
-		for(const auto& camera : cameras) {
+		for(const auto &camera : cameras) {
 			auto traces = camera->get_traces();
 			trace_window->addTraces(traces);
 		}
