@@ -39,15 +39,27 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
 	// Disable gain control until camera is ready and we can query for gain
 	// support and supported range
 	gain_spin.m_spin.set_sensitive(false);
-	gain_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_gain_changed));
+	gain_signal =
+	    gain_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_gain_changed));
 	v_container.add(gain_spin);
 
 	// Disable exposure time control until camera is ready and we can query for
 	// exposure time support and supported range
 	exposure_time_spin.m_spin.set_sensitive(false);
-	exposure_time_spin.m_spin.signal_value_changed().connect(
+	exposure_time_signal = exposure_time_spin.m_spin.signal_value_changed().connect(
 	    sigc::mem_fun(*this, &CameraControlWindow::on_exposure_time_changed));
 	v_container.add(exposure_time_spin);
+
+	/** Binning controls */
+	bin_mode_combo.set_sensitive(false);
+	bin_mode_signal = bin_mode_combo.m_combo.signal_changed().connect(
+	    sigc::mem_fun(*this, &CameraControlWindow::on_bin_mode_changed));
+	v_container.add(bin_mode_combo);
+
+	bin_spin.m_spin.set_sensitive(false);
+	bin_spin_signal =
+	    bin_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_bin_spin_changed));
+	v_container.add(bin_spin);
 
 	// TODO: add rotation options
 	rotation_combo.m_combo.signal_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_rotation_changed));
@@ -121,8 +133,21 @@ void Keela::CameraControlWindow::on_exposure_time_changed() const {
 	camera_manager->set_exposure_time(exposure_time);
 }
 
+void Keela::CameraControlWindow::on_bin_mode_changed() {
+	const auto mode = bin_mode_combo.m_combo.get_active_id();
+	spdlog::info("Binning mode changed to {}", mode.raw());
+	camera_manager->set_binning_mode(mode);
+}
+
+void Keela::CameraControlWindow::on_bin_spin_changed() const {
+	const auto binning_factor = static_cast<int>(bin_spin.m_spin.get_value());
+	spdlog::info("Binning factor changed to {}", binning_factor);
+	camera_manager->set_binning_factors(binning_factor);
+}
+
 void Keela::CameraControlWindow::set_resolution(const int width, const int height) {
 	spdlog::trace("resolution changed");
+	// @todo: get rid of this, we don't need to set resolution on the camera
 	this->camera_manager->set_resolution(width, height);
 	// TODO: can we set a minimum size or allow the user to scale the gl area
 	// themselves?
@@ -314,36 +339,93 @@ void Keela::CameraControlWindow::update_gain_range() {
 	auto gain_range = camera_manager->get_gain_range();
 	double min_gain = gain_range.first;
 	double max_gain = gain_range.second;
+	// and the current gain to set the initial spin value
+	auto current_gain = camera_manager->get_gain();
 
-	if(min_gain == 0.0 && max_gain == 0.0) {
+	if(std::isnan(min_gain)) {
 		gain_spin.m_spin.set_sensitive(false);
 		spdlog::warn("Gain control not supported by camera - disabling gain control UI");
 		return;
 	}
-	// update the gain spin with the new range
+	// update the gain spin with the new range and current setting
+	gain_signal.block();
 	gain_spin.m_spin.set_adjustment(Gtk::Adjustment::create(min_gain, min_gain, max_gain, 1.0));
+	gain_spin.m_spin.set_value(current_gain);
 	gain_spin.m_spin.set_sensitive(true);
+	gain_signal.unblock();
 
 	spdlog::info("Updated gain control range to {:.1f} - {:.1f} dB", min_gain, max_gain);
 }
 
 void Keela::CameraControlWindow::update_exposure_time_range() {
 	// get the range supported by the camera hardware
-	auto exposure_time_range = camera_manager->get_exposure_time_range();
-	double min_exposure_time = exposure_time_range.first;
-	double max_exposure_time = exposure_time_range.second;
+	auto [min_exposure_time, max_exposure_time] = camera_manager->get_exposure_time_range();
+	// and the current exposure time to set the initial spin value
+	auto current_exposure_time = camera_manager->get_exposure_time();
 
-	if(min_exposure_time == 0.0 && max_exposure_time == 0.0) {
+	if(std::isnan(min_exposure_time)) {
 		exposure_time_spin.m_spin.set_sensitive(false);
-		spdlog::warn(
-		    "Exposure time control not supported by camera - disabling "
-		    "exposure time control UI");
+		spdlog::warn("Exposure time control not supported by camera - disabling exposure time control UI");
 		return;
 	}
-	// update the exposure time spin with the new range
+	// update ui based on hardware capabilities and current setting
+	exposure_time_signal.block();
 	exposure_time_spin.m_spin.set_adjustment(
 	    Gtk::Adjustment::create(min_exposure_time, min_exposure_time, max_exposure_time, 1000.0));
+	exposure_time_spin.m_spin.set_value(current_exposure_time);
 	exposure_time_spin.m_spin.set_sensitive(true);
+	exposure_time_signal.unblock();
 
 	spdlog::info("Updated exposure time control range to {:.1f} - {:.1f} μs", min_exposure_time, max_exposure_time);
+}
+
+void Keela::CameraControlWindow::update_binning_modes() {
+	auto modes = camera_manager->get_supported_binning_modes();
+	auto current_mode = camera_manager->get_binning_modes();
+
+	if(modes.empty()) {
+		bin_mode_combo.m_combo.set_sensitive(false);
+		spdlog::warn("Binning mode control not supported by camera - disabling binning mode UI");
+		return;
+	}
+	spdlog::info("Updating binning modes UI with {} modes", modes.size());
+	bin_mode_combo.set_sensitive(true);
+	bin_mode_combo.m_combo.remove_all();
+	for(const auto &mode : modes) {
+		spdlog::info("Adding binning mode to UI: {}", mode);
+		bin_mode_combo.m_combo.append(mode, mode);
+	}
+	bin_mode_signal.block();
+	bin_mode_combo.m_combo.set_active_id(current_mode.first);
+	bin_mode_signal.unblock();
+}
+
+void Keela::CameraControlWindow::update_binning_range() {
+	bool supports_hardware_binning = camera_manager->supports_hardware_binning();
+
+	if(!supports_hardware_binning) {
+		spdlog::warn("Hardware binning control not supported by camera.");
+		return;
+	}
+	// get the range supported by the camera hardware,
+	// only using x as we don't support independent gain settings
+	auto [min_x_binning, max_x_binning, min_y_binning, max_y_binning] = camera_manager->get_binning_bounds();
+	auto [x_binning_increment, y_binning_increment] = camera_manager->get_binning_increments();
+
+	// Get the current binning setting from hardware to preserve it
+	auto [current_x_binning, current_y_binning] = camera_manager->get_binning_factors();
+	double current_binning = std::isnan(current_x_binning) ? min_x_binning : current_x_binning;
+
+	bin_spin_signal.block();
+	// update the binning spin with the new range, preserving current value
+	bin_spin.m_spin.set_adjustment(
+	    Gtk::Adjustment::create(current_binning, min_x_binning, max_x_binning, x_binning_increment));
+
+	bin_spin.m_spin.set_value(current_binning);
+	bin_spin_signal.unblock();
+
+	bin_spin.m_spin.set_sensitive(true);
+
+	spdlog::info("Updated binning factor control range to {} - {}, current value: {}", min_x_binning, max_x_binning,
+	             current_binning);
 }

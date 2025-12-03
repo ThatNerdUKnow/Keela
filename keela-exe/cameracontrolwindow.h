@@ -42,7 +42,14 @@ class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCa
 
 	// TODO: histogram
 	Keela::LabeledSpinButton gain_spin = Keela::LabeledSpinButton("Gain (dB)");
+	sigc::connection gain_signal;
 	Keela::LabeledSpinButton exposure_time_spin = Keela::LabeledSpinButton("Exposure Time (μs)");
+	sigc::connection exposure_time_signal;
+
+	Keela::LabeledSpinButton bin_spin = Keela::LabeledSpinButton("Binning Factor");
+	sigc::connection bin_spin_signal;
+	Keela::LabeledComboBoxText bin_mode_combo = Keela::LabeledComboBoxText("Binning Mode");
+	sigc::connection bin_mode_signal;
 
 	Keela::LabeledComboBoxText rotation_combo = Keela::LabeledComboBoxText("Select Rotation");
 	Gtk::CheckButton flip_horiz_check = Gtk::CheckButton("Flip Along Horizontal Center");
@@ -59,6 +66,10 @@ class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCa
 	void on_gain_changed() const;
 
 	void on_exposure_time_changed() const;
+
+	void on_bin_mode_changed();
+
+	void on_bin_spin_changed() const;
 
 	void on_rotation_changed();
 
@@ -91,6 +102,10 @@ class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCa
 
 	// Update exposure time range after camera is ready
 	void update_exposure_time_range();
+
+	void update_binning_modes();
+
+	void update_binning_range();
 
    private:
 	bool is_heatmap_enabled() override;
