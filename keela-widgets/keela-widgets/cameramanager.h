@@ -4,7 +4,7 @@
 
 #ifndef CAMERAMANAGER_H
 #define CAMERAMANAGER_H
-#include <arv.h>
+#include <aravis-0.8/arv.h>
 #include <keela-pipeline/CameraStreamBin.h>
 #include <keela-pipeline/bin.h>
 #include <keela-pipeline/caps.h>
@@ -13,6 +13,7 @@
 #include <keela-pipeline/simpleelement.h>
 #include <keela-pipeline/snapshotbin.h>
 #include <keela-pipeline/transformbin.h>
+#include <keela-widgets/AravisController.h>
 
 #include <atomic>
 #include <set>
@@ -32,6 +33,8 @@ class CameraManager final : public Keela::Bin {
 
 	~CameraManager() override;
 
+	std::vector<std::string> get_available_pixel_formats() const;
+
 	void set_pix_fmt(const std::string &format);
 
 	void set_framerate(double framerate);
@@ -40,15 +43,50 @@ class CameraManager final : public Keela::Bin {
 
 	void set_experiment_directory(const std::string &path);
 
+	// Creates the AravisController once pipeline is in PLAYING state and we have access to the camera hardware
+	// Returns 0 on success, -1 on failure
+	int init_aravis_controller();
+
 	// Query hardware capabilities
 	std::pair<double, double> get_gain_range() const;
 
+	double get_gain() const;
+
 	std::pair<double, double> get_exposure_time_range() const;
 
-	// Control hardware settings
+	double get_exposure_time() const;
+
+	bool supports_hardware_binning() const;
+
+	std::vector<std::string> get_supported_binning_modes() const;
+
+	std::pair<std::string, std::string> get_binning_modes() const;
+
+	std::tuple<int, int, int, int> get_binning_bounds() const;
+
+	std::pair<int, int> get_binning_increments() const;
+
+	/**
+	 * Get the current camera resolution after any binning/cropping applied
+	 *
+	 * Returns {nan, nan} if camera is not available
+	 */
+	std::pair<int, int> get_current_resolution() const;
+
+	/**
+	 * Get the current binning factors
+	 *
+	 * Returns {nan, nan} if camera is not available
+	 */
+	std::pair<int, int> get_binning_factors() const;
 	void set_gain(double gain);
 
 	void set_exposure_time(double exposure);
+
+	void set_binning_mode(std::string mode);
+
+	void set_binning_factors(int binning_factor_both);
+	void set_binning_factors(int binning_factor_x, int binning_factor_y);
 
 	void start_recording();
 
@@ -130,9 +168,18 @@ class CameraManager final : public Keela::Bin {
 
 	void add_odd_camera_stream();
 
-	ArvCamera *get_aravis_camera() const;
+	void set_pipeline_state(GstState state);
 
-	ArvCamera *aravis_camera = nullptr;
+	/**
+	 * Stops and restarts the pipeline so we can apply changes to the camera/aravissrc.
+	 */
+	void restart_pipeline();
+
+	/**
+	 * Manages Aravis camera hardware settings like querying for
+	 * hardware capabilities and adjusting camera parameters.
+	 */
+	AravisController *aravis_controller = nullptr;
 };
 }  // namespace Keela
 #endif  // CAMERAMANAGER_H
