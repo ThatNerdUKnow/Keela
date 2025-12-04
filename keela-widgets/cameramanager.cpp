@@ -99,7 +99,7 @@ void Keela::CameraManager::set_experiment_directory(const std::string &path) {
 
 int Keela::CameraManager::init_aravis_controller() {
 	GstElement *camera_element = static_cast<GstElement *>(camera);
-	aravis_controller = new AravisController(camera_element);
+	aravis_controller = std::make_unique<AravisController>(camera_element);
 	spdlog::info("Initialized AravisController for camera {}", id);
 	return 0;
 }

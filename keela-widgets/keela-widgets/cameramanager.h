@@ -179,7 +179,7 @@ class CameraManager final : public Keela::Bin {
 	 * Manages Aravis camera hardware settings like querying for
 	 * hardware capabilities and adjusting camera parameters.
 	 */
-	AravisController *aravis_controller = nullptr;
+	std::unique_ptr<AravisController> aravis_controller = nullptr;
 };
 }  // namespace Keela
 #endif  // CAMERAMANAGER_H
