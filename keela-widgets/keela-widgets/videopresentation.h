@@ -16,7 +16,7 @@ class VideoPresentation : public Gtk::Box {
 
 	~VideoPresentation() override;
 
-	void set_video_size(int width, int height);
+	void set_presentation_size(int width, int height);
 
 	void add_overlay_widget(Gtk::Widget &widget);
 

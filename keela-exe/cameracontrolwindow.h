@@ -33,8 +33,8 @@ class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCa
 	Gtk::Box v_container = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
 	Gtk::Box video_hbox = Gtk::Box(Gtk::ORIENTATION_HORIZONTAL);
 
-	std::unique_ptr<VideoPresentation> frame_widget_even;
-	std::unique_ptr<VideoPresentation> frame_widget_odd;
+	std::unique_ptr<VideoPresentation> video_presentation_even;
+	std::unique_ptr<VideoPresentation> video_presentation_odd;
 
 	Gtk::CheckButton range_check = Gtk::CheckButton("Range");
 	Keela::LabeledSpinButton range_min_spin = Keela::LabeledSpinButton("Minimum");
