@@ -17,7 +17,7 @@ Keela::TraceWindow::TraceWindow() {
 Keela::TraceWindow::~TraceWindow() {
 }
 
-void Keela::TraceWindow::addTraces(const std::vector<std::shared_ptr<Keela::ITraceable>>& traces_to_add) {
+void Keela::TraceWindow::addTraces(const std::vector<std::shared_ptr<Keela::ITraceable>> &traces_to_add) {
 	if(traces_to_add.empty()) {
 		return;
 	}
@@ -26,7 +26,7 @@ void Keela::TraceWindow::addTraces(const std::vector<std::shared_ptr<Keela::ITra
 	auto row_box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL);
 	row_box->set_spacing(10);
 
-	for(const auto& trace : traces_to_add) {
+	for(const auto &trace : traces_to_add) {
 		auto widget = std::make_shared<GLTraceRender>(trace);
 		traces.push_back(widget);
 		row_box->pack_start(*widget, true, true, 0);
@@ -41,11 +41,11 @@ void Keela::TraceWindow::removeTraceRow() {
 	// Get the most recently added row box
 	auto children = container.get_children();
 	if(!children.empty()) {
-		auto* last_row = children.back();
+		auto *last_row = children.back();
 		container.remove(*last_row);
 
 		// Count how many traces were in that last row
-		auto last_row_box = dynamic_cast<Gtk::Box*>(last_row);
+		auto last_row_box = dynamic_cast<Gtk::Box *>(last_row);
 		int traces_in_last_row = last_row_box->get_children().size();
 
 		// Remove the corresponding number of traces
@@ -62,7 +62,7 @@ int Keela::TraceWindow::num_traces() const {
 }
 
 void Keela::TraceWindow::set_trace_render_framerate(double framerate) {
-	for(const auto& trace : traces) {
+	for(const auto &trace : traces) {
 		trace->set_trace_render_framerate(framerate);
 	}
 }
@@ -72,13 +72,13 @@ void Keela::TraceWindow::set_on_closed_callback(std::function<void()> callback) 
 }
 
 bool Keela::TraceWindow::on_timeout() {
-	for(const auto& trace : traces) {
+	for(const auto &trace : traces) {
 		trace->queue_draw();
 	}
 	return true;
 }
 
-bool Keela::TraceWindow::on_delete_event(GdkEventAny* any_event) {
+bool Keela::TraceWindow::on_delete_event(GdkEventAny *any_event) {
 	if(on_window_closed_callback) {
 		on_window_closed_callback();
 	}
@@ -86,13 +86,13 @@ bool Keela::TraceWindow::on_delete_event(GdkEventAny* any_event) {
 }
 
 void Keela::TraceWindow::set_trace_window_retention(guint trace_retention) {
-	for(const auto& trace : traces) {
+	for(const auto &trace : traces) {
 		trace->set_plot_duration_sec(trace_retention);
 	}
 }
 
 void Keela::TraceWindow::clear_trace_buffer() {
-	for(const auto& trace : traces) {
+	for(const auto &trace : traces) {
 		trace->clear_buffer();
 	}
 }

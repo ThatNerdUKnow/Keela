@@ -10,7 +10,7 @@ namespace Keela {
  */
 class CameraTrace final : public ITraceable {
    public:
-	CameraTrace(std::shared_ptr<TraceBin> trace_bin, std::shared_ptr<TraceGizmo> trace_gizmo, const std::string& name);
+	CameraTrace(std::shared_ptr<TraceBin> trace_bin, std::shared_ptr<TraceGizmo> trace_gizmo, const std::string &name);
 	~CameraTrace() override = default;
 
 	std::shared_ptr<TraceBin> get_trace_bin() override;
