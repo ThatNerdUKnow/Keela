@@ -7,7 +7,7 @@
 Keela::TraceWindow::TraceWindow() {
 	signal_delete_event().connect(sigc::mem_fun(this, &TraceWindow::on_delete_event));
 
-	set_default_size(640, 480);
+	set_default_size(720, 540);
 	set_title("Traces");
 	Window::add(scrolled_window);
 	scrolled_window.add(container);

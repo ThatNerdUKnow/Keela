@@ -12,7 +12,7 @@ namespace Keela {
 class VideoPresentation : public Gtk::Box {
    public:
 	VideoPresentation(const std::string &label_text, std::shared_ptr<Keela::PresentationBin> presentation_bin,
-	                  IControlGLCameraRenderHeatmap &controller, int width = 640, int height = 480);
+	                  IControlGLCameraRenderHeatmap &controller, int width = 720, int height = 540);
 
 	~VideoPresentation() override;
 

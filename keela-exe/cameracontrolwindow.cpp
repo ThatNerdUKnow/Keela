@@ -87,10 +87,10 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
 	trace_gizmo_even = std::make_shared<TraceGizmo>();
 
 	// Set up video presentations, video_presentation_even renders all frames unless split is enabled
-	video_presentation_even = std::make_unique<VideoPresentation>("Camera " + std::to_string(id),
-	                                                        camera_manager->camera_stream_even->presentation, *this,
-	                                                        640,  // width
-	                                                        480   // height
+	video_presentation_even = std::make_unique<VideoPresentation>(
+	    "Camera " + std::to_string(id), camera_manager->camera_stream_even->presentation, *this,
+	    720,  // width
+	    540   // height
 	);
 	video_presentation_even->add_overlay_widget(*trace_gizmo_even);
 	video_hbox.pack_start(*video_presentation_even, false, false, 10);
@@ -301,14 +301,14 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
 	if(rotation == ROTATION_90 || rotation == ROTATION_270) {
 		video_presentation_odd =
 		    std::make_unique<VideoPresentation>("Odd Frames", camera_manager->camera_stream_odd->presentation, *this,
-		                                        480,  // width
-		                                        640   // height
+		                                        540,  // width
+		                                        720   // height
 		    );
 	} else {
 		video_presentation_odd =
 		    std::make_unique<VideoPresentation>("Odd Frames", camera_manager->camera_stream_odd->presentation, *this,
-		                                        640,  // width
-		                                        480   // height
+		                                        540,  // width
+		                                        720   // height
 		    );
 	}
 
