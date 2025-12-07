@@ -321,9 +321,15 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
 			    tmp = std::byteswap(tmp);
 		    }
 		    if(gizmo->get_enabled()) {
-			    const auto x = index % width;
-			    const auto y = index / width;
-			    if(gizmo->intersects(x * 2, y * 2)) {
+			    const auto video_x = index % width;
+			    const auto video_y = index / width;
+
+			    // Convert video coordinates to display coordinates for intersection test
+			    const auto [display_width, display_height] = trace->get_display_size();
+			    const auto display_x = video_x * display_width / width;
+			    const auto display_y = video_y * display_height / height;
+
+			    if(gizmo->intersects(display_x, display_y)) {
 				    return static_cast<std::pair<size_t, size_t>>(std::make_pair(tmp, 1));
 			    }
 			    return static_cast<std::pair<size_t, size_t>>(std::make_pair(0, 0));

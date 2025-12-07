@@ -268,14 +268,15 @@ void Keela::CameraControlWindow::update_traces() {
 		even_name += " (Even)";
 	}
 
-	auto even_trace =
-	    std::make_shared<CameraTrace>(camera_manager->camera_stream_even->get_trace_bin(), trace_gizmo_even, even_name);
+	auto even_trace = std::make_shared<CameraTrace>(camera_manager->camera_stream_even->get_trace_bin(),
+	                                                trace_gizmo_even, *video_presentation_even, even_name);
 	m_traces.push_back(even_trace);
 
 	// Add odd trace if frame splitting is enabled
 	if(camera_manager->is_frame_splitting_enabled() && trace_gizmo_odd) {
-		auto odd_trace = std::make_shared<CameraTrace>(camera_manager->camera_stream_odd->get_trace_bin(),
-		                                               trace_gizmo_odd, "Camera " + std::to_string(id) + " (Odd)");
+		auto odd_trace =
+		    std::make_shared<CameraTrace>(camera_manager->camera_stream_odd->get_trace_bin(), trace_gizmo_odd,
+		                                  *video_presentation_odd, "Camera " + std::to_string(id) + " (Odd)");
 		m_traces.push_back(odd_trace);
 	}
 }
@@ -301,14 +302,14 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
 	if(rotation == ROTATION_90 || rotation == ROTATION_270) {
 		video_presentation_odd =
 		    std::make_unique<VideoPresentation>("Odd Frames", camera_manager->camera_stream_odd->presentation, *this,
-		                                        540,  // width
-		                                        720   // height
+		                                        DEFAULT_PRESENTATION_HEIGHT,  // width
+		                                        DEFAULT_PRESENTATION_WIDTH    // height
 		    );
 	} else {
 		video_presentation_odd =
 		    std::make_unique<VideoPresentation>("Odd Frames", camera_manager->camera_stream_odd->presentation, *this,
-		                                        540,  // width
-		                                        720   // height
+		                                        DEFAULT_PRESENTATION_WIDTH,  // width
+		                                        DEFAULT_PRESENTATION_HEIGHT  // height
 		    );
 	}
 

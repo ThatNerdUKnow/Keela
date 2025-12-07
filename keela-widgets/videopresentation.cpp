@@ -21,7 +21,13 @@ Keela::VideoPresentation::VideoPresentation(const std::string &label_text,
 
 Keela::VideoPresentation::~VideoPresentation() = default;
 
+std::pair<int, int> Keela::VideoPresentation::get_size() const {
+	return {m_width, m_height};
+}
+
 void Keela::VideoPresentation::set_presentation_size(int width, int height) {
+	m_width = width;
+	m_height = height;
 	gl_area->set_size_request(width, height);
 }
 
