@@ -4,6 +4,7 @@
 
 #include "keela-widgets/GLTraceRender.h"
 
+#include <gst/video/video-info.h>
 #include <spdlog/spdlog.h>
 
 #include <bit>
@@ -301,11 +302,15 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
 		throw std::runtime_error(ss.str());
 	}
 
-	// GStreamer's videoflip may add padding to align each row to memory boundaries
-	gsize stride = mapInfo.size / height;
-	gsize row_pixels = stride / sizeof(T);  // including padding
+	GstVideoInfo info;
+	gst_video_info_init(&info);
+	gst_video_info_from_caps(&info, gst_sample_get_caps(sample));
 
-	assert(static_cast<gsize>(stride * height * sizeof(T)) == mapInfo.size);
+	// GStreamer's videoflip may add padding to align each row to memory boundaries
+	gsize stride = info.stride[0];          // bytes per row (w/ padding)
+	gsize row_pixels = stride / sizeof(T);  // pixels per row (w/ padding)
+
+	assert(static_cast<gsize>(stride * height) == mapInfo.size);
 
 	auto indices = std::vector<unsigned int>(width * height);  // Only actual pixels
 	std::iota(indices.begin(), indices.end(), 0);
