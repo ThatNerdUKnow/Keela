@@ -290,7 +290,7 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
 	}
 
 	// protect against division by zero
-	if(width == 0) {
+	if(width == 0 || height == 0) {
 		return std::numeric_limits<double>::quiet_NaN();
 	}
 
@@ -300,8 +300,14 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
 		ss << __func__ << "Buffer mapping failed";
 		throw std::runtime_error(ss.str());
 	}
-	assert(static_cast<gsize>(width * height * sizeof(T)) == mapInfo.size);
-	auto indices = std::vector<unsigned int>(mapInfo.size / sizeof(T));
+
+	// GStreamer's videoflip may add padding to align each row to memory boundaries
+	gsize stride = mapInfo.size / height;
+	gsize row_pixels = stride / sizeof(T);  // including padding
+
+	assert(static_cast<gsize>(stride * height * sizeof(T)) == mapInfo.size);
+
+	auto indices = std::vector<unsigned int>(width * height);  // Only actual pixels
 	std::iota(indices.begin(), indices.end(), 0);
 
 	// initial value where the first element in the tuple is sum of the pixels in the ROI
@@ -316,14 +322,18 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
 	    },
 	    // map
 	    [&](unsigned int index) {
-		    T tmp = mapInfo.data[index * sizeof(T)];
+		    // index is logical pixel value (0 -> width*height-1)
+		    const auto video_x = index % width;
+		    const auto video_y = index / width;
+
+		    // actual buffer index accounting for stride
+		    const auto buffer_index = video_y * row_pixels + video_x;
+
+		    T tmp = reinterpret_cast<T *>(mapInfo.data)[buffer_index];
 		    if(endianness != std::endian::native) {
 			    tmp = std::byteswap(tmp);
 		    }
 		    if(gizmo->get_enabled()) {
-			    const auto video_x = index % width;
-			    const auto video_y = index / width;
-
 			    // Convert video coordinates to display coordinates for intersection test
 			    const auto [display_width, display_height] = trace->get_display_size();
 			    const auto display_x = video_x * display_width / width;
