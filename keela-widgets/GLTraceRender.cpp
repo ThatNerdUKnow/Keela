@@ -334,7 +334,7 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
 		    // actual buffer index accounting for stride
 		    const auto buffer_index = video_y * row_pixels + video_x;
 
-		    T tmp = reinterpret_cast<T *>(mapInfo.data)[buffer_index];
+		    T tmp = mapInfo.data[buffer_index];
 		    if(endianness != std::endian::native) {
 			    tmp = std::byteswap(tmp);
 		    }
