@@ -85,18 +85,6 @@ void Keela::CameraManager::set_framerate(double framerate) {
 	g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
 }
 
-void Keela::CameraManager::set_resolution(const int width, const int height) {
-	// @todo: get rid of this, we dont set the camera resolution directly in hardware
-	if(width <= 0 || height <= 0) {
-		throw std::invalid_argument("width and height must be greater than zero");
-	}
-	// create a copy of our current caps
-	base_caps = Caps(static_cast<GstCaps *>(base_caps));
-	base_caps.set_resolution(width, height);
-	g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
-	transform.scale(width, height);
-}
-
 void Keela::CameraManager::set_experiment_directory(const std::string &path) {
 	experiment_directory = path;
 }

@@ -22,6 +22,10 @@ class VideoPresentation : public Gtk::Box {
 
 	void set_presentation_size(int width, int height);
 
+	void reset_dimensions();
+
+	void swap_dimensions();
+
 	void add_overlay_widget(Gtk::Widget &widget);
 
 	Gtk::Overlay &get_overlay();
@@ -30,8 +34,10 @@ class VideoPresentation : public Gtk::Box {
 	std::unique_ptr<GLCameraRender> gl_area;
 	Gtk::Label label;
 	Gtk::Overlay overlay;
-	int m_width = DEFAULT_PRESENTATION_WIDTH;
-	int m_height = DEFAULT_PRESENTATION_HEIGHT;
+	int m_base_width;
+	int m_base_height;
+	int m_width;
+	int m_height;
 };
 }  // namespace Keela
 

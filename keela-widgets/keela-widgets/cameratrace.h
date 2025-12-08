@@ -24,8 +24,8 @@ class CameraTrace final : public ITraceable {
    private:
 	std::shared_ptr<TraceBin> m_trace_bin;
 	std::shared_ptr<TraceGizmo> m_trace_gizmo;
-	std::string m_name;
 	const VideoPresentation &m_video_presentation;
+	std::string m_name;
 };
 }  // namespace Keela
 

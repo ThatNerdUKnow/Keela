@@ -43,8 +43,6 @@ class CameraManager final : public Keela::Bin {
 
 	void set_framerate(double framerate);
 
-	void set_resolution(int width, int height);
-
 	void set_experiment_directory(const std::string &path);
 
 	// Query hardware capabilities

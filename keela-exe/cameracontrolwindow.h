@@ -24,8 +24,6 @@ class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCa
 
 	std::shared_ptr<Keela::CameraManager> camera_manager;
 
-	void set_resolution(int width, int height);
-
 	void set_pix_fmt(std::string pix_fmt);
 
    private:
@@ -83,6 +81,8 @@ class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCa
 
 	void update_traces();
 
+	void update_presentation_sizes(const std::string &rotation);
+
    public:
 	std::vector<std::shared_ptr<ITraceable>> get_traces();
 	void set_trace_bin_framerate_caps(guint fps);
@@ -111,8 +111,6 @@ class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCa
 	float heatmap_scale;
 
 	std::vector<std::shared_ptr<CameraTrace>> m_traces;
-	// set width and height initially to a sentinel value
-	int m_width = -1, m_height = -1;
 };
 }  // namespace Keela
 

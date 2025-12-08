@@ -61,13 +61,12 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
 	    bin_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_bin_spin_changed));
 	v_container.add(bin_spin);
 
-	// TODO: add rotation options
-	rotation_combo.m_combo.signal_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_rotation_changed));
 	rotation_combo.m_combo.append(ROTATION_NONE, "---");
 	rotation_combo.m_combo.append(ROTATION_90, "Rotate 90 degrees clockwise");
 	rotation_combo.m_combo.append(ROTATION_180, "Rotate 180 degrees");
 	rotation_combo.m_combo.append(ROTATION_270, "Rotate 270 degrees clockwise");
 	rotation_combo.m_combo.set_active_id(ROTATION_NONE);
+	rotation_combo.m_combo.signal_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_rotation_changed));
 
 	v_container.add(rotation_combo);
 	flip_horiz_check.signal_toggled().connect(sigc::mem_fun(*this, &CameraControlWindow::on_flip_horiz_changed));
@@ -88,10 +87,7 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
 
 	// Set up video presentations, video_presentation_even renders all frames unless split is enabled
 	video_presentation_even = std::make_unique<VideoPresentation>(
-	    "Camera " + std::to_string(id), camera_manager->camera_stream_even->presentation, *this,
-	    720,  // width
-	    540   // height
-	);
+	    "Camera " + std::to_string(id), camera_manager->camera_stream_even->presentation, *this);
 	video_presentation_even->add_overlay_widget(*trace_gizmo_even);
 	video_hbox.pack_start(*video_presentation_even, false, false, 10);
 
@@ -150,31 +146,6 @@ void Keela::CameraControlWindow::on_bin_spin_changed() const {
 	camera_manager->set_binning_factors(binning_factor);
 }
 
-void Keela::CameraControlWindow::set_resolution(const int width, const int height) {
-	spdlog::trace("resolution changed");
-	// @todo: get rid of this, we don't need to set resolution on the camera
-	this->camera_manager->set_resolution(width, height);
-	// TODO: can we set a minimum size or allow the user to scale the gl area
-	// themselves?
-	const auto rotation = rotation_combo.m_combo.get_active_id();
-	if(rotation == ROTATION_90 || rotation == ROTATION_270) {
-		video_presentation_even->set_presentation_size(height, width);
-		if(video_presentation_odd) {
-			video_presentation_odd->set_presentation_size(height, width);
-		}
-	} else {
-		video_presentation_even->set_presentation_size(width, height);
-		if(video_presentation_odd) {
-			video_presentation_odd->set_presentation_size(width, height);
-		}
-	}
-	m_width = width;
-	m_height = height;
-	// force the window to recalculate its size with respect to the size requests
-	// of its children
-	resize(1, 1);
-}
-
 void Keela::CameraControlWindow::set_pix_fmt(std::string pix_fmt) {
 	camera_manager->set_pix_fmt(pix_fmt);
 	uint32_t max = std::numeric_limits<uint16_t>::max();
@@ -190,8 +161,10 @@ void Keela::CameraControlWindow::set_pix_fmt(std::string pix_fmt) {
 
 void Keela::CameraControlWindow::on_rotation_changed() {
 	spdlog::trace("rotation changed");
-	// NOTE: this appears to mess with the caps of the video stream
 	const auto value = rotation_combo.m_combo.get_active_id();
+
+	update_presentation_sizes(value);
+
 	if(value == ROTATION_NONE) {
 		camera_manager->transform.rotate_identity();
 	} else if(value == ROTATION_90) {
@@ -203,10 +176,19 @@ void Keela::CameraControlWindow::on_rotation_changed() {
 	} else {
 		throw std::runtime_error(value + "is an invalid rotation");
 	}
-	if(m_width > 0 && m_height > 0) {
-		set_resolution(m_width, m_height);
+}
+
+void Keela::CameraControlWindow::update_presentation_sizes(const std::string &rotation) {
+	if(rotation == ROTATION_90 || rotation == ROTATION_270) {
+		video_presentation_even->swap_dimensions();
+		if(video_presentation_odd) {
+			video_presentation_odd->swap_dimensions();
+		}
 	} else {
-		spdlog::warn("Skipping resolution change - resolution not initialized");
+		video_presentation_even->reset_dimensions();
+		if(video_presentation_odd) {
+			video_presentation_odd->reset_dimensions();
+		}
 	}
 }
 
@@ -299,32 +281,15 @@ void Keela::CameraControlWindow::add_split_frame_ui() {
 	trace_gizmo_odd = std::make_shared<TraceGizmo>();
 
 	const auto rotation = rotation_combo.m_combo.get_active_id();
+	video_presentation_odd =
+	    std::make_unique<VideoPresentation>("Odd Frames", camera_manager->camera_stream_odd->presentation, *this,
+	                                        DEFAULT_PRESENTATION_WIDTH, DEFAULT_PRESENTATION_HEIGHT);
 	if(rotation == ROTATION_90 || rotation == ROTATION_270) {
-		video_presentation_odd =
-		    std::make_unique<VideoPresentation>("Odd Frames", camera_manager->camera_stream_odd->presentation, *this,
-		                                        DEFAULT_PRESENTATION_HEIGHT,  // width
-		                                        DEFAULT_PRESENTATION_WIDTH    // height
-		    );
-	} else {
-		video_presentation_odd =
-		    std::make_unique<VideoPresentation>("Odd Frames", camera_manager->camera_stream_odd->presentation, *this,
-		                                        DEFAULT_PRESENTATION_WIDTH,  // width
-		                                        DEFAULT_PRESENTATION_HEIGHT  // height
-		    );
+		video_presentation_odd->swap_dimensions();
 	}
 
 	video_presentation_odd->add_overlay_widget(*trace_gizmo_odd);
 	video_hbox.pack_start(*video_presentation_odd, false, false, 10);
-
-	// Ensure the new widget matches the current resolution
-	if(m_width > 0 && m_height > 0) {
-		const auto rotation = rotation_combo.m_combo.get_active_id();
-		if(rotation == ROTATION_90 || rotation == ROTATION_270) {
-			video_presentation_odd->set_presentation_size(m_height, m_width);
-		} else {
-			video_presentation_odd->set_presentation_size(m_width, m_height);
-		}
-	}
 
 	show_all_children();
 }
