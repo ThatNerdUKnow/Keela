@@ -32,11 +32,11 @@ jobs:
             c_compiler: cl
             cpp_compiler: cl
           - os: ubuntu-latest
-            generator: Make
+            generator: Unix Makefiles
             c_compiler: gcc
             cpp_compiler: g++
           - os: ubuntu-latest
-            generator: Make
+            generator: Unix Makefiles
             c_compiler: clang
             cpp_compiler: clang++
         exclude:
@@ -66,7 +66,7 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
-        -G ${{matrix.generator}}
+        -G "${{matrix.generator}}"
 
     - name: Build
       shell: bash
