@@ -9,6 +9,13 @@ on:
     branches: [ "main" ]
 
 jobs:
+  install_dependencies_win:
+    runs-on: windows-latest
+
+    steps:
+      - name: test
+        run: echo hello
+        
   build:
     runs-on: ${{ matrix.os }}
 
@@ -29,16 +36,8 @@ jobs:
         include:
           - os: windows-latest
             generator: MinGW Makefiles
-            c_compiler: cl
-            cpp_compiler: cl
           - os: ubuntu-latest
             generator: Unix Makefiles
-            c_compiler: gcc
-            cpp_compiler: g++
-          - os: ubuntu-latest
-            generator: Unix Makefiles
-            c_compiler: clang
-            cpp_compiler: clang++
         exclude:
           - os: windows-latest
             c_compiler: gcc
