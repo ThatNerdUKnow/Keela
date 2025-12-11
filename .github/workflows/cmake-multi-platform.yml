@@ -18,6 +18,7 @@ jobs:
         shell: msys2 {0}
         run: > 
           pacman -S --noconfirm
+          mingw-w64-x86_64-cmake 
           mingw-w64-x86_64-gtkmm3
           mingw-w64-x86_64-gstreamer
           mingw-w64-x86_64-gst-plugins-good
