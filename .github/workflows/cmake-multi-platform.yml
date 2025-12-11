@@ -17,7 +17,8 @@ jobs:
         run: > 
           sudo apt-get install
           gstreamer-1.0
-          libaravis-0.8.0
+          libgstreamer1.0-dev
+          libaravis-0.8-0
           libaravis-dev
           libgtkmm-3.0-dev
           libspdlog-dev
