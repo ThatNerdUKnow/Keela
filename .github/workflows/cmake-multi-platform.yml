@@ -27,6 +27,7 @@ jobs:
           mingw-w64-x86_64-spdlog
           mingw-w64-x86_64-aravis
           mingw-w64-x86_64-aravis-gst
+          mingw-w64-x86_64-ninja 
       - name: checkout
         uses: actions/checkout@v6.0.1
       - name: configure cmake
@@ -34,9 +35,9 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=release
+          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=release
       - name: build
         shell: msys2 {0}
         run: |
           cd build
-          mingw32-make
+          ninja
