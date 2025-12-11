@@ -21,6 +21,20 @@ jobs:
           libaravis-dev
           libgtkmm-3.0-dev
           libspdlog-dev
+      - name: configure cmake
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=release
+      - name: build
+        run: | 
+          cd build
+          ninja
+      - name: upload_build_directory
+        uses: actions/upload-artifact@v5.0.0
+        with:
+          name: build-ubuntu
+          path: ./build/
   build_windows:
     runs-on: windows-latest
 
