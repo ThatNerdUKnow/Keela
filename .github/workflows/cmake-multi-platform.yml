@@ -26,6 +26,7 @@ jobs:
           libgtkmm-3.0-dev
           libspdlog-dev
           libglib2.0-dev
+          pkgconf
       - name: verify-aravis-install
         run: |
           dpkg --print-architecture
