@@ -14,8 +14,16 @@ jobs:
 
     steps:
       - name: test
-        run: echo hello
-        
+        run: > 
+          pacman -S
+          mingw-w64-x86_64-gtkmm3
+          mingw-w64-x86_64-gstreamer
+          mingw-w64-x86_64-gst-plugins-good
+          mingw-w64-x86_64-gst-plugins-bad
+          mingw-w64-x86_64-gst-plugins-ugly
+          mingw-w64-x86_64-spdlog
+          mingw-w64-x86_64-aravis
+          mingw-w64-x86_64-aravis-gst
   build:
     runs-on: ${{ matrix.os }}
 
