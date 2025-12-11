@@ -28,6 +28,7 @@ jobs:
           libglib2.0-dev
       - name: verify-aravis-install
         run: |
+          dpkg --print-architecture
           dpkg -L libaravis-dev | grep '\.pc$'
           which pkg-config
           pkg-config --modversion aravis-0.8
