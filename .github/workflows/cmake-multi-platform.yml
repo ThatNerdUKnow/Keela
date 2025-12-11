@@ -26,3 +26,10 @@ jobs:
           mingw-w64-x86_64-spdlog
           mingw-w64-x86_64-aravis
           mingw-w64-x86_64-aravis-gst
+      - name: checkout
+        uses: actions/checkout@v6.0.1
+      - name: build
+        run: >
+          mkdir build
+          cd build
+          cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=release
