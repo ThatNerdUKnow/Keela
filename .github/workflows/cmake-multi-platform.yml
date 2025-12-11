@@ -27,6 +27,7 @@ jobs:
           libspdlog-dev
           libglib2.0-dev
           pkgconf
+          libusb-1.0-0-dev
       - name: verify-aravis-install
         run: |
           dpkg --print-architecture
