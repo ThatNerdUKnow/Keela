@@ -16,7 +16,11 @@ jobs:
       - name: install dependencies
         run: > 
           sudo apt-get install
-          libgstreamer-1.0-dev
+          gstreamer-1.0
+          libaravis-0.8.0
+          libaravis-dev
+          libgtkmm-3.0-dev
+          libspdlog-dev
   build_windows:
     runs-on: windows-latest
 
