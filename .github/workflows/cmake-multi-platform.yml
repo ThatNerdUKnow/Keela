@@ -33,6 +33,7 @@ jobs:
           dpkg -L libaravis-dev | grep '\.pc$'
           which pkg-config
           pkg-config --modversion aravis-0.8
+          pkg-config --cflags aravis-0.8
       - name: configure cmake
         run: |
           mkdir build
