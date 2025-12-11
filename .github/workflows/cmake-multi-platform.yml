@@ -28,8 +28,12 @@ jobs:
           mingw-w64-x86_64-aravis-gst
       - name: checkout
         uses: actions/checkout@v6.0.1
-      - name: build
-        run: >
+      - name: configure cmake
+        run: |
           mkdir build
           cd build
           cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=release
+      - name: build
+        run: |
+          cd build
+          mingw32-make
