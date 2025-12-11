@@ -26,7 +26,10 @@ jobs:
           libgtkmm-3.0-dev
           libspdlog-dev
       - name: verify-aravis-install
-        run: dpkg -L libaravis-dev | grep '\.pc$'
+        run: |
+          dpkg -L libaravis-dev | grep '\.pc$'
+          which pkg-config
+          pkg-config --modversion aravis-0.8
       - name: configure cmake
         run: |
           mkdir build
