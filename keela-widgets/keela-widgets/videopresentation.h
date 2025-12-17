@@ -6,17 +6,25 @@
 #include <memory>
 
 #include "GLCameraRender.h"
+#include "keela-pipeline/consts.h"
 #include "tracegizmo.h"
 
 namespace Keela {
 class VideoPresentation : public Gtk::Box {
    public:
 	VideoPresentation(const std::string &label_text, std::shared_ptr<Keela::PresentationBin> presentation_bin,
-	                  IControlGLCameraRenderHeatmap &controller, int width = 640, int height = 480);
+	                  IControlGLCameraRenderHeatmap &controller, int width = DEFAULT_PRESENTATION_WIDTH,
+	                  int height = DEFAULT_PRESENTATION_HEIGHT);
 
 	~VideoPresentation() override;
 
-	void set_video_size(int width, int height);
+	std::pair<int, int> get_size() const;
+
+	void set_presentation_size(int width, int height);
+
+	void reset_dimensions();
+
+	void swap_dimensions();
 
 	void add_overlay_widget(Gtk::Widget &widget);
 
@@ -26,6 +34,10 @@ class VideoPresentation : public Gtk::Box {
 	std::unique_ptr<GLCameraRender> gl_area;
 	Gtk::Label label;
 	Gtk::Overlay overlay;
+	int m_base_width;
+	int m_base_height;
+	int m_width;
+	int m_height;
 };
 }  // namespace Keela
 

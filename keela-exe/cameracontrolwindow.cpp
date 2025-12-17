@@ -39,23 +39,34 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
 	// Disable gain control until camera is ready and we can query for gain
 	// support and supported range
 	gain_spin.m_spin.set_sensitive(false);
-	gain_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_gain_changed));
+	gain_signal =
+	    gain_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_gain_changed));
 	v_container.add(gain_spin);
 
 	// Disable exposure time control until camera is ready and we can query for
 	// exposure time support and supported range
 	exposure_time_spin.m_spin.set_sensitive(false);
-	exposure_time_spin.m_spin.signal_value_changed().connect(
+	exposure_time_signal = exposure_time_spin.m_spin.signal_value_changed().connect(
 	    sigc::mem_fun(*this, &CameraControlWindow::on_exposure_time_changed));
 	v_container.add(exposure_time_spin);
 
-	// TODO: add rotation options
-	rotation_combo.m_combo.signal_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_rotation_changed));
+	/** Binning controls */
+	bin_mode_combo.set_sensitive(false);
+	bin_mode_signal = bin_mode_combo.m_combo.signal_changed().connect(
+	    sigc::mem_fun(*this, &CameraControlWindow::on_bin_mode_changed));
+	v_container.add(bin_mode_combo);
+
+	bin_spin.m_spin.set_sensitive(false);
+	bin_spin_signal =
+	    bin_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_bin_spin_changed));
+	v_container.add(bin_spin);
+
 	rotation_combo.m_combo.append(ROTATION_NONE, "---");
 	rotation_combo.m_combo.append(ROTATION_90, "Rotate 90 degrees clockwise");
 	rotation_combo.m_combo.append(ROTATION_180, "Rotate 180 degrees");
 	rotation_combo.m_combo.append(ROTATION_270, "Rotate 270 degrees clockwise");
 	rotation_combo.m_combo.set_active_id(ROTATION_NONE);
+	rotation_combo.m_combo.signal_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_rotation_changed));
 
 	v_container.add(rotation_combo);
 	flip_horiz_check.signal_toggled().connect(sigc::mem_fun(*this, &CameraControlWindow::on_flip_horiz_changed));
@@ -65,8 +76,6 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
 
 	// TODO: dynamically cast camera_manager->presentation to a WidgetElement to
 	// get a handle to a widget to add to the window
-	// TODO: do we need to take a snapshot of the odd stream too? maybe not
-	// because we just need it for scale calibration?
 	fetch_image_button.signal_clicked().connect(
 	    sigc::mem_fun(*camera_manager->camera_stream_even->snapshot, &Keela::SnapshotBin::take_snapshot));
 	v_container.add(fetch_image_button);
@@ -76,15 +85,11 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
 	// Create overlay for trace gizmo
 	trace_gizmo_even = std::make_shared<TraceGizmo>();
 
-	// Set up video presentations, frame_widget_even renders all frames unless
-	// split is enabled
-	frame_widget_even = std::make_unique<VideoPresentation>("Camera " + std::to_string(id),
-	                                                        camera_manager->camera_stream_even->presentation, *this,
-	                                                        640,  // width
-	                                                        480   // height
-	);
-	frame_widget_even->add_overlay_widget(*trace_gizmo_even);
-	video_hbox.pack_start(*frame_widget_even, false, false, 10);
+	// Set up video presentations, video_presentation_even renders all frames unless split is enabled
+	video_presentation_even = std::make_unique<VideoPresentation>(
+	    "Camera " + std::to_string(id), camera_manager->camera_stream_even->presentation, *this);
+	video_presentation_even->add_overlay_widget(*trace_gizmo_even);
+	video_hbox.pack_start(*video_presentation_even, false, false, 10);
 
 	if(camera_manager->is_frame_splitting_enabled()) {
 		add_split_frame_ui();
@@ -94,6 +99,14 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
 
 	auto gl_bin = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL);
 	h_container.pack_start(*gl_bin, false, false, 10);
+
+	// Set ranges and current values in UI based on camera capabilities
+	if(camera_manager->has_aravis_controller()) {
+		update_binning_range();
+		update_gain_range();
+		update_exposure_time_range();
+		update_binning_modes();
+	}
 
 	show_all_children();
 	show();
@@ -121,28 +134,16 @@ void Keela::CameraControlWindow::on_exposure_time_changed() const {
 	camera_manager->set_exposure_time(exposure_time);
 }
 
-void Keela::CameraControlWindow::set_resolution(const int width, const int height) {
-	spdlog::trace("resolution changed");
-	this->camera_manager->set_resolution(width, height);
-	// TODO: can we set a minimum size or allow the user to scale the gl area
-	// themselves?
-	const auto rotation = rotation_combo.m_combo.get_active_id();
-	if(rotation == ROTATION_90 || rotation == ROTATION_270) {
-		frame_widget_even->set_video_size(height, width);
-		if(frame_widget_odd) {
-			frame_widget_odd->set_video_size(height, width);
-		}
-	} else {
-		frame_widget_even->set_video_size(width, height);
-		if(frame_widget_odd) {
-			frame_widget_odd->set_video_size(width, height);
-		}
-	}
-	m_width = width;
-	m_height = height;
-	// force the window to recalculate its size with respect to the size requests
-	// of its children
-	resize(1, 1);
+void Keela::CameraControlWindow::on_bin_mode_changed() {
+	const auto mode = bin_mode_combo.m_combo.get_active_id();
+	spdlog::info("Binning mode changed to {}", mode.raw());
+	camera_manager->set_binning_mode(mode);
+}
+
+void Keela::CameraControlWindow::on_bin_spin_changed() const {
+	const auto binning_factor = static_cast<int>(bin_spin.m_spin.get_value());
+	spdlog::info("Binning factor changed to {}", binning_factor);
+	camera_manager->set_binning_factors(binning_factor);
 }
 
 void Keela::CameraControlWindow::set_pix_fmt(std::string pix_fmt) {
@@ -160,8 +161,10 @@ void Keela::CameraControlWindow::set_pix_fmt(std::string pix_fmt) {
 
 void Keela::CameraControlWindow::on_rotation_changed() {
 	spdlog::trace("rotation changed");
-	// NOTE: this appears to mess with the caps of the video stream
 	const auto value = rotation_combo.m_combo.get_active_id();
+
+	update_presentation_sizes(value);
+
 	if(value == ROTATION_NONE) {
 		camera_manager->transform.rotate_identity();
 	} else if(value == ROTATION_90) {
@@ -173,10 +176,19 @@ void Keela::CameraControlWindow::on_rotation_changed() {
 	} else {
 		throw std::runtime_error(value + "is an invalid rotation");
 	}
-	if(m_width > 0 && m_height > 0) {
-		set_resolution(m_width, m_height);
+}
+
+void Keela::CameraControlWindow::update_presentation_sizes(const std::string &rotation) {
+	if(rotation == ROTATION_90 || rotation == ROTATION_270) {
+		video_presentation_even->swap_dimensions();
+		if(video_presentation_odd) {
+			video_presentation_odd->swap_dimensions();
+		}
 	} else {
-		spdlog::warn("Skipping resolution change - resolution not initialized");
+		video_presentation_even->reset_dimensions();
+		if(video_presentation_odd) {
+			video_presentation_odd->reset_dimensions();
+		}
 	}
 }
 
@@ -238,14 +250,15 @@ void Keela::CameraControlWindow::update_traces() {
 		even_name += " (Even)";
 	}
 
-	auto even_trace =
-	    std::make_shared<CameraTrace>(camera_manager->camera_stream_even->get_trace_bin(), trace_gizmo_even, even_name);
+	auto even_trace = std::make_shared<CameraTrace>(camera_manager->camera_stream_even->get_trace_bin(),
+	                                                trace_gizmo_even, *video_presentation_even, even_name);
 	m_traces.push_back(even_trace);
 
 	// Add odd trace if frame splitting is enabled
 	if(camera_manager->is_frame_splitting_enabled() && trace_gizmo_odd) {
-		auto odd_trace = std::make_shared<CameraTrace>(camera_manager->camera_stream_odd->get_trace_bin(),
-		                                               trace_gizmo_odd, "Camera " + std::to_string(id) + " (Odd)");
+		auto odd_trace =
+		    std::make_shared<CameraTrace>(camera_manager->camera_stream_odd->get_trace_bin(), trace_gizmo_odd,
+		                                  *video_presentation_odd, "Camera " + std::to_string(id) + " (Odd)");
 		m_traces.push_back(odd_trace);
 	}
 }
@@ -261,47 +274,30 @@ void Keela::CameraControlWindow::set_trace_bin_framerate_caps(guint fps) {
 }
 
 void Keela::CameraControlWindow::add_split_frame_ui() {
-	if(frame_widget_odd)
+	if(video_presentation_odd)
 		return;  // Already added
 
 	// Create trace gizmo for odd frames
 	trace_gizmo_odd = std::make_shared<TraceGizmo>();
 
 	const auto rotation = rotation_combo.m_combo.get_active_id();
+	video_presentation_odd =
+	    std::make_unique<VideoPresentation>("Odd Frames", camera_manager->camera_stream_odd->presentation, *this,
+	                                        DEFAULT_PRESENTATION_WIDTH, DEFAULT_PRESENTATION_HEIGHT);
 	if(rotation == ROTATION_90 || rotation == ROTATION_270) {
-		frame_widget_odd =
-		    std::make_unique<VideoPresentation>("Odd Frames", camera_manager->camera_stream_odd->presentation, *this,
-		                                        480,  // width
-		                                        640   // height
-		    );
-	} else {
-		frame_widget_odd =
-		    std::make_unique<VideoPresentation>("Odd Frames", camera_manager->camera_stream_odd->presentation, *this,
-		                                        640,  // width
-		                                        480   // height
-		    );
+		video_presentation_odd->swap_dimensions();
 	}
 
-	frame_widget_odd->add_overlay_widget(*trace_gizmo_odd);
-	video_hbox.pack_start(*frame_widget_odd, false, false, 10);
-
-	// Ensure the new widget matches the current resolution
-	if(m_width > 0 && m_height > 0) {
-		const auto rotation = rotation_combo.m_combo.get_active_id();
-		if(rotation == ROTATION_90 || rotation == ROTATION_270) {
-			frame_widget_odd->set_video_size(m_height, m_width);
-		} else {
-			frame_widget_odd->set_video_size(m_width, m_height);
-		}
-	}
+	video_presentation_odd->add_overlay_widget(*trace_gizmo_odd);
+	video_hbox.pack_start(*video_presentation_odd, false, false, 10);
 
 	show_all_children();
 }
 
 void Keela::CameraControlWindow::remove_split_frame_ui() {
-	if(frame_widget_odd) {
-		video_hbox.remove(*frame_widget_odd);
-		frame_widget_odd.reset();
+	if(video_presentation_odd) {
+		video_hbox.remove(*video_presentation_odd);
+		video_presentation_odd.reset();
 	}
 }
 
@@ -310,36 +306,93 @@ void Keela::CameraControlWindow::update_gain_range() {
 	auto gain_range = camera_manager->get_gain_range();
 	double min_gain = gain_range.first;
 	double max_gain = gain_range.second;
+	// and the current gain to set the initial spin value
+	auto current_gain = camera_manager->get_gain();
 
-	if(min_gain == 0.0 && max_gain == 0.0) {
+	if(std::isnan(min_gain)) {
 		gain_spin.m_spin.set_sensitive(false);
 		spdlog::warn("Gain control not supported by camera - disabling gain control UI");
 		return;
 	}
-	// update the gain spin with the new range
+	// update the gain spin with the new range and current setting
+	gain_signal.block();
 	gain_spin.m_spin.set_adjustment(Gtk::Adjustment::create(min_gain, min_gain, max_gain, 1.0));
+	gain_spin.m_spin.set_value(current_gain);
 	gain_spin.m_spin.set_sensitive(true);
+	gain_signal.unblock();
 
 	spdlog::info("Updated gain control range to {:.1f} - {:.1f} dB", min_gain, max_gain);
 }
 
 void Keela::CameraControlWindow::update_exposure_time_range() {
 	// get the range supported by the camera hardware
-	auto exposure_time_range = camera_manager->get_exposure_time_range();
-	double min_exposure_time = exposure_time_range.first;
-	double max_exposure_time = exposure_time_range.second;
+	auto [min_exposure_time, max_exposure_time] = camera_manager->get_exposure_time_range();
+	// and the current exposure time to set the initial spin value
+	auto current_exposure_time = camera_manager->get_exposure_time();
 
-	if(min_exposure_time == 0.0 && max_exposure_time == 0.0) {
+	if(std::isnan(min_exposure_time)) {
 		exposure_time_spin.m_spin.set_sensitive(false);
-		spdlog::warn(
-		    "Exposure time control not supported by camera - disabling "
-		    "exposure time control UI");
+		spdlog::warn("Exposure time control not supported by camera - disabling exposure time control UI");
 		return;
 	}
-	// update the exposure time spin with the new range
+	// update ui based on hardware capabilities and current setting
+	exposure_time_signal.block();
 	exposure_time_spin.m_spin.set_adjustment(
 	    Gtk::Adjustment::create(min_exposure_time, min_exposure_time, max_exposure_time, 1000.0));
+	exposure_time_spin.m_spin.set_value(current_exposure_time);
 	exposure_time_spin.m_spin.set_sensitive(true);
+	exposure_time_signal.unblock();
 
 	spdlog::info("Updated exposure time control range to {:.1f} - {:.1f} μs", min_exposure_time, max_exposure_time);
+}
+
+void Keela::CameraControlWindow::update_binning_modes() {
+	auto modes = camera_manager->get_supported_binning_modes();
+	auto current_mode = camera_manager->get_binning_modes();
+
+	if(modes.empty()) {
+		bin_mode_combo.m_combo.set_sensitive(false);
+		spdlog::warn("Binning mode control not supported by camera - disabling binning mode UI");
+		return;
+	}
+	spdlog::info("Updating binning modes UI with {} modes", modes.size());
+	bin_mode_combo.set_sensitive(true);
+	bin_mode_combo.m_combo.remove_all();
+	for(const auto &mode : modes) {
+		spdlog::info("Adding binning mode to UI: {}", mode);
+		bin_mode_combo.m_combo.append(mode, mode);
+	}
+	bin_mode_signal.block();
+	bin_mode_combo.m_combo.set_active_id(current_mode.first);
+	bin_mode_signal.unblock();
+}
+
+void Keela::CameraControlWindow::update_binning_range() {
+	bool supports_hardware_binning = camera_manager->supports_hardware_binning();
+
+	if(!supports_hardware_binning) {
+		spdlog::warn("Hardware binning control not supported by camera.");
+		return;
+	}
+	// get the range supported by the camera hardware,
+	// only using x as we don't support independent gain settings
+	auto [min_x_binning, max_x_binning, min_y_binning, max_y_binning] = camera_manager->get_binning_bounds();
+	auto [x_binning_increment, y_binning_increment] = camera_manager->get_binning_increments();
+
+	// Get the current binning setting from hardware to preserve it
+	auto [current_x_binning, current_y_binning] = camera_manager->get_binning_factors();
+	double current_binning = std::isnan(current_x_binning) ? min_x_binning : current_x_binning;
+
+	bin_spin_signal.block();
+	// update the binning spin with the new range, preserving current value
+	bin_spin.m_spin.set_adjustment(
+	    Gtk::Adjustment::create(current_binning, min_x_binning, max_x_binning, x_binning_increment));
+
+	bin_spin.m_spin.set_value(current_binning);
+	bin_spin_signal.unblock();
+
+	bin_spin.m_spin.set_sensitive(true);
+
+	spdlog::info("Updated binning factor control range to {} - {}, current value: {}", min_x_binning, max_x_binning,
+	             current_binning);
 }

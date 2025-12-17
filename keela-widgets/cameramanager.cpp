@@ -25,6 +25,8 @@ Keela::CameraManager::CameraManager(guint id, bool split_streams)
 		Bin camera_stream_bin = static_cast<Bin &>(*camera_stream_even);
 
 		// Add all elements to the bin
+		// @todo: can we get rid of this caps_filter?
+		// I think we can just modify the source and the downstream elements will renegotiate
 		add_elements(camera, caps_filter, transform, tee_main, camera_stream_bin);
 
 		// Link main pipeline: camera -> capsfilter -> transform -> main_tee ->
@@ -33,6 +35,19 @@ Keela::CameraManager::CameraManager(guint id, bool split_streams)
 
 		if(split_streams) {
 			add_odd_camera_stream();
+		}
+
+		// Set up camera control via aravissrc and AravisCamera
+		GstElement *camera_element = static_cast<GstElement *>(camera);
+		
+		// Only initialize aravis_controller if the camera is an aravissrc
+		GstElementFactory *factory = gst_element_get_factory(camera_element);
+		const gchar *factory_name = gst_plugin_feature_get_name(factory);
+		if(g_strcmp0(factory_name, "aravissrc") == 0) {
+			aravis_controller = std::make_unique<AravisController>(camera_element);
+			spdlog::info("Initialized AravisController for camera {}", id);
+		} else {
+			spdlog::info("Camera {} is not an aravissrc ({}), skipping AravisController initialization", id, factory_name);
 		}
 
 		// Set up frame splitting if enabled
@@ -57,6 +72,7 @@ Keela::CameraManager::~CameraManager() {
 }
 
 void Keela::CameraManager::set_pix_fmt(const std::string &format) {
+	// @todo: switch this to hardware, no need for the caps anymore
 	spdlog::info("{}: Setting pixel format to {}", __func__, format);
 	// create copy of our caps
 	base_caps = Caps(static_cast<GstCaps *>(base_caps));
@@ -66,6 +82,7 @@ void Keela::CameraManager::set_pix_fmt(const std::string &format) {
 }
 
 void Keela::CameraManager::set_framerate(double framerate) {
+	// @todo: switch this to hardware control, no need for the caps anymore
 	spdlog::info("Setting framerate to {}", framerate);
 	int numerator = static_cast<int>(framerate * 10);
 	// TODO: caps need to be writable
@@ -77,132 +94,86 @@ void Keela::CameraManager::set_framerate(double framerate) {
 	g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
 }
 
-void Keela::CameraManager::set_resolution(const int width, const int height) {
-	if(width <= 0 || height <= 0) {
-		throw std::invalid_argument("width and height must be greater than zero");
-	}
-	// create a copy of our current caps
-	base_caps = Caps(static_cast<GstCaps *>(base_caps));
-	base_caps.set_resolution(width, height);
-	g_object_set(caps_filter, "caps", static_cast<GstCaps *>(base_caps), nullptr);
-	transform.scale(width, height);
-}
-
 void Keela::CameraManager::set_experiment_directory(const std::string &path) {
 	experiment_directory = path;
 }
 
 std::pair<double, double> Keela::CameraManager::get_gain_range() const {
-	double min_gain = 0.0;
-	double max_gain = 0.0;
+	return aravis_controller->get_gain_range();
+}
 
-	ArvCamera *aravis_camera = get_aravis_camera();
-	if(aravis_camera == nullptr) {
-		spdlog::warn("Gain control not supported");
-		return {min_gain, max_gain};
-	}
-
-	spdlog::debug("Querying gain range from camera hardware via ArvCamera object");
-
-	GError *error = nullptr;
-	// Query the actual hardware gain limits
-	arv_camera_get_gain_bounds(aravis_camera, &min_gain, &max_gain, &error);
-	if(error == nullptr) {
-		spdlog::info("Queried hardware gain range from camera: {:.1f} to {:.1f} dB", min_gain, max_gain);
-	} else {
-		spdlog::warn("Error querying gain range from camera: {}", error->message);
-		g_error_free(error);
-	}
-
-	g_object_unref(aravis_camera);
-
-	return {min_gain, max_gain};
+double Keela::CameraManager::get_gain() const {
+	return aravis_controller->get_gain();
 }
 
 std::pair<double, double> Keela::CameraManager::get_exposure_time_range() const {
-	double min_exposure = 0.0;
-	double max_exposure = 0.0;
+	return aravis_controller->get_exposure_time_range();
+}
 
-	ArvCamera *aravis_camera = get_aravis_camera();
-	if(aravis_camera == nullptr) {
-		spdlog::warn("Exposure time control not supported");
-		return {min_exposure, max_exposure};
-	}
+double Keela::CameraManager::get_exposure_time() const {
+	return aravis_controller->get_exposure_time();
+}
 
-	spdlog::debug("Querying exposure time range from camera hardware via ArvCamera object");
+bool Keela::CameraManager::supports_hardware_binning() const {
+	if(aravis_controller == nullptr) {
+		return false;
+	};
+	return aravis_controller->supports_hardware_binning();
+}
 
-	GError *error = nullptr;
-	// Query the actual hardware exposure time limits
-	arv_camera_get_exposure_time_bounds(aravis_camera, &min_exposure, &max_exposure, &error);
-	if(error == nullptr) {
-		spdlog::info("Queried hardware exposure time range from camera: {:.1f} to {:.1f} us", min_exposure,
-		             max_exposure);
-	} else {
-		spdlog::warn("Error querying exposure time range from camera: {}", error->message);
-		g_error_free(error);
-	}
+std::vector<std::string> Keela::CameraManager::get_supported_binning_modes() const {
+	return aravis_controller->get_supported_binning_modes();
+}
 
-	return {min_exposure, max_exposure};
+std::pair<std::string, std::string> Keela::CameraManager::get_binning_modes() const {
+	return aravis_controller->get_binning_modes();
+}
+
+std::tuple<int, int, int, int> Keela::CameraManager::get_binning_bounds() const {
+	return aravis_controller->get_binning_bounds();
+}
+
+std::pair<int, int> Keela::CameraManager::get_binning_increments() const {
+	return aravis_controller->get_binning_increments();
+}
+
+std::pair<int, int> Keela::CameraManager::get_current_resolution() const {
+	return aravis_controller->get_current_resolution();
+}
+
+std::pair<int, int> Keela::CameraManager::get_binning_factors() const {
+	return aravis_controller->get_binning_factors();
 }
 
 void Keela::CameraManager::set_gain(double gain) {
-	spdlog::info("Setting camera gain to {}", gain);
-
-	ArvCamera *aravis_camera = get_aravis_camera();
-
-	GError *error = nullptr;
-	arv_camera_set_gain(aravis_camera, gain, &error);
-
-	if(error != nullptr) {
-		spdlog::error("Error setting gain on camera: {}", error->message);
-		g_error_free(error);
-		return;
-	}
-
-	// Read back the actual gain value to confirm it was set
-	gdouble actual_gain = arv_camera_get_gain(aravis_camera, &error);
-
-	if(error != nullptr) {
-		spdlog::error("Error getting gain from camera: {}", error->message);
-		g_error_free(error);
-		return;
-	}
-
-	spdlog::info("Set gain to {:.1f} dB, actual camera gain: {:.1f} dB", gain, actual_gain);
+	aravis_controller->set_gain(gain);
 }
 
 void Keela::CameraManager::set_exposure_time(double exposure) {
-	spdlog::info("Setting camera exposure time to {}", exposure);
-
-	ArvCamera *aravis_camera = get_aravis_camera();
-
-	GError *error = nullptr;
-	arv_camera_set_exposure_time(aravis_camera, exposure, &error);
-
-	if(error != nullptr) {
-		spdlog::error("Error setting exposure time on camera: {}", error->message);
-		g_error_free(error);
-		return;
-	}
-	// Read back the actual exposure time value to confirm it was set
-	gdouble actual_exposure = arv_camera_get_exposure_time(aravis_camera, &error);
-	if(error != nullptr) {
-		spdlog::error("Error getting exposure time from camera: {}", error->message);
-		g_error_free(error);
-		return;
-	}
-	spdlog::info("Set exposure time to {:.1f} us, actual camera exposure time: {:.1f} us", exposure, actual_exposure);
+	return aravis_controller->set_exposure_time(exposure);
 }
 
-ArvCamera *Keela::CameraManager::get_aravis_camera() const {
-	if(aravis_camera != nullptr) {
-		return aravis_camera;
-	}
+void Keela::CameraManager::set_binning_mode(std::string mode) {
+	aravis_controller->set_binning_mode(mode);
+	// BinningMode is set with the 'features' property on aravissrc, which doesn't dynamically
+	// update the camera settings. We need to restart the pipeline to apply the change.
+	restart_pipeline();
+}
 
-	GstElement *camera_element = static_cast<GstElement *>(camera);
-	// Try to get the underlying ArvCamera object from aravissrc
-	g_object_get(camera_element, "camera", &aravis_camera, nullptr);
-	return aravis_camera;
+void Keela::CameraManager::set_binning_factors(int binning_factor) {
+	set_binning_factors(binning_factor, binning_factor);
+}
+
+void Keela::CameraManager::set_binning_factors(int binning_factor_x, int binning_factor_y) {
+	spdlog::info("Setting hardware binning to {}x{}", binning_factor_x, binning_factor_y);
+
+	set_pipeline_state(GST_STATE_NULL);
+	aravis_controller->set_binning_factors(binning_factor_x, binning_factor_y);
+	set_pipeline_state(GST_STATE_PLAYING);
+	// This forces the camera to re-negotiate its caps after the binning change.
+	// The aravissrc doesn't reflect width/height changes until the element is set to NULL and back to PLAYING.
+	// Without this, we end up with mismatched resolutions between the camera source and the rest of the pipeline.
+	restart_pipeline();
 }
 
 void Keela::CameraManager::start_recording() {
@@ -341,4 +312,27 @@ void Keela::CameraManager::remove_frame_splitting_probes() {
 		GstPad *odd_sink_pad = gst_element_get_static_pad(camera_stream_odd->internal_tee, "sink");
 		remove_probe_by_id(odd_frame_probe_id, odd_sink_pad, "odd frame filter");
 	}
+}
+
+void Keela::CameraManager::set_pipeline_state(GstState state) {
+	GstElement *pipeline = GST_ELEMENT(gst_element_get_parent(static_cast<GstElement *>(camera)));
+	if(!pipeline) {
+		spdlog::error("Failed to get parent pipeline for camera {}", id);
+		return;
+	}
+	GstStateChangeReturn ret = gst_element_set_state(pipeline, state);
+	if(ret == GST_STATE_CHANGE_FAILURE) {
+		spdlog::error("Failed to set pipeline state");
+	}
+	// Blocks until state change completes
+	gst_element_get_state(pipeline, nullptr, nullptr, GST_CLOCK_TIME_NONE);
+
+	g_object_unref(pipeline);
+}
+
+void Keela::CameraManager::restart_pipeline() {
+	spdlog::info("Restarting pipeline to apply camera settings");
+
+	set_pipeline_state(GST_STATE_NULL);
+	set_pipeline_state(GST_STATE_PLAYING);
 }

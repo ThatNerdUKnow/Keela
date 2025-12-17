@@ -4,15 +4,19 @@
 #include "GLTraceRender.h"
 
 namespace Keela {
+// Forward declaration
+class VideoPresentation;
 /**
  * CameraTrace is a simple implementation of ITraceable that holds references
  * to a TraceBin and TraceGizmo. It acts as a data holder for trace components.
  */
 class CameraTrace final : public ITraceable {
    public:
-	CameraTrace(std::shared_ptr<TraceBin> trace_bin, std::shared_ptr<TraceGizmo> trace_gizmo, const std::string& name);
+	CameraTrace(std::shared_ptr<TraceBin> trace_bin, std::shared_ptr<TraceGizmo> trace_gizmo,
+	            const VideoPresentation &video_presentation, const std::string &name);
 	~CameraTrace() override = default;
 
+	std::pair<int, int> get_display_size() const override;
 	std::shared_ptr<TraceBin> get_trace_bin() override;
 	std::shared_ptr<TraceGizmo> get_trace_gizmo() override;
 	std::string get_name() override;
@@ -20,6 +24,7 @@ class CameraTrace final : public ITraceable {
    private:
 	std::shared_ptr<TraceBin> m_trace_bin;
 	std::shared_ptr<TraceGizmo> m_trace_gizmo;
+	const VideoPresentation &m_video_presentation;
 	std::string m_name;
 };
 }  // namespace Keela

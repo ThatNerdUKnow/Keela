@@ -10,4 +10,8 @@
 
 #define DEFAULT_TRACE_FPS 125
 
+// Default VideoPresentation dimensions
+#define DEFAULT_PRESENTATION_WIDTH 720
+#define DEFAULT_PRESENTATION_HEIGHT 540
+
 #endif  // CONSTS_H

@@ -24,8 +24,6 @@ class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCa
 
 	std::shared_ptr<Keela::CameraManager> camera_manager;
 
-	void set_resolution(int width, int height);
-
 	void set_pix_fmt(std::string pix_fmt);
 
    private:
@@ -33,8 +31,8 @@ class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCa
 	Gtk::Box v_container = Gtk::Box(Gtk::ORIENTATION_VERTICAL);
 	Gtk::Box video_hbox = Gtk::Box(Gtk::ORIENTATION_HORIZONTAL);
 
-	std::unique_ptr<VideoPresentation> frame_widget_even;
-	std::unique_ptr<VideoPresentation> frame_widget_odd;
+	std::unique_ptr<VideoPresentation> video_presentation_even;
+	std::unique_ptr<VideoPresentation> video_presentation_odd;
 
 	Gtk::CheckButton range_check = Gtk::CheckButton("Range");
 	Keela::LabeledSpinButton range_min_spin = Keela::LabeledSpinButton("Minimum");
@@ -42,7 +40,14 @@ class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCa
 
 	// TODO: histogram
 	Keela::LabeledSpinButton gain_spin = Keela::LabeledSpinButton("Gain (dB)");
+	sigc::connection gain_signal;
 	Keela::LabeledSpinButton exposure_time_spin = Keela::LabeledSpinButton("Exposure Time (μs)");
+	sigc::connection exposure_time_signal;
+
+	Keela::LabeledSpinButton bin_spin = Keela::LabeledSpinButton("Binning Factor");
+	sigc::connection bin_spin_signal;
+	Keela::LabeledComboBoxText bin_mode_combo = Keela::LabeledComboBoxText("Binning Mode");
+	sigc::connection bin_mode_signal;
 
 	Keela::LabeledComboBoxText rotation_combo = Keela::LabeledComboBoxText("Select Rotation");
 	Gtk::CheckButton flip_horiz_check = Gtk::CheckButton("Flip Along Horizontal Center");
@@ -60,6 +65,10 @@ class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCa
 
 	void on_exposure_time_changed() const;
 
+	void on_bin_mode_changed();
+
+	void on_bin_spin_changed() const;
+
 	void on_rotation_changed();
 
 	void on_flip_horiz_changed() const;
@@ -71,6 +80,8 @@ class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCa
 	void remove_split_frame_ui();
 
 	void update_traces();
+
+	void update_presentation_sizes(const std::string &rotation);
 
    public:
 	std::vector<std::shared_ptr<ITraceable>> get_traces();
@@ -85,6 +96,10 @@ class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCa
 	// Update exposure time range after camera is ready
 	void update_exposure_time_range();
 
+	void update_binning_modes();
+
+	void update_binning_range();
+
    private:
 	bool is_heatmap_enabled() override;
 
@@ -96,8 +111,6 @@ class CameraControlWindow final : public Gtk::Window, public Keela::IControlGLCa
 	float heatmap_scale;
 
 	std::vector<std::shared_ptr<CameraTrace>> m_traces;
-	// set width and height initially to a sentinel value
-	int m_width = -1, m_height = -1;
 };
 }  // namespace Keela
 

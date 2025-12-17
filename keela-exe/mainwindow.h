@@ -25,8 +25,6 @@ class MainWindow final : public Gtk::Window {
 
 	Keela::LabeledComboBoxText pix_fmt_combo = Keela::LabeledComboBoxText("Pixel Format");
 	Keela::LabeledSpinButton framerate_spin = Keela::LabeledSpinButton("Framerate (Hz)");
-	Keela::LabeledSpinButton data_matrix_w_spin = Keela::LabeledSpinButton("Data Width");
-	Keela::LabeledSpinButton data_matrix_h_spin = Keela::LabeledSpinButton("Data Height");
 
 	Gtk::CheckButton cv_recording_check;
 	Keela::LabeledSpinButton num_camera_spin = Keela::LabeledSpinButton("Number of Cameras");
@@ -58,12 +56,6 @@ class MainWindow final : public Gtk::Window {
 	void set_framerate();
 
 	void set_framerate(Keela::CameraManager *cm) const;
-
-	void set_resolution() const;
-
-	void set_pix_fmt() const;
-
-	void set_resolution(Keela::CameraControlWindow *c) const;
 
 	void on_trace_button_clicked();
 

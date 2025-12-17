@@ -4,6 +4,7 @@
 
 #include "keela-widgets/GLTraceRender.h"
 
+#include <gst/video/video-info.h>
 #include <spdlog/spdlog.h>
 
 #include <bit>
@@ -290,7 +291,7 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
 	}
 
 	// protect against division by zero
-	if(width == 0) {
+	if(width == 0 || height == 0) {
 		return std::numeric_limits<double>::quiet_NaN();
 	}
 
@@ -300,8 +301,17 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
 		ss << __func__ << "Buffer mapping failed";
 		throw std::runtime_error(ss.str());
 	}
-	assert(static_cast<gsize>(width * height * sizeof(T)) == mapInfo.size);
-	auto indices = std::vector<unsigned int>(mapInfo.size / sizeof(T));
+
+	GstVideoInfo info;
+	gst_video_info_init(&info);
+	gst_video_info_from_caps(&info, gst_sample_get_caps(sample));
+
+	// GStreamer's videoflip may add padding to align each row to memory boundaries
+	gsize stride = info.stride[0];  // bytes per row (w/ padding)
+
+	assert(static_cast<gsize>(stride * height) == mapInfo.size);
+
+	auto indices = std::vector<unsigned int>(width * height);  // Only actual pixels
 	std::iota(indices.begin(), indices.end(), 0);
 
 	// initial value where the first element in the tuple is sum of the pixels in the ROI
@@ -316,14 +326,25 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
 	    },
 	    // map
 	    [&](unsigned int index) {
-		    T tmp = mapInfo.data[index * sizeof(T)];
+		    // index is logical pixel value (0 -> width*height-1)
+		    const auto video_x = index % width;
+		    const auto video_y = index / width;
+
+		    // actual buffer index accounting for stride
+		    const auto byte_offset = video_y * stride + video_x * sizeof(T);
+
+	    	T tmp = mapInfo.data[byte_offset];
+
 		    if(endianness != std::endian::native) {
 			    tmp = std::byteswap(tmp);
 		    }
 		    if(gizmo->get_enabled()) {
-			    const auto x = index % width;
-			    const auto y = index / width;
-			    if(gizmo->intersects(x * 2, y * 2)) {
+			    // Convert video coordinates to display coordinates for intersection test
+			    const auto [display_width, display_height] = trace->get_display_size();
+			    const auto display_x = video_x * display_width / width;
+			    const auto display_y = video_y * display_height / height;
+
+			    if(gizmo->intersects(display_x, display_y)) {
 				    return static_cast<std::pair<size_t, size_t>>(std::make_pair(tmp, 1));
 			    }
 			    return static_cast<std::pair<size_t, size_t>>(std::make_pair(0, 0));
