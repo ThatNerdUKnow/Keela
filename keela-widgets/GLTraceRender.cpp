@@ -333,8 +333,7 @@ double Keela::GLTraceRender::calculate_roi_average(GstSample *sample, GstStructu
 		    // actual buffer index accounting for stride
 		    const auto byte_offset = video_y * stride + video_x * sizeof(T);
 
-		    T tmp;
-		    std::memcpy(&tmp, &mapInfo.data[byte_offset], sizeof(T));
+	    	T tmp = mapInfo.data[byte_offset];
 
 		    if(endianness != std::endian::native) {
 			    tmp = std::byteswap(tmp);
