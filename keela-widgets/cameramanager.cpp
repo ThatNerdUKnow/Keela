@@ -39,7 +39,16 @@ Keela::CameraManager::CameraManager(guint id, bool split_streams)
 
 		// Set up camera control via aravissrc and AravisCamera
 		GstElement *camera_element = static_cast<GstElement *>(camera);
-		aravis_controller = std::make_unique<AravisController>(camera_element);
+		
+		// Only initialize aravis_controller if the camera is an aravissrc
+		GstElementFactory *factory = gst_element_get_factory(camera_element);
+		const gchar *factory_name = gst_plugin_feature_get_name(factory);
+		if(g_strcmp0(factory_name, "aravissrc") == 0) {
+			aravis_controller = std::make_unique<AravisController>(camera_element);
+			spdlog::info("Initialized AravisController for camera {}", id);
+		} else {
+			spdlog::info("Camera {} is not an aravissrc ({}), skipping AravisController initialization", id, factory_name);
+		}
 
 		// Set up frame splitting if enabled
 		this->split_streams = split_streams;
