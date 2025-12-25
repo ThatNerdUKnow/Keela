@@ -18,7 +18,9 @@ jobs:
          - os: ubuntu-latest
            shell: bash
         build_type: [debug,release]
-
+    defaults:
+      run:
+        shell: ${{matrix.environment.shell}}
     runs-on: ${{matrix.environment.os}}
     steps:
       - uses: actions/checkout@v6.0.1
@@ -27,13 +29,11 @@ jobs:
         with:
           os: ubuntu-latest
       - name: configure cmake
-        shell: ${{matrix.environment.shell}}
         run: |
           mkdir build
           cd build
           cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
       - name: build
-        shell: ${{matrix.environment.shell}}
         run: | 
           cd build
           ninja
