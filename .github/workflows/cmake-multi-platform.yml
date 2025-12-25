@@ -40,7 +40,7 @@ jobs:
       - name: test
         run: |
             cd build
-            ctest
+            ctest --output-on-failure
       - name: upload_build_directory
         uses: actions/upload-artifact@v5.0.0
         with:
