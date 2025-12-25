@@ -14,7 +14,7 @@ jobs:
       matrix:
         environment: 
          - os: windows-latest
-           shell: msys {0}
+           shell: 'msys {0}'
          - os: ubuntu-latest
            shell: bash
         build_type: [debug,release]
