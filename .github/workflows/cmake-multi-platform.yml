@@ -14,6 +14,7 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6.0.1
       - name: Setup Environment
         uses: ./.github/actions/install-deps
         with:
@@ -36,12 +37,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      - uses: actions/checkout@v6.0.1
       - name: Setup Environment
         uses: ./.github/actions/install-deps
         with:
           os: windows-latest
-      - name: checkout
-        uses: actions/checkout@v6.0.1
       - name: configure cmake
         shell: msys2 {0}
         run: |
