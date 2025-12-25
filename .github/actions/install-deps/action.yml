@@ -9,9 +9,11 @@ runs:
     steps:
         - name: update apt repositories
           if: inputs.os == 'ubuntu-latest'
+          shell: bash
           run: sudo apt-get update -y
         - name: install dependencies
           if: inputs.os == 'ubuntu-latest'
+          shell: bash
           run: >
             sudo apt-get install
             gstreamer-1.0
