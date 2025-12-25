@@ -9,10 +9,17 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build_ubuntu:
+  build:
+    strategy:
+      matrix:
+        environment: 
+         - os: windows-latest
+           shell: msys {0}
+         - os: ubuntu-latest
+           shell: bash
+        build_type: [debug,release]
 
-
-    runs-on: ubuntu-latest
+    runs-on: ${{matrix.environment.os}}
     steps:
       - uses: actions/checkout@v6.0.1
       - name: Setup Environment
@@ -20,41 +27,43 @@ jobs:
         with:
           os: ubuntu-latest
       - name: configure cmake
+        shell: ${{matrix.environment.shell}}
         run: |
           mkdir build
           cd build
-          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=release
+          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
       - name: build
+        shell: ${{matrix.environment.shell}}
         run: | 
           cd build
           ninja
       - name: upload_build_directory
         uses: actions/upload-artifact@v5.0.0
         with:
-          name: build-ubuntu
+          name: ${{matrix.environment.os}}-${{matrix.build_type}}
           path: ./build/
-  build_windows:
-    runs-on: windows-latest
+#  build_windows:
+#    runs-on: windows-latest
 
-    steps:
-      - uses: actions/checkout@v6.0.1
-      - name: Setup Environment
-        uses: ./.github/actions/install-deps
-        with:
-          os: windows-latest
-      - name: configure cmake
-        shell: msys2 {0}
-        run: |
-          mkdir build
-          cd build
-          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=release
-      - name: build
-        shell: msys2 {0}
-        run: |
-          cd build
-          ninja
-      - name: upload_build_directory
-        uses: actions/upload-artifact@v5.0.0
-        with:
-          name: build-windows
-          path: ./build/
+#    steps:
+#      - uses: actions/checkout@v6.0.1
+#      - name: Setup Environment
+#        uses: ./.github/actions/install-deps
+#        with:
+#          os: windows-latest
+#      - name: configure cmake
+#        shell: msys2 {0}
+#        run: |
+#          mkdir build
+#          cd build
+#          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=release
+#      - name: build
+#        shell: msys2 {0}
+#        run: |
+#          cd build
+#          ninja
+#      - name: upload_build_directory
+#        uses: actions/upload-artifact@v5.0.0
+#        with:
+#          name: build-windows
+#          path: ./build/
