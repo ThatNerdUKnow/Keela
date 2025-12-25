@@ -27,7 +27,7 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/install-deps
         with:
-          os: ubuntu-latest
+          os: ${{matrix.environment.os}}
       - name: configure cmake
         run: |
           mkdir build
