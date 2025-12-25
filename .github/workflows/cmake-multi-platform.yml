@@ -37,33 +37,12 @@ jobs:
         run: | 
           cd build
           ninja
+      - name: test
+        run: |
+            cd build
+            ctest
       - name: upload_build_directory
         uses: actions/upload-artifact@v5.0.0
         with:
           name: ${{matrix.environment.os}}-${{matrix.build_type}}
           path: ./build/
-#  build_windows:
-#    runs-on: windows-latest
-
-#    steps:
-#      - uses: actions/checkout@v6.0.1
-#      - name: Setup Environment
-#        uses: ./.github/actions/install-deps
-#        with:
-#          os: windows-latest
-#      - name: configure cmake
-#        shell: msys2 {0}
-#        run: |
-#          mkdir build
-#          cd build
-#          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=release
-#      - name: build
-#        shell: msys2 {0}
-#        run: |
-#          cd build
-#          ninja
-#      - name: upload_build_directory
-#        uses: actions/upload-artifact@v5.0.0
-#        with:
-#          name: build-windows
-#          path: ./build/
